@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
-import Footer from "./components/Footer";
+import {Routes, Route} from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import Service from "./pages/Service";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import "./index.css";
+import Footer from "./components/Footer";
 
 const App = () => {
   const [sidebarToggle, setSidebarToggle] = useState(true);
@@ -12,18 +17,23 @@ const App = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100"> 
-      <Sidebar isOpen={sidebarToggle} />
+    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+        <Sidebar isOpen={sidebarToggle} />
+        
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <Header onSidebarToggle={() => setSidebarToggle(!sidebarToggle)} />
+          
+          <main className="flex-1 overflow-y-auto">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/service" element={<Service />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </main>
+        </div>
 
-      <div className="flex flex-col flex-1">
-        <Header onSidebartoggle={toggleSidebar} />
-
-        <main className="flex-1 bg-slate-200">
-          Pogi Ako
-        </main>
-        <Footer />
       </div>
-    </div>
   );
 };
 
