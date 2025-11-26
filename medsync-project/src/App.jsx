@@ -7,7 +7,7 @@ import Service from "./pages/Service";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import "./index.css";
-import Footer from "./components/Footer";
+import Footer from "./components/Footer"
 
 const App = () => {
   const [sidebarToggle, setSidebarToggle] = useState(true);
@@ -15,9 +15,15 @@ const App = () => {
   function toggleSidebar() {
     setSidebarToggle(!sidebarToggle);
   }
+  
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+    <Routes>
+      <Route path="/login" element={<Login />}/>
+      <Route path="/logout" element={<Logout/>}/>
+      <Route path="/*" element={(
+      <ProtectedRoute>
+      <div className="flex h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
         <Sidebar isOpen={sidebarToggle} />
         
         <div className="flex flex-col flex-1 overflow-hidden">
@@ -31,9 +37,14 @@ const App = () => {
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>
+          <Footer/>
         </div>
 
       </div>
+    </ProtectedRoute>
+  )} />
+    </Routes>
+    
   );
 };
 
