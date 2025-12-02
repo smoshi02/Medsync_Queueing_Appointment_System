@@ -1,50 +1,64 @@
 import React, { useState } from "react";
+import { Routes, Route } from "react-router-dom";
+
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
-import {Routes, Route} from "react-router-dom";
+import Footer from "./components/Footer";
+
+// Pages
 import Dashboard from "./pages/Dashboard";
-import Service from "./pages/Service";
+import Services from "./pages/Services";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+
+// Components
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import "./index.css";
-import Footer from "./components/Footer"
 
 const App = () => {
   const [sidebarToggle, setSidebarToggle] = useState(true);
 
-  function toggleSidebar() {
-    setSidebarToggle(!sidebarToggle);
-  }
-  
+  const toggleSidebar = () => setSidebarToggle(!sidebarToggle);
 
   return (
     <Routes>
-      <Route path="/login" element={<Login />}/>
-      <Route path="/logout" element={<Logout/>}/>
-      <Route path="/*" element={(
-      <ProtectedRoute>
-      <div className="flex h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
-        <Sidebar isOpen={sidebarToggle} />
-        
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <Header onSidebarToggle={() => setSidebarToggle(!sidebarToggle)} />
-          
-          <main className="flex-1 overflow-y-auto">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/service" element={<Service />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
-          </main>
-          <Footer/>
-        </div>
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
-      </div>
-    </ProtectedRoute>
-  )} />
+      {/* Protected Routes */}
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <div className="flex h-screen bg-gray-100">
+              <Sidebar
+                isOpen={sidebarToggle}
+                onClose={() => setSidebarToggle(false)}
+              />
+              <div className="flex-1 flex flex-col">
+                <Header
+                  onSidebarToggle={toggleSidebar}
+                  isSidebarOpen={sidebarToggle}
+                />
+                <main className="flex-1 bg-slate-200 p-4">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/services" element={<Services />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Routes>
+                </main>
+                <Footer />
+              </div>
+            </div>
+          </ProtectedRoute>
+        }
+      />
     </Routes>
-    
   );
 };
 
