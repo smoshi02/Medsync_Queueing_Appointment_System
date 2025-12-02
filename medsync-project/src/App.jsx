@@ -11,17 +11,22 @@ import Services from "./pages/Services";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Signup from "./pages/SignUp";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
-
-import "./index.css";
 
 const App = () => {
   const [sidebarToggle, setSidebarToggle] = useState(true);
 
   const toggleSidebar = () => setSidebarToggle(!sidebarToggle);
+
+  const menuItems = [
+    { icon: "🏠", label: "Dashboard", path: "/" },
+    { icon: "🩺", label: "Service", path: "/services" },
+    { icon: "👤", label: "Profile", path: "/profile" },
+    { icon: "⚙️", label: "Settings", path: "/settings" },
+  ];
 
   return (
     <Routes>
@@ -29,22 +34,16 @@ const App = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* Protected Routes */}
+      {/* Protected Layout */}
       <Route
         path="/*"
         element={
           <ProtectedRoute>
             <div className="flex h-screen bg-gray-100">
-              <Sidebar
-                isOpen={sidebarToggle}
-                onClose={() => setSidebarToggle(false)}
-              />
+              <Sidebar isOpen={sidebarToggle} menuItems={menuItems} />
               <div className="flex-1 flex flex-col">
-                <Header
-                  onSidebarToggle={toggleSidebar}
-                  isSidebarOpen={sidebarToggle}
-                />
-                <main className="flex-1 bg-slate-200 p-4">
+                <Header onSidebarToggle={toggleSidebar} isSidebarOpen={sidebarToggle} />
+                <main className="flex-1 bg-slate-200 p-4 overflow-auto">
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/services" element={<Services />} />

@@ -6,6 +6,7 @@ function Signup() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("STAFF"); // Default role
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -15,6 +16,15 @@ function Signup() {
     e.preventDefault();
     setError("");
 
+    // Client-side validation
+    if (username.length < 3 || username.length > 20) {
+      setError("Username must be between 3 and 20 characters");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -23,20 +33,23 @@ function Signup() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: username,
           password: password,
+          role: role.toUpperCase(),
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || "Failed to register");
+        throw new Error(data.error || "Failed to register");
       }
 
+      // Registration successful → redirect to login
       navigate("/login");
     } catch (err) {
       setError(err.message);
@@ -59,7 +72,6 @@ function Signup() {
           </div>
         )}
 
-        {/* USERNAME INPUT */}
         <div className="mb-4">
           <label className="block mb-1 font-medium">Username</label>
           <input
@@ -68,13 +80,12 @@ function Signup() {
             onChange={(e) => setUsername(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
             required
+            placeholder="Enter your username"
             minLength={3}
             maxLength={20}
-            placeholder="Enter your username"
           />
         </div>
 
-        {/* PASSWORD INPUT */}
         <div className="mb-4">
           <label className="block mb-1 font-medium">Password</label>
           <input
@@ -87,8 +98,7 @@ function Signup() {
           />
         </div>
 
-        {/* CONFIRM PASSWORD */}
-        <div className="mb-6">
+        <div className="mb-4">
           <label className="block mb-1 font-medium">Confirm Password</label>
           <input
             type="password"
@@ -98,6 +108,18 @@ function Signup() {
             required
             minLength={6}
           />
+        </div>
+
+        <div className="mb-6">
+          <label className="block mb-1 font-medium">Role</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+          >
+            <option value="STAFF">Staff</option>
+            <option value="DOCTOR">Doctor</option>
+          </select>
         </div>
 
         <button

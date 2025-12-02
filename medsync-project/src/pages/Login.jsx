@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthProvider";
+import { useAuth } from "../context/AuthProvider"; // 👈 import Auth
 import { API_URL } from "../config/constants";
 
 function Login() {
@@ -9,8 +9,8 @@ function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { login } = useAuth(); // 👈 get login from context
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -25,13 +25,21 @@ function Login() {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || "Invalid username or password");
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Invalid username or password");
       }
 
       const data = await response.json();
+
+      // 👇 Save token via context
       login(data.token);
-      navigate("/");
+
+      // Optionally store additional info in localStorage
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("username", data.username);
+
+      // Redirect to dashboard
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -53,7 +61,6 @@ function Login() {
           </div>
         )}
 
-        {/* USERNAME INPUT */}
         <div className="mb-4">
           <label className="block mb-1 font-medium">Username</label>
           <input
@@ -62,13 +69,10 @@ function Login() {
             onChange={(e) => setUsername(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
             required
-            minLength={3}
-            maxLength={20}
             placeholder="Enter your username"
           />
         </div>
 
-        {/* PASSWORD INPUT */}
         <div className="mb-6">
           <label className="block mb-1 font-medium">Password</label>
           <input
@@ -77,7 +81,7 @@ function Login() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
             required
-            minLength={6}
+            placeholder="Enter your password"
           />
         </div>
 

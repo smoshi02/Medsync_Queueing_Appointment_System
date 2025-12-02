@@ -1,9 +1,10 @@
-
-import React, { useState } from "react";
-import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import React from "react";
+import { useAuth } from "../context/AuthProvider"; // ← Make sure the path is correct
+import { Link, useLocation } from "react-router-dom";
 
 function Header({ onSidebarToggle }) {
-  const {logout} =useAuth();
+  const { logout } = useAuth(); // Now useAuth is defined
+
   return (
     <header className="bg-gradient-to-r from-blue-600 to-blue-800 shadow-lg">
       <div className="flex items-center justify-between px-6 py-4">
@@ -29,7 +30,7 @@ function Header({ onSidebarToggle }) {
           </button>
 
           <div className="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white font-bold border-2 border-white">RG</div>
-          <div> 
+          <div>
             <button onClick={logout}>Logout</button>
           </div>
         </div>
@@ -38,4 +39,4 @@ function Header({ onSidebarToggle }) {
   );
 }
 
-export default Header; 
+export default Header;
