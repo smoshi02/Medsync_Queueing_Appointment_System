@@ -1,8 +1,17 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
-function Sidebar({ isOpen, menuItems }) {
+function Sidebar({ isOpen }) {
   const location = useLocation();
+
+  const menuItems = [
+    { icon: "🏠", label: "Dashboard", path: "/" },
+    { icon: "⏱️", label: "Queue", path: "/queue" },
+    { icon: "📋", label: "Medical Records", path: "/medical-records" },
+    { icon: "👥", label: "User Management", path: "/user-management" },
+    { icon: "📅", label: "Appointments", path: "/appointments" },
+    { icon: "⚙️", label: "Settings", path: "/settings" },
+  ];
 
   return (
     <div
