@@ -1,11 +1,10 @@
-import React, { useState } from "react";
 import { Routes, Route } from "react-router-dom";
-
+import { useState } from "react";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
-// Pages
 import Dashboard from "./pages/Dashboard";
 import Queue from "./pages/Queue";
 import MedicalRecords from "./pages/MedicalRecords";
@@ -15,13 +14,8 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/SignUp";
 
-// Components
-import ProtectedRoute from "./components/ProtectedRoute";
-
 const App = () => {
-  const [sidebarToggle, setSidebarToggle] = useState(true);
-
-  const toggleSidebar = () => setSidebarToggle(!sidebarToggle);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <Routes>
@@ -35,10 +29,13 @@ const App = () => {
         element={
           <ProtectedRoute>
             <div className="flex h-screen bg-gray-100">
-              <Sidebar isOpen={sidebarToggle} />
+              <Sidebar isOpen={sidebarOpen} />
               <div className="flex-1 flex flex-col">
-                <Header onSidebarToggle={toggleSidebar} isSidebarOpen={sidebarToggle} />
-                <main className="flex-1 bg-slate-200 p-4 overflow-auto">
+                <Header
+                  onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
+                  isSidebarOpen={sidebarOpen}
+                />
+                <main className="flex-1 p-4 overflow-auto">
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/queue" element={<Queue />} />

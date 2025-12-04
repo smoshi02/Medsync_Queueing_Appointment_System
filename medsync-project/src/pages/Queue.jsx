@@ -1,107 +1,133 @@
-import React, { useEffect, useState } from "react";
-import { socket } from "../js/socket";
+import { useState, useEffect } from "react";
 import { fetchWithAuth } from "../js/fetchHelper";
-
-const services = [
-  "Medical Consultation", "Laboratory Service", "Pharmacy Services", "Family Planning Service",
-  "TB DOTs Service", "Obstetrics Services", "Dental Services", "Medical Certification",
-  "Adolescent Health Clinic", "Immunization",
-];
+import { useStompWebSocket } from "../js/useStompWebSocket";
 
 function Queue() {
-  const [activeService, setActiveService] = useState(null);
-  const [queueData, setQueueData] = useState([]);
-  const [serviceStats, setServiceStats] = useState([]);
+  const [cards, setCards] = useState([]);
+  const [tableData, setTableData] = useState([]);
+  const [selectedService, setSelectedService] = useState("");
+  const [loadingCards, setLoadingCards] = useState(true);
+  const [loadingTable, setLoadingTable] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const data = await fetchWithAuth("/api/queue/stats");
-        setServiceStats(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      }
-    };
-    loadStats();
-
-    socket.on("queueUpdate", (data) => {
-      setServiceStats(Array.isArray(data.stats) ? data.stats : []);
-      if (activeService) {
-        setQueueData(Array.isArray(data.queues?.[activeService]) ? data.queues[activeService] : []);
-      }
-    });
-    return () => socket.off("queueUpdate");
-  }, [activeService]);
-
-  const handleCardClick = async (serviceName) => {
-    setActiveService(serviceName);
+  // =============================
+  // LOAD QUEUE CARDS
+  // =============================
+  const loadCards = async () => {
     try {
-      const data = await fetchWithAuth(`/api/queue/${encodeURIComponent(serviceName)}`);
-      setQueueData(Array.isArray(data) ? data : []);
+      setLoadingCards(true);
+      const data = await fetchWithAuth("/api/queue/cards");
+      setCards(data);
     } catch (err) {
-      console.error(err);
       setError(err.message);
+    } finally {
+      setLoadingCards(false);
     }
   };
 
-  if (error) return <p className="p-6 text-red-600">{error}</p>;
+  // ===================================
+  // LOAD TABLE WHEN SERVICE IS CLICKED
+  // ===================================
+  const loadServiceTable = async (serviceName) => {
+    try {
+      setSelectedService(serviceName);
+      setLoadingTable(true);
+
+      const data = await fetchWithAuth(`/api/queue/service/${serviceName}`);
+      setTableData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingTable(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCards();
+  }, []);
+
+  // ========================================
+  // WEBSOCKET UPDATES FOR REAL-TIME QUEUE
+  // ========================================
+  useStompWebSocket(["/topic/queue"], async (msg) => {
+    if (msg.type === "queue-update") {
+      loadCards();
+      if (selectedService) {
+        loadServiceTable(selectedService);
+      }
+    }
+  });
+
+  if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-blue-900">Service Queues</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        {serviceStats.map((stat, idx) => (
-          <div
-            key={idx}
-            onClick={() => handleCardClick(stat.service)}
-            className={`bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition transform hover:scale-105 ${activeService === stat.service ? "border-4 border-blue-500" : ""}`}
-          >
-            <h3 className="text-lg font-bold text-blue-900 mb-2">{stat.service}</h3>
-            <p>Total in Queue: <span className="font-semibold">{stat.total}</span></p>
-            <p>Active Now: <span className="font-semibold">{stat.active}</span></p>
-          </div>
-        ))}
+    <div>
+      <h1 className="text-2xl font-bold mb-4">Patient Queue</h1>
+
+      {/* ========================== */}
+      {/* SERVICE CARDS */}
+      {/* ========================== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        {loadingCards ? (
+          <p>Loading queue categories...</p>
+        ) : (
+          cards.map((card) => (
+            <div
+              key={card.serviceName}
+              onClick={() => loadServiceTable(card.serviceName)}
+              className={`p-4 border rounded-lg shadow cursor-pointer hover:bg-gray-100 transition ${
+                selectedService === card.serviceName ? "bg-gray-200" : ""
+              }`}
+            >
+              <h2 className="font-semibold text-lg">{card.serviceName}</h2>
+              <p>Total in Queue: {card.activePatients}</p>
+              <p>Total Served: {card.totalServed}</p>
+            </div>
+          ))
+        )}
       </div>
 
-      {activeService && (
-        <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-          <h2 className="text-xl font-bold text-blue-900 mb-4">{activeService} Queue</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-blue-50">
+      {/* ========================== */}
+      {/* QUEUE TABLE */}
+      {/* ========================== */}
+      {selectedService && (
+        <div>
+          <h2 className="text-xl font-semibold mb-3">
+            Patients in: {selectedService}
+          </h2>
+
+          {loadingTable ? (
+            <p>Loading patients...</p>
+          ) : tableData.length === 0 ? (
+            <p className="text-gray-500 italic">No patients yet.</p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
                 <tr>
-                  <th>Queue ID</th>
-                  <th>Patient</th>
-                  <th>Staff</th>
-                  <th>Priority</th>
-                  <th>Status</th>
+                  <th className="border p-2">Queue #</th>
+                  <th className="border p-2">Patient Name</th>
+                  <th className="border p-2">Priority</th>
+                  <th className="border p-2">Staff</th>
+                  <th className="border p-2">Status</th>
+                  <th className="border p-2">Timeslot</th>
                 </tr>
               </thead>
               <tbody>
-                {queueData.map((item, idx) => (
-                  <tr key={idx} className="border-b hover:bg-blue-50">
-                    <td>{item.queueId}</td>
-                    <td>{item.patient}</td>
-                    <td>{item.staff}</td>
-                    <td>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        item.priority === "High" ? "bg-red-100 text-red-700" :
-                        item.priority === "Medium" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-green-100 text-green-700"
-                      }`}>{item.priority}</span>
-                    </td>
-                    <td>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        item.status === "Serving" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
-                      }`}>{item.status}</span>
+                {tableData.map((row) => (
+                  <tr key={row.queueId} className="hover:bg-gray-100">
+                    <td className="border p-2">{row.queueId}</td>
+                    <td className="border p-2">{row.patientName}</td>
+                    <td className="border p-2">{row.priority}</td>
+                    <td className="border p-2">{row.staffName || "—"}</td>
+                    <td className="border p-2">{row.status}</td>
+                    <td className="border p-2">
+                      {new Date(row.timeSlot).toLocaleTimeString()}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          )}
         </div>
       )}
     </div>

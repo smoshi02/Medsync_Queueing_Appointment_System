@@ -1,131 +1,130 @@
-import React, { useEffect, useState } from "react";
-import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
-import { socket } from "../js/socket";
+import { useState, useEffect } from "react";
 import { fetchWithAuth } from "../js/fetchHelper";
+import { useStompWebSocket } from "../js/useStompWebSocket";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 function Dashboard() {
-  const [stats, setStats] = useState([]);
-  const [chartData, setChartData] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
+  const [summary, setSummary] = useState({
+    totalPatients: 0,
+    activeQueue: 0,
+    completedServices: 0,
+    weeklyStats: [],
+    activityLogs: []
+  });
+
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Load dashboard data
-  const loadDashboard = async () => {
+  const loadStats = async () => {
     try {
-      const data = await fetchWithAuth(`${import.meta.env.VITE_API_URL}/api/dashboard`);
-      if (!data) return; // already redirected
-      setStats(Array.isArray(data.stats) ? data.stats : []);
-      setChartData(Array.isArray(data.chart) ? data.chart : []);
-      setRecentActivity(Array.isArray(data.recentActivity) ? data.recentActivity : []);
+      setLoading(true);
+      const data = await fetchWithAuth("/api/dashboard/stats");
+
+      setSummary({
+        totalPatients: data.totalPatients ?? 0,
+        activeQueue: data.activeQueue ?? 0,
+        completedServices: data.completedServices ?? 0,
+        weeklyStats: Array.isArray(data.weeklyStats) ? data.weeklyStats : [],
+        activityLogs: Array.isArray(data.activityLogs) ? data.activityLogs : []
+      });
+
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadDashboard();
-
-    // Listen for real-time updates
-    const handleUpdate = (data) => {
-      setStats(Array.isArray(data.stats) ? data.stats : []);
-      setChartData(Array.isArray(data.chart) ? data.chart : []);
-      setRecentActivity(Array.isArray(data.recentActivity) ? data.recentActivity : []);
-    };
-
-    socket.on("dashboardUpdate", handleUpdate);
-    return () => socket.off("dashboardUpdate", handleUpdate);
+    loadStats();
   }, []);
 
-  if (error) return <p className="p-6 text-red-600">{error}</p>;
-  if (!stats.length) return <p className="p-6">Loading dashboard...</p>;
+  // Listen for real-time WebSocket updates
+  useStompWebSocket(["/topic/stats"], (msg) => {
+    if (msg.type === "stats-update") {
+      setSummary((prev) => ({
+        ...prev,
+        ...msg.data
+      }));
+    }
+  });
+
+  if (loading) return <p>Loading dashboard...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-blue-900">Dashboard Overview</h1>
+    <div className="space-y-6">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <div
-            key={index}
-            className={`bg-gradient-to-br ${stat.color} rounded-xl shadow-lg p-6 text-white`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-90">{stat.title}</p>
-                <p className="text-3xl font-bold mt-2">{stat.value}</p>
-              </div>
-              <div className="text-4xl opacity-80">{stat.icon}</div>
-            </div>
-          </div>
-        ))}
+      {/* SUMMARY CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <div className="p-4 bg-white shadow rounded">
+          <h2 className="text-gray-500 text-sm">Total Patients</h2>
+          <p className="text-3xl font-bold">{summary.totalPatients}</p>
+        </div>
+
+        <div className="p-4 bg-white shadow rounded">
+          <h2 className="text-gray-500 text-sm">Active Queue</h2>
+          <p className="text-3xl font-bold">{summary.activeQueue}</p>
+        </div>
+
+        <div className="p-4 bg-white shadow rounded">
+          <h2 className="text-gray-500 text-sm">Completed Services</h2>
+          <p className="text-3xl font-bold">{summary.completedServices}</p>
+        </div>
+
       </div>
 
-      {chartData.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-bold text-blue-900 mb-4">Patients Served (Weekly)</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="day" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="patients" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      {/* WEEKLY CHART */}
+      <div className="bg-white p-4 rounded shadow">
+        <h2 className="text-xl font-bold mb-4">Weekly Served Patients</h2>
 
-      {recentActivity.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-bold text-blue-900 mb-4">Recent Activity Log</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-blue-50">
-                <tr>
-                  <th>Queue ID</th>
-                  <th>Patient</th>
-                  <th>Service</th>
-                  <th>Staff</th>
-                  <th>Priority</th>
-                  <th>Status</th>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={summary.weeklyStats}>
+            <XAxis dataKey="weekLabel" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Bar dataKey="totalServed" fill="#4f46e5" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* RECENT ACTIVITY LOGS */}
+      <div className="bg-white p-4 rounded shadow">
+        <h2 className="text-xl font-bold mb-4">Recent Activity Logs</h2>
+
+        {summary.activityLogs.length === 0 ? (
+          <p className="text-gray-500">No activity yet.</p>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="text-left border-b">
+                <th className="p-2">Queue #</th>
+                <th className="p-2">Patient</th>
+                <th className="p-2">Service</th>
+                <th className="p-2">Staff</th>
+                <th className="p-2">Priority</th>
+                <th className="p-2">Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {summary.activityLogs.map((log) => (
+                <tr key={log.queueId} className="border-b">
+                  <td className="p-2">{log.queueId}</td>
+                  <td className="p-2">{log.patientName}</td>
+                  <td className="p-2">{log.serviceName}</td>
+                  <td className="p-2">{log.staffName}</td>
+                  <td className="p-2">{log.priority}</td>
+                  <td className="p-2">{log.status}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {recentActivity.map((item, idx) => (
-                  <tr key={idx} className="border-b hover:bg-blue-50">
-                    <td>{item.queueId}</td>
-                    <td>{item.patient}</td>
-                    <td>{item.service}</td>
-                    <td>{item.staff}</td>
-                    <td>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          item.priority === "High"
-                            ? "bg-red-100 text-red-700"
-                            : item.priority === "Medium"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {item.priority}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          item.status === "Serving" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+              ))}
+            </tbody>
+
+          </table>
+        )}
+      </div>
+
     </div>
   );
 }

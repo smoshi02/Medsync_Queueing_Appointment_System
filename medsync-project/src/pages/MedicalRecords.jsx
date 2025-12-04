@@ -1,72 +1,69 @@
-import React, { useEffect, useState } from "react";
-import { socket } from "../js/socket";
+import { useState, useEffect } from "react";
 import { fetchWithAuth } from "../js/fetchHelper";
+import { useStompWebSocket } from "../js/useStompWebSocket";
 
 function MedicalRecords() {
   const [records, setRecords] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadRecords = async () => {
-      try {
-        const data = await fetchWithAuth("/api/medical-records");
-        setRecords(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      }
-    };
-    loadRecords();
+  const loadRecords = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchWithAuth("/api/medical-records");
+      setRecords(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    socket.on("medicalRecordsUpdate", (data) => setRecords(Array.isArray(data) ? data : []));
-    return () => socket.off("medicalRecordsUpdate");
+  useEffect(() => {
+    loadRecords();
   }, []);
 
-  const filteredRecords = records.filter(record =>
-    record.patientName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useStompWebSocket(["/topic/medical-records"], (msg) => {
+    if (msg.type === "records-update") {
+      setRecords(msg.data);
+    }
+  });
 
-  if (error) return <p className="p-6 text-red-600">{error}</p>;
+  if (loading) return <p>Loading medical records...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-blue-900">Medical Records</h1>
-      <input
-        type="text"
-        placeholder="Search patient..."
-        value={searchTerm}
-        onChange={e => setSearchTerm(e.target.value)}
-        className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-      <div className="bg-white rounded-xl shadow-lg p-6 overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-blue-50">
+    <div>
+      <h1 className="text-2xl font-bold mb-4">Medical Records</h1>
+
+      {records.length === 0 ? (
+        <p className="italic text-gray-500">No medical records yet.</p>
+      ) : (
+        <table className="w-full border-collapse">
+          <thead>
             <tr>
-              <th>Patient ID</th>
-              <th>Patient Name</th>
-              <th>Date of Birth</th>
-              <th>Last Visit</th>
-              <th>Medical Records</th>
+              <th className="border p-2">Record #</th>
+              <th className="border p-2">Patient</th>
+              <th className="border p-2">Diagnosis</th>
+              <th className="border p-2">Prescription</th>
+              <th className="border p-2">Date</th>
             </tr>
           </thead>
           <tbody>
-            {filteredRecords.map((rec, idx) => (
-              <tr key={idx} className="border-b hover:bg-blue-50">
-                <td>{rec.patientId}</td>
-                <td>{rec.patientName}</td>
-                <td>{rec.dob}</td>
-                <td>{rec.lastVisit}</td>
-                <td>
-                  <ul className="list-disc ml-5 space-y-1">
-                    {(Array.isArray(rec.medicalRecords) ? rec.medicalRecords : []).map((r, i) => <li key={i}>{r}</li>)}
-                  </ul>
+            {records.map((record) => (
+              <tr key={record.recordId} className="hover:bg-gray-100">
+                <td className="border p-2">{record.recordId}</td>
+                <td className="border p-2">{record.patientName}</td>
+                <td className="border p-2">{record.diagnosis}</td>
+                <td className="border p-2">{record.prescription}</td>
+                <td className="border p-2">
+                  {new Date(record.recordCreatedDate).toLocaleDateString()}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      )}
     </div>
   );
 }
