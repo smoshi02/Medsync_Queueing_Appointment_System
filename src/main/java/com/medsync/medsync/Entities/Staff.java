@@ -14,9 +14,13 @@ public class Staff {
     private String username;
     private String password;
 
+    private String email;
+
+    private boolean emailNotificationsEnabled;
+
     private String firstName;
-    private String lastName;
     private String middleName;
+    private String lastName;
     private String role;
 
     private LocalDate dateHired;
@@ -29,14 +33,49 @@ public class Staff {
     private String addressMunicipality;
     private String addressProvince;
 
+    // ===== Constructors =====
     public Staff() {}
 
+    // ===== Getters and Setters =====
     public Long getStaffId() {
         return staffId;
     }
 
     public void setStaffId(Long staffId) {
         this.staffId = staffId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+
+    public boolean isEmailNotificationsEnabled() {
+        return emailNotificationsEnabled;
+    }
+
+    public void setEmailNotificationsEnabled(boolean emailNotificationsEnabled) {
+        this.emailNotificationsEnabled = emailNotificationsEnabled;
     }
 
     public String getFirstName() {
@@ -47,20 +86,20 @@ public class Staff {
         this.firstName = firstName;
     }
 
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
     public String getMiddleName() {
         return middleName;
     }
 
     public void setMiddleName(String middleName) {
         this.middleName = middleName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getRole() {
@@ -133,21 +172,5 @@ public class Staff {
 
     public void setAddressProvince(String addressProvince) {
         this.addressProvince = addressProvince;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 }

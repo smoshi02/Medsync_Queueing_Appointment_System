@@ -1,6 +1,7 @@
 package com.medsync.medsync.Util;
 
 import com.medsync.medsync.Services.CustomUserDetailsService;
+import com.medsync.medsync.filter.JwtAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,13 +13,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
@@ -39,13 +39,14 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
-    // CORS config
+    // --- CORS configuration ---
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174")); // React dev ports
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -53,10 +54,10 @@ public class SecurityConfig {
         return source;
     }
 
-    // API Security (stateless, JSON, CORS)
+    // --- API Security (JWT, stateless) ---
     @Bean
     @Order(1)
-    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
                 .securityMatcher("/api/**")
                 .csrf(csrf -> csrf.disable())
@@ -66,30 +67,49 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.disable())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .formLogin(form -> form.disable())  // important: no login page for APIs
                 .httpBasic(basic -> basic.disable())
                 .logout(logout -> logout.disable())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, excep) -> {
                             res.setContentType("application/json");
-                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            res.getWriter().write("{\"error\": \"Unauthorized\"}");
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+                            res.getWriter().write("{\"error\":\"Unauthorized\"}");
                         })
                 );
 
         return http.build();
     }
 
-    // Web Security (HTML pages)
+
+    // --- Web Security (HTML + WebSocket handshake) ---
     @Bean
     @Order(2)
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/**")
+                .securityMatcher("/(?!api).*")
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/**", "/sockjs/**"))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers(
+                                "/login",
+                                "/register",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+
+                                // WebSocket + SockJS endpoints
+                                "/ws/**",
+                                "/sockjs/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/ws/**",
+                        "/sockjs/**"
+                ))
+
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/", true)

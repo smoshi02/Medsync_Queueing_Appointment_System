@@ -43,7 +43,7 @@ public class JwtTokenService {
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
-                .expiresAt(now.plus(1, ChronoUnit.HOURS)) // 1 hour expiration
+                .expiresAt(now.plus(8, ChronoUnit.HOURS))
                 .subject(username)
                 .claim("scope", scope) // store roles
                 .build();

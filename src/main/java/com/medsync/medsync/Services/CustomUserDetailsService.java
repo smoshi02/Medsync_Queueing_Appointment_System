@@ -23,30 +23,23 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username)
-            throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        // 1. Try login as STAFF
         Staff staff = staffRepository.findByUsername(username);
         if (staff != null) {
-            return User
-                    .withUsername(staff.getUsername())
-                    .password(staff.getPassword())
-                    .roles("STAFF")
-                    .build();
+            return new CustomStaffDetails(staff);
         }
 
-        // 2. Try login as DOCTOR
         Doctor doctor = doctorRepository.findByUsername(username);
         if (doctor != null) {
-            return User
+            // You can create a CustomDoctorDetails class or just return User for now
+            return org.springframework.security.core.userdetails.User
                     .withUsername(doctor.getUsername())
                     .password(doctor.getPassword())
                     .roles("DOCTOR")
                     .build();
         }
 
-        // 3. Nothing found
         throw new UsernameNotFoundException("No account found for: " + username);
     }
 }

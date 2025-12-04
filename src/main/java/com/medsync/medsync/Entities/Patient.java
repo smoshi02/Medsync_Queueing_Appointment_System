@@ -41,6 +41,10 @@ public class Patient {
     @JoinColumn(name = "queue_id")
     private Queue queue;
 
+    @OneToMany(mappedBy = "patient")
+    private List<Queue> queues;
+
+
     public Patient() {}
 
     public Long getPatientId() {

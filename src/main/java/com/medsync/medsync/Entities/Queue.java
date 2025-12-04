@@ -10,7 +10,7 @@ public class Queue {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long queueId;
+    private Long queueId;  // changed from Integer to Long
 
     private String queueNumber;
     private LocalDate queueDate;
@@ -21,6 +21,16 @@ public class Queue {
     @ManyToOne
     @JoinColumn(name = "service_id")
     private Service service;
+
+    @ManyToOne
+    @JoinColumn(name = "patient_id")
+    private Patient patient;
+
+    @ManyToOne
+    @JoinColumn(name = "staff_id")
+    private Staff staff;
+
+    private LocalDateTime completedAt;
 
     public Queue() {}
 
@@ -78,5 +88,29 @@ public class Queue {
 
     public void setService(Service service) {
         this.service = service;
+    }
+
+    public Patient getPatient() {
+        return patient;
+    }
+
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
+
+    public Staff getStaff() {
+        return staff;
+    }
+
+    public void setStaff(Staff staff) {
+        this.staff = staff;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
     }
 }

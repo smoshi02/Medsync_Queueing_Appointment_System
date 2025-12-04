@@ -15,10 +15,13 @@ public class Doctor {
     private String username;
     private String password;
 
+    private String email;
 
-    private String fName;
-    private String lName;
-    private String mName;
+    private boolean emailNotificationsEnabled;
+
+    private String firstName;
+    private String middleName;
+    private String lastName;
 
     private String specialization;
     private String contactNumber;
@@ -36,8 +39,10 @@ public class Doctor {
     @OneToMany(mappedBy = "doctor")
     private List<MedicalRecords> medicalRecords;
 
+    // ===== Constructors =====
     public Doctor() {}
 
+    // ===== Getters and Setters =====
     public Long getDoctorId() {
         return doctorId;
     }
@@ -46,28 +51,60 @@ public class Doctor {
         this.doctorId = doctorId;
     }
 
-    public String getfName() {
-        return fName;
+    public String getUsername() {
+        return username;
     }
 
-    public void setfName(String fName) {
-        this.fName = fName;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    public String getlName() {
-        return lName;
+    public String getPassword() {
+        return password;
     }
 
-    public void setlName(String lName) {
-        this.lName = lName;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
-    public String getmName() {
-        return mName;
+    public String getEmail() {
+        return email;
     }
 
-    public void setmName(String mName) {
-        this.mName = mName;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public boolean isEmailNotificationsEnabled() {
+        return emailNotificationsEnabled;
+    }
+
+    public void setEmailNotificationsEnabled(boolean emailNotificationsEnabled) {
+        this.emailNotificationsEnabled = emailNotificationsEnabled;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getSpecialization() {
@@ -156,21 +193,5 @@ public class Doctor {
 
     public void setMedicalRecords(List<MedicalRecords> medicalRecords) {
         this.medicalRecords = medicalRecords;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 }
