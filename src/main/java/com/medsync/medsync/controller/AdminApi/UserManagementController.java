@@ -120,7 +120,9 @@ public class UserManagementController {
     /** Helpers to map entities to DTO */
     private UserManagementDTO mapStaffToDTO(Staff staff) {
         return new UserManagementDTO(
-                staff.getStaffId(),
+                staff.getStaffId(),      // id
+                staff.getStaffId(),      // staffId
+                null,                    // doctorId (null for staff)
                 staff.getFirstName() + " " +
                         (staff.getMiddleName() != null ? staff.getMiddleName() + " " : "") +
                         staff.getLastName(),
@@ -134,7 +136,9 @@ public class UserManagementController {
 
     private UserManagementDTO mapDoctorToDTO(Doctor doc) {
         return new UserManagementDTO(
-                doc.getDoctorId(),
+                doc.getDoctorId(),       // id
+                null,                    // staffId (null for doctors)
+                doc.getDoctorId(),       // doctorId
                 doc.getFirstName() + " " +
                         (doc.getMiddleName() != null ? doc.getMiddleName() + " " : "") +
                         doc.getLastName(),
@@ -145,6 +149,57 @@ public class UserManagementController {
                 null
         );
     }
+
+    /** Edit a Staff */
+    @PutMapping("/admin/edit/staff/{id}")
+    public Staff editStaff(@PathVariable Long id, @RequestBody Staff updatedStaff) {
+        Staff staff = staffRepo.findById(id).orElseThrow(() -> new RuntimeException("Staff not found"));
+
+        staff.setFirstName(updatedStaff.getFirstName());
+        staff.setMiddleName(updatedStaff.getMiddleName());
+        staff.setLastName(updatedStaff.getLastName());
+        staff.setUsername(updatedStaff.getUsername());
+        staff.setPassword(updatedStaff.getPassword());
+        staff.setEmail(updatedStaff.getEmail());
+        staff.setRole(updatedStaff.getRole());
+        staff.setAddressStreet(updatedStaff.getAddressStreet());
+        staff.setAddressBarangay(updatedStaff.getAddressBarangay());
+        staff.setAddressMunicipality(updatedStaff.getAddressMunicipality());
+        staff.setAddressProvince(updatedStaff.getAddressProvince());
+        staff.setPhoneNumber(updatedStaff.getPhoneNumber());
+        staff.setEmergencyContactNumber(updatedStaff.getEmergencyContactNumber());
+        staff.setDateHired(updatedStaff.getDateHired());
+
+        Staff saved = staffRepo.save(staff);
+        broadcastUpdate();
+        return saved;
+    }
+
+    /** Edit a Doctor */
+    @PutMapping("/admin/edit/doctor/{id}")
+    public Doctor editDoctor(@PathVariable Long id, @RequestBody Doctor updatedDoctor) {
+        Doctor doctor = doctorRepo.findById(id).orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        doctor.setFirstName(updatedDoctor.getFirstName());
+        doctor.setMiddleName(updatedDoctor.getMiddleName());
+        doctor.setLastName(updatedDoctor.getLastName());
+        doctor.setUsername(updatedDoctor.getUsername());
+        doctor.setPassword(updatedDoctor.getPassword());
+        doctor.setEmail(updatedDoctor.getEmail());
+        doctor.setSex(updatedDoctor.getSex());
+        doctor.setAddressStreet(updatedDoctor.getAddressStreet());
+        doctor.setAddressBarangay(updatedDoctor.getAddressBarangay());
+        doctor.setAddressMunicipality(updatedDoctor.getAddressMunicipality());
+        doctor.setAddressProvince(updatedDoctor.getAddressProvince());
+        doctor.setContactNumber(updatedDoctor.getContactNumber());
+        doctor.setEmergencyContactNumber(updatedDoctor.getEmergencyContactNumber());
+        doctor.setDateOfBirth(updatedDoctor.getDateOfBirth());
+
+        Doctor saved = doctorRepo.save(doctor);
+        broadcastUpdate();
+        return saved;
+    }
+
 
     /** Broadcast the latest user list to WebSocket subscribers */
     private void broadcastUpdate() {

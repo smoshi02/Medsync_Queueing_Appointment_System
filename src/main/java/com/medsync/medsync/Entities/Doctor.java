@@ -14,9 +14,7 @@ public class Doctor {
 
     private String username;
     private String password;
-
     private String email;
-
     private boolean emailNotificationsEnabled;
 
     private String firstName;
@@ -25,10 +23,11 @@ public class Doctor {
 
     private String specialization;
     private String contactNumber;
+    private String emergencyContactNumber; // ✅ Added field
     private String availability;
 
     private String sex;
-    private LocalDate dateOfBirth;
+    private LocalDate dateOfBirth; // ✅ Already included
     private String employmentStatus;
 
     private String addressStreet;
@@ -121,6 +120,14 @@ public class Doctor {
 
     public void setContactNumber(String contactNumber) {
         this.contactNumber = contactNumber;
+    }
+
+    public String getEmergencyContactNumber() {
+        return emergencyContactNumber;
+    }
+
+    public void setEmergencyContactNumber(String emergencyContactNumber) {
+        this.emergencyContactNumber = emergencyContactNumber;
     }
 
     public String getAvailability() {
