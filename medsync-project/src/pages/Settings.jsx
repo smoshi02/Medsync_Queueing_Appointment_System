@@ -9,7 +9,6 @@ function Settings() {
   const [saving, setSaving] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
 
-  // Load current logged-in user info
   const loadUser = async () => {
     try {
       setLoading(true);
@@ -29,7 +28,6 @@ function Settings() {
     loadUser();
   }, []);
 
-  // Optional: subscribe to live updates via WebSocket
   useStompWebSocket(["/topic/users"], (msg) => {
     if (msg.type === "users-update" && user) {
       const updatedUser = msg.data.find((u) => u.id === user.id);
@@ -37,12 +35,10 @@ function Settings() {
     }
   });
 
-  // Handle form field changes
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  // Save edited user info
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -53,13 +49,12 @@ function Settings() {
       });
       alert("Profile updated!");
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      alert("Error: " + err.message);
     } finally {
       setSaving(false);
     }
   };
 
-  // Upload and preview profile photo
   const handlePhotoChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -76,30 +71,29 @@ function Settings() {
       const reader = new FileReader();
       reader.onloadend = () => setPhotoPreview(reader.result);
       reader.readAsDataURL(file);
+
       alert("Photo uploaded!");
     } catch (err) {
       alert(`Error uploading photo: ${err.message}`);
     }
   };
 
-  // Change password
   const handlePasswordChange = async () => {
-    const oldPassword = prompt("Enter old password:");
-    const newPassword = prompt("Enter new password:");
-    if (!oldPassword || !newPassword) return;
+    const oldPass = prompt("Enter old password:");
+    const newPass = prompt("Enter new password:");
+    if (!oldPass || !newPass) return;
 
     try {
       await fetchWithAuth(
-        `/api/users/${user.id}/password?oldPassword=${oldPassword}&newPassword=${newPassword}`,
+        `/api/users/${user.id}/password?oldPassword=${oldPass}&newPassword=${newPass}`,
         { method: "PUT" }
       );
-      alert("Password changed successfully!");
+      alert("Password changed!");
     } catch (err) {
-      alert(`Error changing password: ${err.message}`);
+      alert(`Error: ${err.message}`);
     }
   };
 
-  // Toggle email notifications
   const handleNotificationToggle = async () => {
     try {
       await fetchWithAuth(
@@ -115,84 +109,122 @@ function Settings() {
     }
   };
 
-  if (loading) return <p>Loading user settings...</p>;
+  if (loading)
+    return (
+      <p className="text-violet-700 text-lg animate-pulse">
+        Loading user settings...
+      </p>
+    );
+
   if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      {user && (
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+    <div className="p-6 bg-gradient-to-br from-violet-50 to-purple-50 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-violet-900 animate-fade-in">
+        Settings
+      </h1>
+
+      <div className="bg-white rounded-xl shadow-xl p-8 animate-slide-up border-t-4 border-violet-500">
+        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
           {/* Profile Photo */}
-          <div>
-            <label className="block font-medium mb-1">Profile Photo</label>
-            {photoPreview && (
-              <img
-                src={photoPreview}
-                alt="Profile"
-                className="w-24 h-24 rounded-full mb-2"
-              />
-            )}
-            <input type="file" accept="image/*" onChange={handlePhotoChange} />
+          <div className="flex items-center space-x-6 animate-fade-in">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-violet-200 shadow-lg">
+              {photoPreview ? (
+                <img
+                  src={photoPreview}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                user.fullName?.charAt(0) + user.fullName?.charAt(1)
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-violet-900 mb-2">
+                Profile Photo
+              </label>
+
+              <label className="cursor-pointer bg-gradient-to-r from-violet-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-violet-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">
+                Upload New Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
 
           {/* Full Name */}
-          <div>
-            <label className="block font-medium">Full Name</label>
+          <div className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <label className="block text-sm font-medium text-violet-900 mb-2">
+              Full Name
+            </label>
             <input
               type="text"
               name="fullName"
               value={user.fullName || ""}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-3 border-2 border-violet-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all duration-300"
             />
           </div>
 
           {/* Email */}
-          <div>
-            <label className="block font-medium">Email</label>
+          <div className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
+            <label className="block text-sm font-medium text-violet-900 mb-2">
+              Email
+            </label>
             <input
               type="email"
               name="email"
               value={user.email || ""}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-3 border-2 border-violet-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all duration-300"
             />
           </div>
 
           {/* Contact Number */}
-          <div>
-            <label className="block font-medium">Contact Number</label>
+          <div className="animate-fade-in" style={{ animationDelay: "0.3s" }}>
+            <label className="block text-sm font-medium text-violet-900 mb-2">
+              Contact Number
+            </label>
             <input
               type="text"
               name="contactNumber"
               value={user.contactNumber || ""}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-3 border-2 border-violet-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all duration-300"
             />
           </div>
 
-          {/* Role (read-only) */}
-          <div>
-            <label className="block font-medium">Role</label>
+          {/* Role */}
+          <div className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
+            <label className="block text-sm font-medium text-violet-900 mb-2">
+              Role
+            </label>
             <input
               type="text"
-              value={user.role}
+              value={user.role || ""}
               readOnly
-              className="w-full p-2 border border-gray-300 rounded bg-gray-100"
+              className="w-full p-3 border-2 border-violet-200 rounded-lg bg-violet-50 text-gray-600"
             />
           </div>
 
           {/* Email Notifications */}
-          <div>
-            <label className="block font-medium">Email Notifications</label>
+          <div className="animate-fade-in" style={{ animationDelay: "0.5s" }}>
+            <label className="block text-sm font-medium text-violet-900 mb-2">
+              Email Notifications
+            </label>
+
             <button
               type="button"
               onClick={handleNotificationToggle}
-              className={`px-4 py-2 rounded ${
+              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 ${
                 user.emailNotificationsEnabled
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-300"
+                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
+                  : "bg-gray-300 text-gray-700"
               }`}
             >
               {user.emailNotificationsEnabled ? "Enabled" : "Disabled"}
@@ -200,29 +232,29 @@ function Settings() {
           </div>
 
           {/* Change Password */}
-          <div>
+          <div className="animate-fade-in" style={{ animationDelay: "0.6s" }}>
             <button
               type="button"
               onClick={handlePasswordChange}
-              className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+              className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 font-semibold"
             >
               Change Password
             </button>
           </div>
 
           {/* Save Changes */}
-          <div>
+          <div className="animate-fade-in" style={{ animationDelay: "0.7s" }}>
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-4 rounded-lg hover:from-violet-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 font-bold text-lg shadow-lg"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
-      )}
+      </div>
     </div>
   );
 }

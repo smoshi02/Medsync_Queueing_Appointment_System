@@ -23,47 +23,78 @@ function MedicalRecords() {
     loadRecords();
   }, []);
 
+  // Realtime updates via WebSocket
   useStompWebSocket(["/topic/medical-records"], (msg) => {
     if (msg.type === "records-update") {
       setRecords(msg.data);
     }
   });
 
-  if (loading) return <p>Loading medical records...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  // Loading state
+  if (loading)
+    return (
+      <div className="p-6 min-h-screen flex items-center justify-center text-violet-700 text-xl animate-pulse">
+        Loading medical records...
+      </div>
+    );
+
+  // Error state
+  if (error)
+    return (
+      <p className="text-red-600 p-4 bg-red-50 border border-red-200 rounded-lg">
+        {error}
+      </p>
+    );
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Medical Records</h1>
+    <div className="p-6 bg-gradient-to-br from-violet-50 to-purple-50 min-h-screen animate-fade-in">
+      <h1 className="text-3xl font-bold mb-6 text-violet-900 animate-fade-in">
+        Medical Records
+      </h1>
 
-      {records.length === 0 ? (
-        <p className="italic text-gray-500">No medical records yet.</p>
-      ) : (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              <th className="border p-2">Record #</th>
-              <th className="border p-2">Patient</th>
-              <th className="border p-2">Diagnosis</th>
-              <th className="border p-2">Prescription</th>
-              <th className="border p-2">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((record) => (
-              <tr key={record.recordId} className="hover:bg-gray-100">
-                <td className="border p-2">{record.recordId}</td>
-                <td className="border p-2">{record.patientName}</td>
-                <td className="border p-2">{record.diagnosis}</td>
-                <td className="border p-2">{record.prescription}</td>
-                <td className="border p-2">
-                  {new Date(record.recordCreatedDate).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="bg-white rounded-xl shadow-xl p-6 animate-slide-up border-t-4 border-violet-500">
+        {records.length === 0 ? (
+          <p className="italic text-gray-500 text-center py-6">
+            No medical records yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-violet-100 to-purple-100">
+                <tr>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Record #</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Patient</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Diagnosis</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Prescription</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Date</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {records.map((record, index) => (
+                  <tr
+                    key={record.recordId}
+                    className="border-b border-violet-100 hover:bg-violet-50 transition-all"
+                    style={{
+                      animation: `fadeIn 0.5s ease ${(index + 1) * 0.08}s both`,
+                    }}
+                  >
+                    <td className="p-3 font-medium text-violet-700">
+                      #{record.recordId}
+                    </td>
+                    <td className="p-3">{record.patientName}</td>
+                    <td className="p-3">{record.diagnosis}</td>
+                    <td className="p-3">{record.prescription}</td>
+                    <td className="p-3 text-sm text-gray-600">
+                      {new Date(record.recordCreatedDate).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

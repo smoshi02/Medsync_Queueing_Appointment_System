@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchWithAuth } from "../js/fetchHelper";
 import { useStompWebSocket } from "../js/useStompWebSocket";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 function Dashboard() {
   const [summary, setSummary] = useState({
@@ -39,7 +39,7 @@ function Dashboard() {
     loadStats();
   }, []);
 
-  // Listen for real-time WebSocket updates
+  // Realtime WebSocket updates
   useStompWebSocket(["/topic/stats"], (msg) => {
     if (msg.type === "stats-update") {
       setSummary((prev) => ({
@@ -49,79 +49,160 @@ function Dashboard() {
     }
   });
 
-  if (loading) return <p>Loading dashboard...</p>;
+  if (loading) return <p className="text-violet-700 text-xl">Loading dashboard...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gradient-to-br from-violet-50 to-purple-50 min-h-screen">
+
+      <h1 className="text-3xl font-bold text-violet-900 animate-fade-in">
+        Dashboard Overview
+      </h1>
 
       {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
 
-        <div className="p-4 bg-white shadow rounded">
-          <h2 className="text-gray-500 text-sm">Total Patients</h2>
-          <p className="text-3xl font-bold">{summary.totalPatients}</p>
+        {/* Total Patients */}
+        <div
+          className="p-6 bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-xl rounded-xl transform hover:scale-105 transition-all duration-300 animate-slide-up"
+          style={{ animationDelay: "0.1s" }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-violet-100 text-sm uppercase tracking-wide">Total Patients</h2>
+              <p className="text-4xl font-bold mt-2">{summary.totalPatients}</p>
+            </div>
+            <div className="text-5xl opacity-20">👥</div>
+          </div>
         </div>
 
-        <div className="p-4 bg-white shadow rounded">
-          <h2 className="text-gray-500 text-sm">Active Queue</h2>
-          <p className="text-3xl font-bold">{summary.activeQueue}</p>
+        {/* Active Queue */}
+        <div
+          className="p-6 bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-xl rounded-xl transform hover:scale-105 transition-all duration-300 animate-slide-up"
+          style={{ animationDelay: "0.2s" }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-purple-100 text-sm uppercase tracking-wide">Active Queue</h2>
+              <p className="text-4xl font-bold mt-2">{summary.activeQueue}</p>
+            </div>
+            <div className="text-5xl opacity-20">⏱️</div>
+          </div>
         </div>
 
-        <div className="p-4 bg-white shadow rounded">
-          <h2 className="text-gray-500 text-sm">Completed Services</h2>
-          <p className="text-3xl font-bold">{summary.completedServices}</p>
+        {/* Completed Services */}
+        <div
+          className="p-6 bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-xl rounded-xl transform hover:scale-105 transition-all duration-300 animate-slide-up"
+          style={{ animationDelay: "0.3s" }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-violet-100 text-sm uppercase tracking-wide">Completed Services</h2>
+              <p className="text-4xl font-bold mt-2">{summary.completedServices}</p>
+            </div>
+            <div className="text-5xl opacity-20">✅</div>
+          </div>
         </div>
 
       </div>
 
       {/* WEEKLY CHART */}
-      <div className="bg-white p-4 rounded shadow">
-        <h2 className="text-xl font-bold mb-4">Weekly Served Patients</h2>
+      <div className="bg-white p-6 rounded-xl shadow-xl animate-fade-in border-t-4 border-violet-500">
+        <h2 className="text-2xl font-bold mb-6 text-violet-900">
+          Weekly Served Patients
+        </h2>
 
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={summary.weeklyStats}>
-            <XAxis dataKey="weekLabel" />
-            <YAxis allowDecimals={false} />
-            <Tooltip />
-            <Bar dataKey="totalServed" fill="#4f46e5" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e9d5ff" />
+            <XAxis dataKey="weekLabel" stroke="#7c3aed" />
+            <YAxis allowDecimals={false} stroke="#7c3aed" />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#7c3aed",
+                border: "none",
+                borderRadius: "8px",
+                color: "white"
+              }}
+            />
+            <Bar dataKey="totalServed" fill="url(#violetGradient)" radius={[8, 8, 0, 0]} />
+
+            <defs>
+              <linearGradient id="violetGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#8b5cf6" />
+                <stop offset="100%" stopColor="#6d28d9" />
+              </linearGradient>
+            </defs>
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       {/* RECENT ACTIVITY LOGS */}
-      <div className="bg-white p-4 rounded shadow">
-        <h2 className="text-xl font-bold mb-4">Recent Activity Logs</h2>
+      <div className="bg-white p-6 rounded-xl shadow-xl animate-fade-in border-t-4 border-purple-500">
+        <h2 className="text-2xl font-bold mb-6 text-violet-900">Recent Activity Logs</h2>
 
         {summary.activityLogs.length === 0 ? (
           <p className="text-gray-500">No activity yet.</p>
         ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="p-2">Queue #</th>
-                <th className="p-2">Patient</th>
-                <th className="p-2">Service</th>
-                <th className="p-2">Staff</th>
-                <th className="p-2">Priority</th>
-                <th className="p-2">Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {summary.activityLogs.map((log) => (
-                <tr key={log.queueId} className="border-b">
-                  <td className="p-2">{log.queueId}</td>
-                  <td className="p-2">{log.patientName}</td>
-                  <td className="p-2">{log.serviceName}</td>
-                  <td className="p-2">{log.staffName}</td>
-                  <td className="p-2">{log.priority}</td>
-                  <td className="p-2">{log.status}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-violet-100 to-purple-100">
+                <tr>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Queue #</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Patient</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Service</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Staff</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Priority</th>
+                  <th className="p-3 text-left text-violet-900 font-semibold">Status</th>
                 </tr>
-              ))}
-            </tbody>
+              </thead>
 
-          </table>
+              <tbody>
+                {summary.activityLogs.map((log, index) => (
+                  <tr
+                    key={log.queueId}
+                    className="border-b border-violet-100 hover:bg-violet-50 transition-colors duration-200"
+                    style={{ animation: `fadeIn 0.5s ease-in ${index * 0.1}s both` }}
+                  >
+                    <td className="p-3 font-medium text-violet-700">#{log.queueId}</td>
+                    <td className="p-3">{log.patientName}</td>
+                    <td className="p-3">{log.serviceName}</td>
+                    <td className="p-3">{log.staffName}</td>
+
+                    {/* PRIORITY PILL */}
+                    <td className="p-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          log.priority === "High"
+                            ? "bg-red-100 text-red-700"
+                            : log.priority === "Urgent"
+                            ? "bg-orange-100 text-orange-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {log.priority}
+                      </span>
+                    </td>
+
+                    {/* STATUS PILL */}
+                    <td className="p-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          log.status === "Completed"
+                            ? "bg-green-100 text-green-700"
+                            : log.status === "In Progress"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {log.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
