@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface StaffRepository extends JpaRepository<Staff, Long> {
     Staff findByUsername(String username);
+    boolean existsByUsername(String username);
 
 
     @Query("""

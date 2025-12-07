@@ -9,6 +9,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
     // existing method
     Doctor findByUsername(String username);
+    boolean existsByUsername(String username);
 
     @Query("""
        SELECT new com.medsync.medsync.DTO.SettingsDTO.SettingsDTO(

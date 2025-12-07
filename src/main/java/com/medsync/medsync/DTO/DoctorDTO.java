@@ -8,12 +8,19 @@ import java.time.LocalDate;
 public class DoctorDTO {
     private Long doctorId;
     @NotBlank(message = "First name is required")
-    private String fName;
+    private String firstName;
 
     @NotBlank(message = "Last name is required")
-    private String lName;
+    private String lastName;
 
-    private String mName;
+    private String middleName;
+
+    @NotBlank
+    private String username;
+
+    @NotBlank
+    private String password;
+
 
     @NotBlank(message = "Specialization is required")
     private String specialization;
@@ -55,29 +62,6 @@ public class DoctorDTO {
         this.doctorId = doctorId;
     }
 
-    public String getfName() {
-        return fName;
-    }
-
-    public void setfName(String fName) {
-        this.fName = fName;
-    }
-
-    public String getlName() {
-        return lName;
-    }
-
-    public void setlName(String lName) {
-        this.lName = lName;
-    }
-
-    public String getmName() {
-        return mName;
-    }
-
-    public void setmName(String mName) {
-        this.mName = mName;
-    }
 
     public String getSpecialization() {
         return specialization;
@@ -157,5 +141,45 @@ public class DoctorDTO {
 
     public void setAddressProvince(String addressProvince) {
         this.addressProvince = addressProvince;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

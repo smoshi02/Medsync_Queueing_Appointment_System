@@ -1,15 +1,21 @@
 package com.medsync.medsync.controller.Admin;
 
-import com.medsync.medsync.Entities.Staff;
+import com.medsync.medsync.DTO.DoctorDTO;
+import com.medsync.medsync.DTO.StaffDTO;
 import com.medsync.medsync.Entities.Doctor;
-import com.medsync.medsync.Repo.StaffRepository;
+import com.medsync.medsync.Entities.Staff;
 import com.medsync.medsync.Repo.DoctorRepository;
-import jakarta.servlet.http.HttpSession;
+import com.medsync.medsync.Repo.StaffRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
+@CrossOrigin(origins = "http://localhost:3000")
 public class AdminController {
 
     @Autowired
@@ -18,85 +24,63 @@ public class AdminController {
     @Autowired
     private DoctorRepository doctorRepo;
 
-    /**
-     * Get logged-in staff or doctor info
-     * Assumes you store username in session after login
-     */
-    @GetMapping("/profile")
-    public Object getProfile(HttpSession session) {
-        String username = (String) session.getAttribute("username");
-        String role = (String) session.getAttribute("role");
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        if (username == null || role == null) {
-            return "User not logged in";
+    /** Add new Staff */
+    @PostMapping("/add/staff")
+    public ResponseEntity<?> addStaff(@RequestBody StaffDTO staffDTO) {
+        if (staffRepo.existsByUsername(staffDTO.getUsername())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", "Username already exists"));
         }
 
-        switch (role.toUpperCase()) {
-            case "STAFF":
-                Staff staff = staffRepo.findByUsername(username);
-                if (staff == null) return "Staff not found";
-                return staff;
+        Staff staff = new Staff();
+        staff.setFirstName(staffDTO.getFirstName());
+        staff.setLastName(staffDTO.getLastName());
+        staff.setMiddleName(staffDTO.getMiddleName());
+        staff.setPhoneNumber(staffDTO.getPhoneNumber());
+        staff.setEmergencyContactNumber(staffDTO.getEmergencyContactNumber());
+        staff.setAddressStreet(staffDTO.getAddressStreet());
+        staff.setAddressBarangay(staffDTO.getAddressBarangay());
+        staff.setAddressMunicipality(staffDTO.getAddressMunicipality());
+        staff.setAddressProvince(staffDTO.getAddressProvince());
+        staff.setDateHired(staffDTO.getDateHired());
+        staff.setStatus(staffDTO.getStatus());
+        staff.setUsername(staffDTO.getUsername());
+        staff.setPassword(passwordEncoder.encode(staffDTO.getPassword()));
 
-            case "DOCTOR":
-                Doctor doctor = doctorRepo.findByUsername(username);
-                if (doctor == null) return "Doctor not found";
-                return doctor;
-
-            default:
-                return "Role not supported";
-        }
+        staffRepo.save(staff);
+        return ResponseEntity.ok(Map.of("message", "Staff created successfully", "staff", staff));
     }
 
-    /**
-     * Update logged-in user's profile (Staff or Doctor)
-     */
-    @PostMapping("/profile/update")
-    public Object updateProfile(@RequestBody Object payload, HttpSession session) {
-        String username = (String) session.getAttribute("username");
-        String role = (String) session.getAttribute("role");
-
-        if (username == null || role == null) {
-            return "User not logged in";
+    /** Add new Doctor */
+    @PostMapping("/add/doctor")
+    public ResponseEntity<?> addDoctor(@RequestBody DoctorDTO doctorDTO) {
+        if (doctorRepo.existsByUsername(doctorDTO.getUsername())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", "Username already exists"));
         }
 
-        switch (role.toUpperCase()) {
-            case "STAFF":
-                Staff staff = staffRepo.findByUsername(username);
-                if (staff == null) return "Staff not found";
+        Doctor doctor = new Doctor();
+        doctor.setFirstName(doctorDTO.getFirstName());
+        doctor.setLastName(doctorDTO.getLastName());
+        doctor.setMiddleName(doctorDTO.getMiddleName());
+        doctor.setContactNumber(doctorDTO.getContactNumber());
+        doctor.setAvailability(doctorDTO.getAvailability());
+        doctor.setEmploymentStatus(doctorDTO.getEmploymentStatus());
+        doctor.setDateOfBirth(doctorDTO.getDateOfBirth());
+        doctor.setAddressStreet(doctorDTO.getAddressStreet());
+        doctor.setAddressBarangay(doctorDTO.getAddressBarangay());
+        doctor.setAddressMunicipality(doctorDTO.getAddressMunicipality());
+        doctor.setAddressProvince(doctorDTO.getAddressProvince());
+        doctor.setSpecialization(doctorDTO.getSpecialization());
+        doctor.setUsername(doctorDTO.getUsername());
+        doctor.setPassword(passwordEncoder.encode(doctorDTO.getPassword()));
 
-                // Cast payload to a Map and update fields dynamically
-                var staffMap = (java.util.Map<String, Object>) payload;
-                staff.setFirstName((String) staffMap.get("firstName"));
-                staff.setLastName((String) staffMap.get("lastName"));
-                staff.setMiddleName((String) staffMap.get("middleName"));
-                staff.setPhoneNumber((String) staffMap.get("phoneNumber"));
-                staff.setAddressStreet((String) staffMap.get("addressStreet"));
-                staff.setAddressBarangay((String) staffMap.get("addressBarangay"));
-                staff.setAddressMunicipality((String) staffMap.get("addressMunicipality"));
-                staff.setAddressProvince((String) staffMap.get("addressProvince"));
-
-                staffRepo.save(staff);
-                return staff;
-
-            case "DOCTOR":
-                Doctor doctor = doctorRepo.findByUsername(username);
-                if (doctor == null) return "Doctor not found";
-
-                var doctorMap = (java.util.Map<String, Object>) payload;
-                doctor.setFirstName((String) doctorMap.get("fName"));
-                doctor.setLastName((String) doctorMap.get("lName"));
-                doctor.setMiddleName((String) doctorMap.get("mName"));
-                doctor.setContactNumber((String) doctorMap.get("contactNumber"));
-                doctor.setAddressStreet((String) doctorMap.get("addressStreet"));
-                doctor.setAddressBarangay((String) doctorMap.get("addressBarangay"));
-                doctor.setAddressMunicipality((String) doctorMap.get("addressMunicipality"));
-                doctor.setAddressProvince((String) doctorMap.get("addressProvince"));
-
-                doctorRepo.save(doctor);
-                return doctor;
-
-            default:
-                return "Role not supported";
-        }
+        doctorRepo.save(doctor);
+        return ResponseEntity.ok(Map.of("message", "Doctor created successfully", "doctor", doctor));
     }
 }
