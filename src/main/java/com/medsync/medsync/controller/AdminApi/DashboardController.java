@@ -1,57 +1,78 @@
 package com.medsync.medsync.controller.AdminApi;
 
-import com.medsync.medsync.DTO.DashboardDTO.DashboardSummaryDTO;
 import com.medsync.medsync.DTO.DashboardDTO.ActivityLogDTO;
+import com.medsync.medsync.DTO.DashboardDTO.DashboardSummaryDTO;
 import com.medsync.medsync.DTO.DashboardDTO.WeeklyServedDTO;
+import com.medsync.medsync.Entities.Queue;
+import com.medsync.medsync.Repo.PatientRepository;
+import com.medsync.medsync.Repo.QueueRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.Collections;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.IsoFields;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/dashboard")
 public class DashboardController {
 
+    @Autowired
+    private PatientRepository patientRepository;
+
+    @Autowired
+    private QueueRepository queueRepository;
+
     // =======================
-    //   DASHBOARD CARD STATS
+    // DASHBOARD CARD STATS
     // =======================
     @GetMapping("/stats")
     public DashboardSummaryDTO getDashboardStats() {
+        long totalPatients = patientRepository.count();
+        long activeQueue = queueRepository.countByStatus("In Progress");
+        long completedServices = queueRepository.countByStatus("Completed");
 
-        // No hardcoded values anymore
-        long totalPatients = 0;        // until real data exists
-        long activeQueue = 0;          // no active service yet
-        long completedServices = 0;    // no completed service yet
-
-        return new DashboardSummaryDTO(
-                totalPatients,
-                activeQueue,
-                completedServices
-        );
+        return new DashboardSummaryDTO(totalPatients, activeQueue, completedServices);
     }
 
-
-    // =======================
-    //   WEEKLY SERVED CHART
-    // =======================
     @GetMapping("/weekly-served")
     public List<WeeklyServedDTO> getWeeklyServed() {
+        List<Queue> completedQueues = queueRepository.findByStatus("Completed");
 
-        // Empty list → Recharts will not show bars instead of showing “0”
-        return Collections.emptyList();
+        Map<String, Long> weeklyMap = new LinkedHashMap<>();
+
+        for (Queue q : completedQueues) {
+            if (q.getTimeRegistered() != null) {
+                int year = q.getTimeRegistered().getYear();
+                int week = q.getTimeRegistered().get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+                String weekLabel = year + "-W" + week;
+                weeklyMap.put(weekLabel, weeklyMap.getOrDefault(weekLabel, 0L) + 1);
+            }
+        }
+
+        // Sort by week ascending
+        return weeklyMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey()) // <-- sort ascending by weekLabel
+                .map(e -> new WeeklyServedDTO(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
     }
 
 
-    // =======================
-    //   RECENT ACTIVITY LOGS
-    // =======================
+
     @GetMapping("/recent-activity")
     public List<ActivityLogDTO> getRecentActivity() {
+        List<Queue> recentQueues = queueRepository.findTop10ByOrderByTimeRegisteredDesc();
 
-        // No fake logs, real-time means empty for now
-        return Collections.emptyList();
+        return recentQueues.stream()
+                .filter(q -> q.getPatient() != null && q.getStaff() != null && q.getService() != null)
+                .map(q -> new ActivityLogDTO(
+                        q.getQueueId(),
+                        q.getPatient().getFirstName() + " " + q.getPatient().getLastName(),
+                        q.getService().getServiceName(),
+                        q.getStaff().getFirstName() + " " + q.getStaff().getLastName(),
+                        q.getPriorityLevel(),
+                        q.getStatus()
+                )).collect(Collectors.toList());
     }
 }

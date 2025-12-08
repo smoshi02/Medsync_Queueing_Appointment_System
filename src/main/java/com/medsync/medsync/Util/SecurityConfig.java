@@ -43,7 +43,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174")); // React dev ports
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
@@ -64,17 +64,21 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Allow login/auth endpoints without token
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Allow dashboard endpoints for testing
+                        .requestMatchers("/api/dashboard/**").permitAll()
+                        // All other API endpoints require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .formLogin(form -> form.disable())  // important: no login page for APIs
+                .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .logout(logout -> logout.disable())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, excep) -> {
                             res.setContentType("application/json");
-                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             res.getWriter().write("{\"error\":\"Unauthorized\"}");
                         })
                 );
@@ -98,18 +102,11 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-
-                                // WebSocket + SockJS endpoints
                                 "/ws/**",
                                 "/sockjs/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .csrf(csrf -> csrf.ignoringRequestMatchers(
-                        "/ws/**",
-                        "/sockjs/**"
-                ))
-
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/", true)

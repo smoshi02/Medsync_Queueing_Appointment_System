@@ -12,6 +12,11 @@ import java.util.List;
 @Repository
 public interface QueueRepository extends JpaRepository<Queue, Long> {
 
+    long countByStatus(String status);
+    List<Queue> findByStatus(String status);
+
+    List<Queue> findTop10ByOrderByTimeRegisteredDesc();
+
     @Query("""
            SELECT new com.medsync.medsync.DTO.QueueCardDTO.QueueCardDTO(
                s.serviceName,
