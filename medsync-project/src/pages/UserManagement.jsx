@@ -636,8 +636,6 @@ function AddUserModal({ onClose, addUser }) {
     firstName: "",
     middleName: "",
     lastName: "",
-    username: "",
-    password: "",
     email: "",
     addressStreet: "",
     addressBarangay: "",
@@ -650,11 +648,12 @@ function AddUserModal({ onClose, addUser }) {
 
   const validate = () => {
     const newErrors = {};
-    Object.keys(validationMessages).forEach((key) => {
-      if ((key === "role" ? !role : !form[key]) && validationMessages[key]) {
+    Object.keys(form).forEach((key) => {
+      if (!form[key] && validationMessages[key]) {
         newErrors[key] = validationMessages[key];
       }
     });
+    if (!role) newErrors.role = "Role is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -669,11 +668,15 @@ function AddUserModal({ onClose, addUser }) {
     if (!validate()) return;
 
     try {
-      const saved = await fetchWithAuth(`/api/users/admin/add/${role}`, {
+      const saved = await fetchWithAuth(`/api/admin/add/${role}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, role }),
       });
+
+      alert(
+        `User created successfully!\nUsername: ${saved.username}\nPassword has been sent to the user's email.`
+      );
 
       const tableUser = {
         ...saved,
@@ -691,8 +694,7 @@ function AddUserModal({ onClose, addUser }) {
   };
 
   const getInputClass = (key) =>
-    `w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 ${errors[key] ? "border-red-500" : "border-gray-200"
-    }`;
+    `w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 ${errors[key] ? "border-red-500" : "border-gray-200"}`;
 
   const renderField = (key, type = "text") => (
     <div key={key}>
@@ -703,8 +705,8 @@ function AddUserModal({ onClose, addUser }) {
       <input
         name={key}
         type={type}
-        value={key === "role" ? role : form[key]}
-        onChange={key === "role" ? (e) => setRole(e.target.value) : handleChange}
+        value={form[key]}
+        onChange={handleChange}
         className={getInputClass(key)}
       />
       {errors[key] && <p className="text-red-500 text-xs mt-1">{errors[key]}</p>}
@@ -740,8 +742,8 @@ function AddUserModal({ onClose, addUser }) {
           {/* Personal Information */}
           <h3 className="text-lg font-bold text-gray-900 mb-3">Personal Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {["firstName", "middleName", "lastName", "username", "password", "email"].map(
-              (key) => renderField(key, key === "password" ? "password" : key === "email" ? "email" : "text")
+            {["firstName", "middleName", "lastName", "email"].map((key) =>
+              renderField(key, key === "email" ? "email" : "text")
             )}
           </div>
 
