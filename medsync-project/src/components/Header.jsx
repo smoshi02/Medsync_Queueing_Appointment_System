@@ -1,21 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import Settings from "../pages/Settings";
 import { useAuth } from "../context/AuthProvider";
 import { fetchWithAuth } from "../js/fetchHelper";
 import { makePhotoUrl } from "../js/makePhotoUrl";
+import logo from "../assets/medsync-logo.png";
 
-function Header({ onSidebarToggle }) {
+
+function Header({ isSidebarOpen, onSidebarToggle }) {
   const { logout } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [user, setUser] = useState(null);
   const modalRef = useRef();
+
 
   // Load current user
   useEffect(() => {
     const loadUser = async () => {
       try {
         const data = await fetchWithAuth("/api/settings/me");
-        data.profilePhoto = data.profilePath ? `/uploads/${data.profilePath}` : data.profilePhotoBase64 || null;
+        data.profilePhoto = data.profilePath
+          ? `/uploads/${data.profilePath}`
+          : data.profilePhotoBase64 || null;
         setUser(data);
       } catch (err) {
         console.error("Failed to load user:", err);
@@ -23,6 +29,7 @@ function Header({ onSidebarToggle }) {
     };
     loadUser();
   }, []);
+
 
   // Close modal if clicked outside
   useEffect(() => {
@@ -35,9 +42,17 @@ function Header({ onSidebarToggle }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
   const profileContent = user?.profilePhoto
-    ? <img src={makePhotoUrl(user.profilePhoto)} alt="Profile" className="w-full h-full object-cover rounded-full" />
+    ? (
+      <img
+        src={makePhotoUrl(user.profilePhoto)}
+        alt="Profile"
+        className="w-full h-full object-cover rounded-full"
+      />
+    )
     : ((user?.firstName?.charAt(0) || "") + (user?.lastName?.charAt(0) || ""));
+
 
   return (
     <header className="bg-gradient-to-r from-violet-600 via-purple-600 to-violet-800 shadow-lg z-50">
@@ -51,6 +66,19 @@ function Header({ onSidebarToggle }) {
           </svg>
         </button>
 
+
+        {/* Logo / Brand */}
+        {!isSidebarOpen && (
+          <Link
+            to="/home" // <-- navigate to HomePage
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+          >
+            <img src={logo} alt="MedSync Logo" className="h-10 object-contain" />
+            <span className="text-white font-bold text-xl tracking-wide">MedSync</span>
+          </Link>
+        )}
+
+
         <button
           onClick={() => setModalOpen(true)}
           className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-lg hover:scale-110 transition-all duration-300 overflow-hidden"
@@ -58,6 +86,7 @@ function Header({ onSidebarToggle }) {
           {profileContent}
         </button>
       </div>
+
 
       {modalOpen && user && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-6">
@@ -72,6 +101,7 @@ function Header({ onSidebarToggle }) {
               X
             </button>
 
+
             <Settings user={user} setUser={setUser} logout={logout} />
           </div>
         </div>
@@ -79,5 +109,6 @@ function Header({ onSidebarToggle }) {
     </header>
   );
 }
+
 
 export default Header;

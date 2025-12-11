@@ -5,24 +5,31 @@ import {
     Lightbulb,
     Smartphone,
     Shield,
-    Gift,
     CheckCircle,
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
 import medsyncBg from "../assets/medsync-bg.jpg";
+import logo from "../assets/medsync-logo.png"; 
+import dentalImg from "../assets/dental.jpeg";
+import famplanImg from "../assets/famplan.jpeg";
+import labImg from "../assets/lab.jpg";
+import medconsImg from "../assets/medcons.jpg";
+import obImg from "../assets/ob.jpg";
+import pharmaImg from "../assets/pharma.jpg";
+import tbdotsImg from "../assets/tbdots.jpg";
 
 export default function LandingPage() {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const services = [
-        { name: "Medical Consultations", color: "bg-[#790081]" },
-        { name: "Laboratory Services", color: "bg-[#790081]" },
-        { name: "Family Planning Services", color: "bg-[#790081]" },
-        { name: "Pharmacy", color: "bg-[#790081]" },
-        { name: "Obstetrics", color: "bg-[#790081]" },
-        { name: "Dental Services", color: "bg-[#790081]" },
-        { name: "TB DOTs Services", color: "bg-[#790081]" },
+        { name: "Medical Consultations", color: "bg-[#790081]", img: medconsImg },
+        { name: "Laboratory Services", color: "bg-[#790081]", img: labImg },
+        { name: "Family Planning Services", color: "bg-[#790081]", img: famplanImg },
+        { name: "Pharmacy", color: "bg-[#790081]", img: pharmaImg },
+        { name: "Obstetrics", color: "bg-[#790081]", img: obImg },
+        { name: "Dental Services", color: "bg-[#790081]", img: dentalImg },
+        { name: "TB DOTs Services", color: "bg-[#790081]", img: tbdotsImg },
     ];
 
     const nextSlide = () => {
@@ -48,31 +55,20 @@ export default function LandingPage() {
             <nav className="bg-[#B52DB5] shadow-md px-6 py-4 fixed top-0 left-0 w-full z-50">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-                            <span className="text-[#B52DB5] font-bold text-xl">M</span>
+                        <div className="w-12 h-12 rounded-lg overflow-hidden">
+                            <img src={logo} alt="MedSync Logo" className="w-full h-full object-cover" />
                         </div>
-                        <span className="text-2xl font-bold text-white tracking-wide">
-                            MedSync
-                        </span>
+                        <span className="text-2xl font-bold text-white tracking-wide">MedSync</span>
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <a href="#about" className="text-white hover:text-purple-100 transition-colors">
-                            About
-                        </a>
-                        <a href="#services" className="text-white hover:text-purple-100 transition-colors">
-                            Services
-                        </a>
-                        <a href="#contact" className="text-white hover:text-purple-100 transition-colors">
-                            Contact
-                        </a>
+                        <a href="#about" className="text-white hover:text-purple-100 transition-colors">About</a>
+                        <a href="#services" className="text-white hover:text-purple-100 transition-colors">Services</a>
+                        <a href="#contact" className="text-white hover:text-purple-100 transition-colors">Contact</a>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button className="text-white hover:text-purple-100 transition-colors">Sign In</button>
-                        <button className="bg-white text-[#B52DB5] px-6 py-2 rounded-lg hover:bg-purple-50 transition-colors font-semibold">
-                            Book Now
-                        </button>
+                        <button className="bg-white text-[#B52DB5] px-6 py-2 rounded-lg hover:bg-purple-50 transition-colors font-semibold">Start Now</button>
                     </div>
                 </div>
             </nav>
@@ -83,9 +79,7 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div className="space-y-6">
                             <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-                                Smart Medical{" "}
-                                <span className="text-[#B52DB5]">Appointments & Queue</span>{" "}
-                                Management
+                                Smart Medical <span className="text-[#B52DB5]">Appointments & Queue</span> Management
                             </h1>
                             <p className="text-gray-600 text-lg leading-relaxed">
                                 Skip the waiting room. Book appointments, manage your queue
@@ -94,12 +88,7 @@ export default function LandingPage() {
                             </p>
                             <div className="flex gap-4 pt-4">
                                 <button className="bg-[#B52DB5] text-white px-8 py-4 rounded-lg flex items-center gap-2 hover:bg-[#790081] transition-all shadow-lg hover:shadow-xl font-semibold">
-                                    <Calendar size={20} />
-                                    Get Started
-                                </button>
-                                <button className="border-2 border-[#B52DB5] text-[#B52DB5] px-8 py-4 rounded-lg flex items-center gap-2 hover:bg-purple-50 transition-all font-semibold">
-                                    <Play size={20} />
-                                    Watch Demo
+                                    <Calendar size={20} /> Get Started
                                 </button>
                             </div>
                         </div>
@@ -173,7 +162,6 @@ export default function LandingPage() {
                                 alt="MedSync Background"
                                 className="absolute inset-0 w-full h-full object-cover rounded-3xl"
                             />
-                            {/* Optional overlay */}
                             <div className="absolute inset-0 bg-black/20 rounded-3xl"></div>
                         </div>
                     </div>
@@ -191,6 +179,7 @@ export default function LandingPage() {
                         </p>
                     </div>
 
+                    {/* Appointment Booking & Efficient Queuing Cards */}
                     <div className="grid md:grid-cols-2 gap-8 mb-16">
                         {/* Appointment Booking Card */}
                         <div className="bg-white rounded-3xl shadow-xl p-10 border-t-4 border-[#B52DB5] hover:shadow-2xl transition-shadow">
@@ -203,7 +192,6 @@ export default function LandingPage() {
                                 and instant confirmation. Schedule follow-ups and recurring
                                 appointments effortlessly.
                             </p>
-
                             <div className="space-y-4 mb-8">
                                 <div className="flex items-center gap-3 text-gray-700">
                                     <CheckCircle size={24} className="text-green-500 flex-shrink-0" />
@@ -218,7 +206,6 @@ export default function LandingPage() {
                                     <span>Instant confirmation</span>
                                 </div>
                             </div>
-
                             <button className="w-full bg-[#B52DB5] text-white py-4 rounded-xl hover:bg-[#790081] transition-all font-semibold shadow-lg hover:shadow-xl">
                                 Start Booking
                             </button>
@@ -234,7 +221,6 @@ export default function LandingPage() {
                                 No more hassle lines by promoting digital numbers to avoid
                                 confusion from manually distributed number cards.
                             </p>
-
                             <div className="space-y-4 mb-8">
                                 <div className="flex items-center gap-3 text-gray-700">
                                     <CheckCircle size={24} className="text-green-500 flex-shrink-0" />
@@ -249,7 +235,6 @@ export default function LandingPage() {
                                     <span>Faster processing time</span>
                                 </div>
                             </div>
-
                             <button className="w-full bg-green-500 text-white py-4 rounded-xl hover:bg-green-600 transition-all font-semibold shadow-lg hover:shadow-xl">
                                 Join Queue
                             </button>
@@ -275,17 +260,21 @@ export default function LandingPage() {
                                                 .map((service, index) => (
                                                     <div
                                                         key={index}
-                                                        className="relative rounded-2xl overflow-hidden h-72 bg-gradient-to-br from-purple-100 to-purple-200 shadow-lg hover:shadow-xl transition-shadow"
+                                                        className="relative rounded-2xl overflow-hidden h-72 shadow-lg hover:shadow-xl transition-shadow"
                                                     >
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <Gift size={80} className="text-[#B52DB5] opacity-20" />
-                                                        </div>
+                                                        {/* Image */}
+                                                        <img
+                                                            src={service.img}
+                                                            alt={service.name}
+                                                            className="absolute inset-0 w-full h-full object-cover"
+                                                        />
+                                                        {/* Overlay */}
+                                                        <div className="absolute inset-0 bg-black/25"></div>
+                                                        {/* Text Bar */}
                                                         <div
-                                                            className={`absolute bottom-0 left-0 right-0 ${service.color} text-white p-8`}
+                                                            className={`absolute bottom-0 left-0 right-0 ${service.color} text-white p-6`}
                                                         >
-                                                            <h3 className="text-2xl font-bold">
-                                                                {service.name}
-                                                            </h3>
+                                                            <h3 className="text-2xl font-bold">{service.name}</h3>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -316,10 +305,9 @@ export default function LandingPage() {
                                     <button
                                         key={index}
                                         onClick={() => setCurrentSlide(index)}
-                                        className={`h-3 rounded-full transition-all ${currentSlide === index
-                                                ? "bg-[#B52DB5] w-10"
-                                                : "bg-gray-300 w-3"
-                                            }`}
+                                        className={`h-3 rounded-full transition-all ${
+                                            currentSlide === index ? "bg-[#B52DB5] w-10" : "bg-gray-300 w-3"
+                                        }`}
                                     />
                                 )
                             )}
@@ -338,9 +326,6 @@ export default function LandingPage() {
                         Join thousands of patients who have already simplified their medical
                         appointments with MedSync.
                     </p>
-                    <button className="bg-white text-[#B52DB5] px-10 py-5 rounded-xl hover:bg-purple-50 transition-all font-bold text-lg shadow-2xl hover:shadow-xl">
-                        Get Started Today
-                    </button>
                 </div>
             </section>
 
@@ -350,8 +335,8 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-4 gap-12 mb-12">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="w-10 h-10 bg-[#B52DB5] rounded-lg flex items-center justify-center">
-                                    <span className="text-white font-bold">M</span>
+                                <div className="w-10 h-10 rounded-lg overflow-hidden">
+                                    <img src={logo} alt="MedSync Logo" className="w-full h-full object-cover" />
                                 </div>
                                 <span className="text-2xl font-bold">MedSync</span>
                             </div>
@@ -361,57 +346,27 @@ export default function LandingPage() {
                             </p>
                         </div>
 
+                        {/* Services, Company, Support columns */}
                         <div>
                             <h4 className="font-bold text-lg mb-4">Services</h4>
                             <ul className="space-y-3 text-purple-200">
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Appointment Booking
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Queue Management
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Patient Portal
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Provider Dashboard
-                                    </a>
-                                </li>
+                                <li><a href="#" className="hover:text-white transition-colors">Appointment Booking</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Queue Management</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Patient Portal</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Provider Dashboard</a></li>
                             </ul>
                         </div>
 
                         <div>
                             <h4 className="font-bold text-lg mb-4">Company</h4>
                             <ul className="space-y-3 text-purple-200">
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        About Us
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Careers
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Press
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Contact
-                                    </a>
-                                </li>
+                                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Press</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
                             </ul>
                         </div>
+
 
                         <div>
                             <h4 className="font-bold text-lg mb-4">Support</h4>
@@ -439,6 +394,7 @@ export default function LandingPage() {
                             </ul>
                         </div>
                     </div>
+
 
                     <div className="border-t border-purple-600 pt-8 text-center text-purple-200">
                         <p>© 2024 MedSync. All rights reserved.</p>
