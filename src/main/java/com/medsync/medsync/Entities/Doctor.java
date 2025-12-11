@@ -16,7 +16,7 @@ public class Doctor {
     private String password;
     private String email;
     private boolean emailNotificationsEnabled;
-
+    private String profilePath;
     private String firstName;
     private String middleName;
     private String lastName;
@@ -200,5 +200,13 @@ public class Doctor {
 
     public void setMedicalRecords(List<MedicalRecords> medicalRecords) {
         this.medicalRecords = medicalRecords;
+    }
+
+    public String getProfilePath() {
+        return profilePath;
+    }
+
+    public void setProfilePath(String profilePath) {
+        this.profilePath = profilePath;
     }
 }

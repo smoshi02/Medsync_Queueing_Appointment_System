@@ -6,8 +6,13 @@ import com.medsync.medsync.Repo.StaffRepository;
 import com.medsync.medsync.Repo.DoctorRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Optional;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -48,17 +53,54 @@ public class UserService {
     // -------- Login Validation --------
     public boolean checkStaffCredentials(String username, String rawPassword) {
         Staff staff = staffRepository.findByUsername(username);
-        if (staff != null) {
-            return passwordEncoder.matches(rawPassword, staff.getPassword());
-        }
-        return false;
+        return staff != null && passwordEncoder.matches(rawPassword, staff.getPassword());
     }
 
     public boolean checkDoctorCredentials(String username, String rawPassword) {
         Doctor doctor = doctorRepository.findByUsername(username);
-        if (doctor != null) {
-            return passwordEncoder.matches(rawPassword, doctor.getPassword());
+        return doctor != null && passwordEncoder.matches(rawPassword, doctor.getPassword());
+    }
+
+    // -------- Profile Picture Upload --------
+    public String saveProfilePicture(String username, MultipartFile file, String userType) throws Exception {
+        if (file == null || file.isEmpty()) return null;
+
+        // Validate file type
+        String contentType = file.getContentType();
+        if (!Arrays.asList("image/jpeg", "image/jpg", "image/png", "image/gif").contains(contentType)) {
+            throw new IllegalArgumentException("Invalid file type");
         }
-        return false;
+
+        // Validate file size (max 5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("File size exceeds 5MB");
+        }
+
+        // Save file
+        String uploadDir = "uploads/profiles/";
+        String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        Path filePath = uploadPath.resolve(fileName);
+        file.transferTo(filePath.toFile());
+
+        // Update entity with profile path
+        if ("staff".equalsIgnoreCase(userType)) {
+            Staff staff = staffRepository.findByUsername(username);
+            if (staff != null) {
+                staff.setProfilePath(fileName);
+                staffRepository.save(staff);
+            }
+        } else if ("doctor".equalsIgnoreCase(userType)) {
+            Doctor doctor = doctorRepository.findByUsername(username);
+            if (doctor != null) {
+                doctor.setProfilePath(fileName);
+                doctorRepository.save(doctor);
+            }
+        }
+
+        return fileName;
     }
 }

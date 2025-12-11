@@ -15,7 +15,7 @@ public class Staff {
     private String password;
 
     private String email;
-
+    private String profilePath;
     private boolean emailNotificationsEnabled;
 
     private String firstName;
@@ -172,5 +172,13 @@ public class Staff {
 
     public void setAddressProvince(String addressProvince) {
         this.addressProvince = addressProvince;
+    }
+
+    public String getProfilePath() {
+        return profilePath;
+    }
+
+    public void setProfilePath(String profilePath) {
+        this.profilePath = profilePath;
     }
 }

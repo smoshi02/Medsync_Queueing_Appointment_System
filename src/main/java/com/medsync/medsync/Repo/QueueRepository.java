@@ -1,6 +1,7 @@
 package com.medsync.medsync.Repo;
 
 import com.medsync.medsync.Entities.Queue;
+import com.medsync.medsync.Entities.Service;
 import com.medsync.medsync.DTO.QueueCardDTO.QueueCardDTO;
 import com.medsync.medsync.DTO.QueueCardDTO.QueueTableDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,16 +17,18 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<Queue> findByStatus(String status);
 
     List<Queue> findTop10ByOrderByTimeRegisteredDesc();
+    List<Queue> findByService_ServiceName(String serviceName);
 
     @Query("""
-           SELECT new com.medsync.medsync.DTO.QueueCardDTO.QueueCardDTO(
-               s.serviceName,
-               (SELECT COUNT(q1) FROM Queue q1 WHERE q1.service.serviceId = s.serviceId AND q1.status = 'COMPLETED'),
-               (SELECT COUNT(q2) FROM Queue q2 WHERE q2.service.serviceId = s.serviceId AND q2.status = 'ACTIVE')
-           )
-           FROM Service s
-           """)
+       SELECT new com.medsync.medsync.DTO.QueueCardDTO.QueueCardDTO(
+           s.serviceName,
+           (SELECT COUNT(q1) FROM Queue q1 WHERE q1.service.serviceId = s.serviceId AND q1.status IN ('Completed','COMPLETED')),
+           (SELECT COUNT(q2) FROM Queue q2 WHERE q2.service.serviceId = s.serviceId AND q2.status IN ('In Progress','ACTIVE','IN_PROGRESS'))
+       )
+       FROM Service s
+    """)
     List<QueueCardDTO> loadQueueCards();
+
 
     @Query("""
            SELECT new com.medsync.medsync.DTO.QueueCardDTO.QueueTableDTO(
@@ -43,4 +46,8 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
            ORDER BY q.queueNumber
            """)
     List<QueueTableDTO> loadQueueTable(Long serviceId);
+
+    // ➜ REQUIRED for safe deletion of Staff
+    boolean existsByStaff_StaffId(Long staffId);
 }
+

@@ -10,6 +10,7 @@ public class MedicalRecords {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long recordId;
+    private String status;
 
     private String chiefComplaint;
     private String diagnosis;
@@ -109,6 +110,30 @@ public class MedicalRecords {
 
     public void setRecordCreatedDate(LocalDate recordCreatedDate) {
         this.recordCreatedDate = recordCreatedDate;
+    }
+
+    public Patient getPatient() {
+        return patient;
+    }
+
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
+
+    public Doctor getDoctor() {
+        return doctor;
+    }
+
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     // Getters and Setters

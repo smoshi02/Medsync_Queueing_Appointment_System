@@ -45,20 +45,23 @@ public interface DashboardRepository extends JpaRepository<Queue, Integer> {
 
     // ACTIVITY LOG
     @Query("""
-        SELECT new com.medsync.medsync.DTO.DashboardDTO.ActivityLogDTO(
-            q.queueId,
-            CONCAT(p.firstName, ' ', p.lastName),
-            s.serviceName,
-            CONCAT(st.firstName, ' ', st.lastName),
-            q.priorityLevel,
-            q.status
-        )
-        FROM Queue q
-        JOIN q.patient p
-        JOIN q.service s
-        JOIN q.staff st
-        ORDER BY q.queueId DESC
-        """)
+    SELECT new com.medsync.medsync.DTO.DashboardDTO.ActivityLogDTO(
+        q.queueId,
+        CONCAT(p.firstName, ' ', p.lastName),
+        s.serviceName,
+        CONCAT(st.firstName, ' ', st.lastName),
+        q.priorityLevel,
+        q.status,
+        q.completedAt
+    )
+    FROM Queue q
+    JOIN q.patient p
+    JOIN q.service s
+    JOIN q.staff st
+    WHERE q.status = 'COMPLETED'
+    ORDER BY q.completedAt DESC
+""")
     List<ActivityLogDTO> activityLogs();
+
 
 }

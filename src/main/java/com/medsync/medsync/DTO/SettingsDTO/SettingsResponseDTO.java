@@ -1,13 +1,12 @@
 package com.medsync.medsync.DTO.SettingsDTO;
 
-import org.springframework.web.multipart.MultipartFile;
-
-public record SettingsDTO(
+public record SettingsResponseDTO(
         String firstName,
         String middleName,
         String lastName,
         String email,
         String role,
         String contactNumber,
-        MultipartFile profilePhoto // Now a MultipartFile
+        String profilePhotoBase64,
+        Long id
 ) {}

@@ -14,16 +14,17 @@ import java.util.List;
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
     @Query("""
-           SELECT new com.medsync.medsync.DTO.AppointmentsDTO.AppointmentsDTO(
-               a.appointmentId,                      
-               CONCAT(p.firstName, ' ', p.lastName),  
-               CONCAT(s.firstName, ' ', s.lastName), 
-               a.date,                              
-               a.status                          
-           )
-           FROM Appointment a
-           JOIN a.patient p
-           JOIN a.staff s
-           """)
+       SELECT new com.medsync.medsync.DTO.AppointmentsDTO.AppointmentsDTO(
+           a.appointmentId,
+           CONCAT(p.firstName, ' ', p.lastName),
+           CONCAT(s.firstName, ' ', s.lastName),
+           a.date,
+           a.status
+       )
+       FROM Appointment a
+       JOIN a.patient p
+       JOIN a.staff s
+       """)
     List<AppointmentsDTO> loadAppointments();
+
 }
