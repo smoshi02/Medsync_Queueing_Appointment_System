@@ -15,6 +15,7 @@ const PatientAppointments = () => {
     dateOfBirth: "",
     civilStatus: "",
     contactNumber: "",
+    email: "", // added email field
     emergencyContactNumber: "",
     addressStreet: "",
     addressBarangay: "",
@@ -80,7 +81,7 @@ const PatientAppointments = () => {
   const handleSubmit = async () => {
     const requiredFields = [
       "firstName", "lastName", "gender", "dateOfBirth", "civilStatus",
-      "contactNumber", "healthConcern", "addressStreet",
+      "contactNumber", "email", "healthConcern", "addressStreet",
       "addressBarangay", "addressMunicipality", "addressProvince",
       "priorityCategory",
     ];
@@ -113,7 +114,6 @@ const PatientAppointments = () => {
 
       const newAppointment = await res.json();
 
-      // Construct the patientName explicitly to be safe
       const formattedAppointment = {
         ...newAppointment,
         patientName: newAppointment.patientName || `${formData.firstName} ${formData.lastName}`
@@ -121,18 +121,19 @@ const PatientAppointments = () => {
 
       setAppointments(prev => [...prev, formattedAppointment]);
 
-
       setFormData({
         firstName: "", middleName: "", lastName: "", suffix: "", gender: "",
-        dateOfBirth: "", civilStatus: "", contactNumber: "", emergencyContactNumber: "",
+        dateOfBirth: "", civilStatus: "", contactNumber: "", email: "", emergencyContactNumber: "",
         addressStreet: "", addressBarangay: "", addressMunicipality: "", addressProvince: "",
         priorityCategory: "", height: "", weight: "", bloodType: "", medicalHistory: "", healthConcern: "",
       });
+      setShowForm(false);
     } catch (err) {
       console.error(err);
       alert(err.message);
     }
   };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-6xl mx-auto">
@@ -149,6 +150,7 @@ const PatientAppointments = () => {
                 <thead>
                   <tr className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
                     <th className="px-6 py-3 text-left text-sm font-semibold">Patient Name</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold">Date</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
                   </tr>
@@ -160,6 +162,7 @@ const PatientAppointments = () => {
                       className={`${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors`}
                     >
                       <td className="px-6 py-4 text-gray-800">{a.patientName}</td>
+                      <td className="px-6 py-4 text-gray-600">{a.email || "-"}</td>
                       <td className="px-6 py-4 text-gray-600">{a.date}</td>
                       <td className="px-6 py-4">
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
@@ -189,251 +192,188 @@ const PatientAppointments = () => {
               <h3 className="text-2xl font-bold">Patient Information Form</h3>
             </div>
 
-            <div className="p-8">
-              <div className="space-y-6">
-                {/* Personal Information */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-blue-200">
-                    Personal Information
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                      <input name="firstName" value={formData.firstName} onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input
+                type="text"
+                name="firstName"
+                placeholder="First Name *"
+                value={formData.firstName}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="middleName"
+                placeholder="Middle Name"
+                value={formData.middleName}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Last Name *"
+                value={formData.lastName}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="suffix"
+                placeholder="Suffix"
+                value={formData.suffix}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              >
+                <option value="">Select Gender *</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+              <input
+                type="date"
+                name="dateOfBirth"
+                placeholder="Date of Birth *"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <select
+                name="civilStatus"
+                value={formData.civilStatus}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              >
+                <option value="">Select Civil Status *</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Widowed">Widowed</option>
+                <option value="Divorced">Divorced</option>
+              </select>
+              <input
+                type="text"
+                name="contactNumber"
+                placeholder="Contact Number *"
+                value={formData.contactNumber}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email Address *"
+                value={formData.email}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="emergencyContactNumber"
+                placeholder="Emergency Contact Number"
+                value={formData.emergencyContactNumber}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="addressStreet"
+                placeholder="Street *"
+                value={formData.addressStreet}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="addressBarangay"
+                placeholder="Barangay *"
+                value={formData.addressBarangay}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="addressMunicipality"
+                placeholder="Municipality *"
+                value={formData.addressMunicipality}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="addressProvince"
+                placeholder="Province *"
+                value={formData.addressProvince}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <select
+                name="priorityCategory"
+                value={formData.priorityCategory}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              >
+                <option value="">Select Priority Category *</option>
+                <option value="Priority 1">Priority 1</option>
+                <option value="Priority 2">Priority 2</option>
+              </select>
+              <input
+                type="number"
+                name="height"
+                placeholder="Height (cm)"
+                value={formData.height}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="number"
+                name="weight"
+                placeholder="Weight (kg)"
+                value={formData.weight}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="bloodType"
+                placeholder="Blood Type"
+                value={formData.bloodType}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <textarea
+                name="medicalHistory"
+                placeholder="Medical History"
+                value={formData.medicalHistory}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+              <textarea
+                name="healthConcern"
+                placeholder="Health Concern *"
+                value={formData.healthConcern}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full"
+              />
+            </div>
 
-                      <input
-                        name="middleName"          // was middle_name
-                        value={formData.middleName}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                      <input name="lastName" value={formData.lastName} onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Suffix</label>
-                      <input
-                        name="suffix"
-                        value={formData.suffix}
-                        onChange={handleChange}
-                        placeholder="Jr., Sr., III"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
-                      <select
-                        name="gender"
-                        value={formData.gender}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      >
-                        <option value="">Select Gender</option>
-                        <option>Male</option>
-                        <option>Female</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
-                      <input
-                        type="date"
-                        name="dateOfBirth"         // was date_of_birth
-                        value={formData.dateOfBirth}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Civil Status *</label>
-                      <select
-                        name="civilStatus"         // was civil_status
-                        value={formData.civilStatus}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      >
-                        <option value="">Select Status</option>
-                        <option>Single</option>
-                        <option>Married</option>
-                        <option>Widowed</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-blue-200">
-                    Contact Information
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
-                      <input
-                        name="contact_number"
-                        value={formData.contact_number}
-                        onChange={handleChange}
-                        placeholder="09XX XXX XXXX"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact *</label>
-                      <input
-                        name="emergency_contact_number"
-                        value={formData.emergency_contact_number}
-                        onChange={handleChange}
-                        placeholder="09XX XXX XXXX"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Address */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-blue-200">
-                    Address
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Street *</label>
-                      <input
-                        name="address_street"
-                        value={formData.address_street}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Barangay *</label>
-                      <input
-                        name="address_barangay"
-                        value={formData.address_barangay}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Municipality *</label>
-                      <input
-                        name="address_municipality"
-                        value={formData.address_municipality}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Province *</label>
-                      <input
-                        name="address_province"
-                        value={formData.address_province}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Medical Information */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-blue-200">
-                    Medical Information
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Priority Category *</label>
-                      <select
-                        name="priority_category"
-                        value={formData.priority_category}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      >
-                        <option value="">Select Priority</option>
-                        <option value="high">High (PWD, Pregnant, Infant, Senior)</option>
-                        <option value="normal">Normal</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Blood Type</label>
-                      <input
-                        name="blood_type"
-                        value={formData.blood_type}
-                        onChange={handleChange}
-                        placeholder="A+, B+, O-, etc."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
-                      <input
-                        name="height"
-                        value={formData.height}
-                        onChange={handleChange}
-                        type="number"
-                        placeholder="170"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-                      <input
-                        name="weight"
-                        value={formData.weight}
-                        onChange={handleChange}
-                        type="number"
-                        placeholder="65"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Medical History</label>
-                      <textarea
-                        name="medical_history"
-                        value={formData.medical_history}
-                        onChange={handleChange}
-                        rows="3"
-                        placeholder="Previous illnesses, surgeries, allergies..."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      ></textarea>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Health Concern / Chief Complaint *</label>
-                      <textarea
-                        name="health_concern"
-                        value={formData.health_concern}
-                        onChange={handleChange}
-                        rows="3"
-                        placeholder="Describe your current health concern..."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      ></textarea>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-4 mt-8 pt-6 border-t">
-                <button
-                  onClick={handleSubmit}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105"
-                >
-                  Save Appointment
-                </button>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
+            <div className="flex gap-4 mt-8 p-8 border-t">
+              <button
+                onClick={handleSubmit}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105"
+              >
+                Schedule Appointment
+              </button>
+              <button
+                onClick={() => setShowForm(false)}
+                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all duration-200"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
