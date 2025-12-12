@@ -13,11 +13,11 @@ public class Patient {
     private Long patientId;
 
     private String firstName;
-    private String lastName;
     private String middleName;
+    private String lastName;
     private String suffix;
-    private LocalDate dateOfBirth;
 
+    private LocalDate dateOfBirth;
     private String gender;
     private String civilStatus;
 
@@ -27,6 +27,7 @@ public class Patient {
     private String addressProvince;
 
     private String contactNumber;
+    private String email; // added email field
     private String emergencyContactNumber;
     private String priorityCategory;
 
@@ -34,6 +35,7 @@ public class Patient {
     private String weight;
     private String bloodType;
     private String medicalHistory;
+    private String healthConcern; // added health concern
 
     @OneToMany(mappedBy = "patient")
     private List<Appointment> appointments;
@@ -46,12 +48,9 @@ public class Patient {
     @JoinColumn(name = "queue_id")
     private Queue queue;
 
-    @OneToMany(mappedBy = "patient")
-    private List<Queue> queues;
-
-
     public Patient() {}
 
+    // Getters and setters
     public Long getPatientId() {
         return patientId;
     }
@@ -68,20 +67,20 @@ public class Patient {
         this.firstName = firstName;
     }
 
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
     public String getMiddleName() {
         return middleName;
     }
 
     public void setMiddleName(String middleName) {
         this.middleName = middleName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getSuffix() {
@@ -156,6 +155,14 @@ public class Patient {
         this.contactNumber = contactNumber;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getEmergencyContactNumber() {
         return emergencyContactNumber;
     }
@@ -170,14 +177,6 @@ public class Patient {
 
     public void setPriorityCategory(String priorityCategory) {
         this.priorityCategory = priorityCategory;
-    }
-
-    public List<Appointment> getAppointments() {
-        return appointments;
-    }
-
-    public void setAppointments(List<Appointment> appointments) {
-        this.appointments = appointments;
     }
 
     public String getHeight() {
@@ -210,5 +209,37 @@ public class Patient {
 
     public void setMedicalHistory(String medicalHistory) {
         this.medicalHistory = medicalHistory;
+    }
+
+    public String getHealthConcern() {
+        return healthConcern;
+    }
+
+    public void setHealthConcern(String healthConcern) {
+        this.healthConcern = healthConcern;
+    }
+
+    public List<Appointment> getAppointments() {
+        return appointments;
+    }
+
+    public void setAppointments(List<Appointment> appointments) {
+        this.appointments = appointments;
+    }
+
+    public Doctor getDoctor() {
+        return doctor;
+    }
+
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
+
+    public Queue getQueue() {
+        return queue;
+    }
+
+    public void setQueue(Queue queue) {
+        this.queue = queue;
     }
 }
