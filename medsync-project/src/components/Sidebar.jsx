@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/medsync-logo.png";
 
-function Sidebar({ isOpen }) {
+function Sidebar({ isOpen, customItems }) {
   const location = useLocation();
   const [activeItem, setActiveItem] = useState(location.pathname);
 
@@ -10,11 +10,10 @@ function Sidebar({ isOpen }) {
     setActiveItem(location.pathname);
   }, [location.pathname]);
 
-  // 🔥 Read role from localStorage and normalize
+  // Role-based menu (for protected users)
   const roleRaw = localStorage.getItem("role") || "ROLE_PATIENT";
   const role = roleRaw.replace(/^ROLE_+/, "").toUpperCase();
 
-  // 🔥 Role-based menu config
   const menuConfig = {
     SUPER_ADMIN: [
       { icon: "🏠", label: "Dashboard", path: "/dashboard" },
@@ -34,12 +33,13 @@ function Sidebar({ isOpen }) {
       { icon: "📋", label: "Medical Records", path: "/medical-records" },
     ],
     PATIENT: [
-      { icon: "⏱️", label: "Queue", path: "/queue" },
-      { icon: "📅", label: "Appointments", path: "/appointments" },
+      { icon: "⏱️", label: "Queue", path: "/patient/queue" },
+      { icon: "📅", label: "Appointments", path: "/patient/appointments" },
     ],
   };
 
-  const menuItems = menuConfig[role] || [];
+  // Use customItems if provided, otherwise fallback to role-based menu
+  const menuItems = (customItems && Array.isArray(customItems) ? customItems : menuConfig[role]) || [];
 
   return (
     <div
@@ -47,7 +47,7 @@ function Sidebar({ isOpen }) {
         isOpen ? "w-72" : "w-0"
       } overflow-hidden flex flex-col`}
     >
-      {/* Logo Section */}
+      {/* Logo */}
       <div className="p-8 border-b border-white/10 backdrop-blur-sm">
         <div className="flex flex-col items-center space-y-3">
           <div className="relative group">
@@ -84,12 +84,9 @@ function Sidebar({ isOpen }) {
                   : "hover:bg-white/10 hover:backdrop-blur-md"
               }`}
             >
-              {/* Active Indicator */}
               {isActive && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full shadow-lg"></div>
               )}
-
-              {/* Icon Container */}
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ${
                   isActive
@@ -99,19 +96,13 @@ function Sidebar({ isOpen }) {
               >
                 <span className="text-xl">{item.icon}</span>
               </div>
-
-              {/* Label */}
               <span
                 className={`ml-4 font-medium transition-all duration-200 ${
-                  isActive
-                    ? "text-white"
-                    : "text-violet-100 group-hover:text-white"
+                  isActive ? "text-white" : "text-violet-100 group-hover:text-white"
                 }`}
               >
                 {item.label}
               </span>
-
-              {/* Hover Effect */}
               <div className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/5 transition-all duration-200"></div>
             </Link>
           );

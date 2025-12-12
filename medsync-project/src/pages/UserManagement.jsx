@@ -482,6 +482,9 @@ function EditUserModal({ user, onSave, onCancel }) {
     "role",
     "name",
     "employmentStatus",
+    "medicalRecords",
+    "profilePath",
+    "availability"
   ];
 
   const requiredFields = [
