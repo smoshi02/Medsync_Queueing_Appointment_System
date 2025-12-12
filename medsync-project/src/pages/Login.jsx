@@ -12,7 +12,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // FIELD-LEVEL ERRORS
+  // FIELD ERRORS
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
@@ -22,7 +22,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Reset
+    // Reset errors
     setUsernameError("");
     setPasswordError("");
 
@@ -50,19 +50,42 @@ function Login() {
       });
 
       if (!res.ok) {
-        // Backend invalid login
         setUsernameError("Invalid username or password");
         setPasswordError("Invalid username or password");
         return;
       }
 
       const data = await res.json();
+
+      // ✅ NORMALIZE ROLE: Remove all ROLE_ prefixes (handles ROLE_ROLE_SUPER_ADMIN)
+      const rawRole = data.role || "PATIENT";
+      const normalizedRole = rawRole.replace(/^(ROLE_)+/g, "");
+
+      console.log("🔐 Login Debug:", {
+        rawRole,
+        normalizedRole,
+        username: data.username
+      });
+
+      // Store JWT in context
       login(data.token);
 
+      // Save normalized details to localStorage
       localStorage.setItem("username", data.username);
-      localStorage.setItem("role", data.role);
+      localStorage.setItem("role", normalizedRole);
 
-      navigate("/", { replace: true });
+      // ---- ROLE-BASED REDIRECT ----
+      const role = normalizedRole.toUpperCase();
+
+      if (role === "SUPER_ADMIN") {
+        navigate("/dashboard", { replace: true });
+      } else if (role === "DOCTOR" || role === "STAFF") {
+        navigate("/queue", { replace: true });
+      } else if (role === "PATIENT") {
+        navigate("/queue", { replace: true });
+      } else {
+        navigate("/landing", { replace: true }); // unknown roles
+      }
     } finally {
       setLoading(false);
     }
@@ -73,7 +96,6 @@ function Login() {
 
       {/* VIDEO BACKGROUND */}
       <div className="absolute inset-0">
-        {/* Video Element */}
         <video
           autoPlay
           loop
@@ -84,10 +106,8 @@ function Login() {
           <source src={bgVideo} type="video/mp4" />
         </video>
 
-        {/* Dark Gradient Overlay for readability */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-violet-950/75 to-black/80"></div>
 
-        {/* Animated circles */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl animate-pulse"></div>
         <div
           className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-fuchsia-600/10 rounded-full blur-3xl animate-pulse"
@@ -97,7 +117,6 @@ function Login() {
 
       {/* LEFT DESIGN */}
       <div className="hidden lg:flex absolute left-0 top-0 bottom-0 w-1/2 flex-col justify-between p-16 z-10">
-
         <div className="space-y-8">
           <div className="flex items-center gap-4">
             <img src={logo} alt="MedSync" className="h-16 drop-shadow-2xl" />
@@ -164,14 +183,13 @@ function Login() {
             <p className="text-slate-400 text-sm">Powerful insights at your fingertips</p>
           </div>
         </div>
-
       </div>
 
       {/* RIGHT LOGIN CARD */}
       <div className="relative z-10 w-full max-w-lg">
-
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-10 border border-white/20">
 
+          {/* TOP LOGO */}
           <div className="flex flex-col items-center mb-8">
             <div className="relative mb-4">
               <div className="absolute inset-0 bg-violet-500/30 blur-2xl rounded-full"></div>
@@ -185,6 +203,7 @@ function Login() {
             </p>
           </div>
 
+          {/* TITLE */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-slate-800 mb-2">
               Welcome Back
@@ -312,6 +331,7 @@ function Login() {
             </button>
           </form>
 
+          {/* DIVIDER */}
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200"></div>

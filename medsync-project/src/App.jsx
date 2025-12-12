@@ -1,13 +1,13 @@
-// App.js
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
-import HomePage from "./pages/HomePage"; // <-- your video background page
+import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
 import Queue from "./pages/Queue";
 import MedicalRecords from "./pages/MedicalRecords";
@@ -18,7 +18,6 @@ import Login from "./pages/Login";
 import Signup from "./pages/SignUp";
 import LandingPage from "./pages/LandingPage";
 
-// ✅ helper function
 const isLoggedIn = () => !!localStorage.getItem("token");
 
 const App = () => {
@@ -27,42 +26,42 @@ const App = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("username");
     navigate("/", { replace: true });
+  };
+
+  // Role-based redirect helper
+  const getRoleRedirect = () => {
+    const role = localStorage.getItem("role")?.toUpperCase();
+    if (role === "SUPER_ADMIN") return "/dashboard";
+    if (role === "DOCTOR" || role === "STAFF" || role === "PATIENT") return "/queue";
+    return "/home";
   };
 
   return (
     <Routes>
-      {/* ==========================
-          PUBLIC LANDING PAGE
-      =========================== */}
+      {/* PUBLIC LANDING PAGE */}
       <Route
         path="/"
-        element={
-          isLoggedIn() ? <Navigate to="/home" /> : <LandingPage />
-        }
+        element={isLoggedIn() ? <Navigate to={getRoleRedirect()} replace /> : <LandingPage />}
       />
 
-      {/* ==========================
-          PUBLIC AUTH ROUTES
-      =========================== */}
+      {/* PUBLIC AUTH ROUTES */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* ==========================
-          PROTECTED ROUTES
-      =========================== */}
+      {/* PUBLIC PAGES (accessible without login) */}
+      <Route path="/queue" element={<Queue />} />
+      <Route path="/appointments" element={<Appointments />} />
+
+      {/* PROTECTED PAGES */}
       <Route
         path="/*"
         element={
           <ProtectedRoute>
             <div className="flex h-screen bg-gray-50">
-              {/* Sidebar */}
-              <Sidebar
-                isOpen={sidebarOpen}
-                onLogout={handleLogout}
-              />
-
-              {/* Main Content */}
+              <Sidebar isOpen={sidebarOpen} onLogout={handleLogout} />
               <div className="flex-1 flex flex-col">
                 <Header
                   isSidebarOpen={sidebarOpen}
@@ -71,18 +70,39 @@ const App = () => {
 
                 <main className="flex-1 overflow-auto">
                   <Routes>
-                    {/* Home page with video */}
+                    {/* Home page for logged-in users */}
                     <Route path="/home" element={<HomePage />} />
 
-                    {/* Other protected pages */}
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/queue" element={<Queue />} />
-                    <Route path="/medical-records" element={<MedicalRecords />} />
-                    <Route path="/user-management" element={<UserManagement />} />
-                    <Route path="/appointments" element={<Appointments />} />
+                    {/* SUPER_ADMIN only */}
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <RoleProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+                          <Dashboard />
+                        </RoleProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/user-management"
+                      element={
+                        <RoleProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+                          <UserManagement />
+                        </RoleProtectedRoute>
+                      }
+                    />
+
+                    {/* PROTECTED MEDICAL RECORDS */}
+                    <Route
+                      path="/medical-records"
+                      element={
+                        <RoleProtectedRoute allowedRoles={["SUPER_ADMIN", "DOCTOR", "STAFF"]}>
+                          <MedicalRecords />
+                        </RoleProtectedRoute>
+                      }
+                    />
 
                     {/* Redirect unknown routes */}
-                    <Route path="*" element={<Navigate to="/home" replace />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </main>
 

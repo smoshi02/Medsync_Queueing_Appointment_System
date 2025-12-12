@@ -1,9 +1,13 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthProvider";
 
 const ProtectedRoute = ({ children }) => {
-  const { token } = useAuth();
-  if (!token) return <Navigate to="/" replace />;
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    // Only redirect if trying to access protected page
+    return <Navigate to="/login" replace />;
+  }
+
   return children;
 };
 

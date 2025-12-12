@@ -10,13 +10,36 @@ function Sidebar({ isOpen }) {
     setActiveItem(location.pathname);
   }, [location.pathname]);
 
-  const menuItems = [
-    { icon: "🏠", label: "Dashboard", path: "/dashboard" },
-    { icon: "⏱️", label: "Queue", path: "/queue" },
-    { icon: "📋", label: "Medical Records", path: "/medical-records" },
-    { icon: "👥", label: "User Management", path: "/user-management" },
-    { icon: "📅", label: "Appointments", path: "/appointments" },
-  ];
+  // 🔥 Read role from localStorage and normalize
+  const roleRaw = localStorage.getItem("role") || "ROLE_PATIENT";
+  const role = roleRaw.replace(/^ROLE_+/, "").toUpperCase();
+
+  // 🔥 Role-based menu config
+  const menuConfig = {
+    SUPER_ADMIN: [
+      { icon: "🏠", label: "Dashboard", path: "/dashboard" },
+      { icon: "⏱️", label: "Queue", path: "/queue" },
+      { icon: "📋", label: "Medical Records", path: "/medical-records" },
+      { icon: "👥", label: "User Management", path: "/user-management" },
+      { icon: "📅", label: "Appointments", path: "/appointments" },
+    ],
+    DOCTOR: [
+      { icon: "⏱️", label: "Queue", path: "/queue" },
+      { icon: "📅", label: "Appointments", path: "/appointments" },
+      { icon: "📋", label: "Medical Records", path: "/medical-records" },
+    ],
+    STAFF: [
+      { icon: "⏱️", label: "Queue", path: "/queue" },
+      { icon: "📅", label: "Appointments", path: "/appointments" },
+      { icon: "📋", label: "Medical Records", path: "/medical-records" },
+    ],
+    PATIENT: [
+      { icon: "⏱️", label: "Queue", path: "/queue" },
+      { icon: "📅", label: "Appointments", path: "/appointments" },
+    ],
+  };
+
+  const menuItems = menuConfig[role] || [];
 
   return (
     <div
@@ -80,7 +103,9 @@ function Sidebar({ isOpen }) {
               {/* Label */}
               <span
                 className={`ml-4 font-medium transition-all duration-200 ${
-                  isActive ? "text-white" : "text-violet-100 group-hover:text-white"
+                  isActive
+                    ? "text-white"
+                    : "text-violet-100 group-hover:text-white"
                 }`}
               >
                 {item.label}
