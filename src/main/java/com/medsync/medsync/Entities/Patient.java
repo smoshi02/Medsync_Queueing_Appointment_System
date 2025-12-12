@@ -30,6 +30,11 @@ public class Patient {
     private String emergencyContactNumber;
     private String priorityCategory;
 
+    private String height;
+    private String weight;
+    private String bloodType;
+    private String medicalHistory;
+
     @OneToMany(mappedBy = "patient")
     private List<Appointment> appointments;
 
@@ -173,5 +178,37 @@ public class Patient {
 
     public void setAppointments(List<Appointment> appointments) {
         this.appointments = appointments;
+    }
+
+    public String getHeight() {
+        return height;
+    }
+
+    public void setHeight(String height) {
+        this.height = height;
+    }
+
+    public String getWeight() {
+        return weight;
+    }
+
+    public void setWeight(String weight) {
+        this.weight = weight;
+    }
+
+    public String getBloodType() {
+        return bloodType;
+    }
+
+    public void setBloodType(String bloodType) {
+        this.bloodType = bloodType;
+    }
+
+    public String getMedicalHistory() {
+        return medicalHistory;
+    }
+
+    public void setMedicalHistory(String medicalHistory) {
+        this.medicalHistory = medicalHistory;
     }
 }

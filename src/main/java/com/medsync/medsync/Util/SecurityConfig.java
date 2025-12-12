@@ -64,6 +64,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Public patient appointment endpoint
+                        .requestMatchers("/api/patient/appointments").permitAll()
                         // Allow login/auth endpoints without token
                         .requestMatchers("/api/auth/**").permitAll()
                         // Allow dashboard endpoints for testing
@@ -85,6 +87,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
 
     // --- Web Security (HTML + WebSocket handshake) ---

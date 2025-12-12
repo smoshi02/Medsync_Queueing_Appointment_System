@@ -17,14 +17,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
        SELECT new com.medsync.medsync.DTO.AppointmentsDTO.AppointmentsDTO(
            a.appointmentId,
            CONCAT(p.firstName, ' ', p.lastName),
-           CONCAT(s.firstName, ' ', s.lastName),
+           CASE WHEN s IS NOT NULL THEN CONCAT(s.firstName, ' ', s.lastName) ELSE 'N/A' END,
            a.date,
            a.status
        )
        FROM Appointment a
        JOIN a.patient p
-       JOIN a.staff s
+       LEFT JOIN a.staff s
+       ORDER BY a.bookingDate DESC
        """)
     List<AppointmentsDTO> loadAppointments();
-
 }

@@ -17,21 +17,22 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .addInterceptors(jwtInterceptor)
-                .setAllowedOrigins("http://localhost:5173", "http://localhost:5174")
+        // Public endpoint (no JWT required)
+        registry.addEndpoint("/ws/public")
                 .setAllowedOriginPatterns("*")
-                .withSockJS(); // keep only if you need fallback
+                .withSockJS();
 
-        // FOR REACT NATIVE STOMP (better)
-        registry.addEndpoint("/ws")
+        // Private endpoint (JWT required)
+        registry.addEndpoint("/ws/private")
                 .addInterceptors(jwtInterceptor)
-                .setAllowedOrigins("*");
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic", "/queue");
+        // Separate topics for public and private
+        registry.enableSimpleBroker("/topic/public", "/topic/private", "/queue");
         registry.setApplicationDestinationPrefixes("/app");
     }
 }
