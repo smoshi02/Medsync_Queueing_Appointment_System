@@ -26,11 +26,14 @@ function Appointments() {
     loadAppointments();
   }, []);
 
-  useStompWebSocket(["/topic/appointments"], (msg) => {
+ useStompWebSocket(
+  ["/topic/private/appointments"],
+  (msg) => {
     if (msg.type === "appointments-update") {
       setAppointments(msg.data || []);
     }
-  });
+  }
+);
 
   // Filter appointments
   const filteredAppointments = appointments.filter((appt) => {
