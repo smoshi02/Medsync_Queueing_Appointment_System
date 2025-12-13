@@ -11,11 +11,15 @@ import java.util.List;
 @Repository
 public interface MedicalRecordsRepository extends JpaRepository<MedicalRecords, Long> {
 
-    // Existing method returning DTOs
     @Query("""
        SELECT new com.medsync.medsync.DTO.MedicalRecordDTOs.MedicalRecordDTO(
            m.recordId,
-           CONCAT(p.firstName, ' ', p.lastName),
+           p.patientId,
+           CONCAT(p.firstName, ' ', COALESCE(p.middleName, ''), ' ', p.lastName),
+           p.contactNumber,
+           p.email,
+           p.dateOfBirth,
+           p.bloodType,
            m.chiefComplaint,
            m.diagnosis,
            m.prescription,
@@ -28,10 +32,10 @@ public interface MedicalRecordsRepository extends JpaRepository<MedicalRecords, 
        )
        FROM MedicalRecords m
        JOIN m.patient p
+       ORDER BY m.recordCreatedDate DESC
        """)
     List<MedicalRecordDTO> loadMedicalRecords();
 
-    // NEW METHOD: return full entities for dashboard completed services
-    @Query("SELECT m FROM MedicalRecords m JOIN FETCH m.patient LEFT JOIN FETCH m.doctor")
+    @Query("SELECT m FROM MedicalRecords m JOIN FETCH m.patient LEFT JOIN FETCH m.doctor ORDER BY m.recordCreatedDate DESC")
     List<MedicalRecords> loadMedicalRecordsEntity();
 }

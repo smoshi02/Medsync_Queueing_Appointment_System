@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 public record PatientRegistrationDTO(
+        // Patient basic info
         String firstName,
         String middleName,
         String lastName,
@@ -11,20 +12,27 @@ public record PatientRegistrationDTO(
         String gender,
         LocalDate dateOfBirth,
         String civilStatus,
+
+        // Contact info
         String contactNumber,
         String email,
         String emergencyContactNumber,
+
+        // Address
         String addressStreet,
         String addressBarangay,
         String addressMunicipality,
         String addressProvince,
-        String priorityCategory,
+
+        // Health info
         String height,
         String weight,
         String bloodType,
+        String priorityCategory,
         String medicalHistory,
         String healthConcern,
-        LocalDate date,  // ← Appointment date from form
-        LocalTime time
 
+        // Appointment info
+        LocalDate date,
+        LocalTime time
 ) {}
