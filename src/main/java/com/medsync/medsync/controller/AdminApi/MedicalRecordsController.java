@@ -34,6 +34,7 @@ public class MedicalRecordsController {
     public ResponseEntity<List<MedicalRecordDTO>> getAllRecords() {
         try {
             List<MedicalRecordDTO> records = medicalRecordsRepository.loadMedicalRecords();
+            System.out.println("📋 Loaded " + records.size() + " medical records");
             return ResponseEntity.ok(records);
         } catch (Exception e) {
             System.err.println("❌ Error loading medical records: " + e.getMessage());
@@ -49,6 +50,7 @@ public class MedicalRecordsController {
             MedicalRecords record = medicalRecordsRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Medical record not found"));
 
+            System.out.println("📄 Retrieved medical record #" + id);
             return ResponseEntity.ok(record);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -66,17 +68,35 @@ public class MedicalRecordsController {
             Authentication authentication
     ) {
         try {
-            // Check if user is a doctor
+            System.out.println("=== Doctor Update Request ===");
+            System.out.println("Record ID: " + id);
+            System.out.println("Authentication: " + authentication);
+
+            if (authentication != null) {
+                System.out.println("Username: " + authentication.getName());
+                System.out.println("Authorities: " + authentication.getAuthorities());
+            }
+
+            // Check if user is a doctor - IMPROVED ROLE CHECKING
             boolean isDoctor = authentication != null &&
                     authentication.getAuthorities().stream()
                             .map(GrantedAuthority::getAuthority)
-                            .anyMatch(role -> role.equals("ROLE_DOCTOR") || role.equals("ROLE_ROLE_DOCTOR"));
+                            .peek(auth -> System.out.println("Authority found: " + auth))
+                            .anyMatch(role ->
+                                    role.equals("ROLE_DOCTOR") ||
+                                            role.equals("DOCTOR") ||
+                                            role.contains("DOCTOR")
+                            );
+
+            System.out.println("Is Doctor: " + isDoctor);
 
             if (!isDoctor) {
                 System.err.println("❌ Access denied: User is not a doctor");
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Access Denied");
                 error.put("message", "Only doctors can update medical records");
+                error.put("userAuthorities", authentication != null ?
+                        authentication.getAuthorities().toString() : "No authentication");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
             }
 
@@ -84,7 +104,7 @@ public class MedicalRecordsController {
             MedicalRecords record = medicalRecordsRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Medical record not found"));
 
-            System.out.println("=== Updating Medical Record #" + id + " ===");
+            System.out.println("✅ Found medical record, proceeding with update...");
 
             // Update fields that doctors can modify
             if (request.diagnosis() != null && !request.diagnosis().trim().isEmpty()) {
@@ -167,9 +187,6 @@ public class MedicalRecordsController {
             Boolean followUpRequired,
             LocalDate followUpDate
     ) {}
-
-    // ✅ WebSocket message wrapper (kept for backward compatibility)
-    public record RecordUpdateMessage(String type, Object data) {}
 
     // ✅ Exception handler
     @ExceptionHandler(Exception.class)

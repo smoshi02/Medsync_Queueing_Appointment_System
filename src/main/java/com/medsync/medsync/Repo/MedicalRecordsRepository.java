@@ -14,7 +14,12 @@ public interface MedicalRecordsRepository extends JpaRepository<MedicalRecords, 
     @Query("""
        SELECT new com.medsync.medsync.DTO.MedicalRecordDTOs.MedicalRecordDTO(
            m.recordId,
-           CONCAT(p.firstName, ' ', p.lastName),
+           p.patientId,
+           CONCAT(p.firstName, ' ', COALESCE(p.middleName, ''), ' ', p.lastName),
+           p.contactNumber,
+           p.email,
+           p.dateOfBirth,
+           p.bloodType,
            m.chiefComplaint,
            m.diagnosis,
            m.prescription,

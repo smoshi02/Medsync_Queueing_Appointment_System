@@ -37,7 +37,15 @@ public class UserService {
         Staff staff = new Staff();
         staff.setUsername(username);
         staff.setPassword(passwordEncoder.encode(password));
+        staff.setRole("STAFF"); // ✅ SET DEFAULT ROLE
+        staff.setStatus("Active"); // ✅ SET DEFAULT STATUS
+
+        System.out.println("📝 Registering new staff:");
+        System.out.println("   Username: " + username);
+        System.out.println("   Role: STAFF");
+
         staffRepository.save(staff);
+        System.out.println("✅ Staff registered successfully");
     }
 
     public void registerDoctor(String username, String password) {
@@ -47,7 +55,13 @@ public class UserService {
         Doctor doctor = new Doctor();
         doctor.setUsername(username);
         doctor.setPassword(passwordEncoder.encode(password));
+        // Doctors don't have a role field in their entity, they're identified by being in the Doctor table
+
+        System.out.println("📝 Registering new doctor:");
+        System.out.println("   Username: " + username);
+
         doctorRepository.save(doctor);
+        System.out.println("✅ Doctor registered successfully");
     }
 
     // -------- Login Validation --------

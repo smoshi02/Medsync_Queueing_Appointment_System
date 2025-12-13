@@ -57,6 +57,11 @@ public class AdminController {
         String username = generateUniqueUsername(staffDTO.getLastName(), true);
         String rawPassword = PasswordGenerator.generateRandomPassword();
 
+        System.out.println("👤 Creating new staff account:");
+        System.out.println("   Name: " + staffDTO.getFirstName() + " " + staffDTO.getLastName());
+        System.out.println("   Username: " + username);
+        System.out.println("   Email: " + staffDTO.getEmail());
+
         Staff staff = new Staff();
         staff.setFirstName(staffDTO.getFirstName());
         staff.setLastName(staffDTO.getLastName());
@@ -73,12 +78,21 @@ public class AdminController {
         staff.setUsername(username);
         staff.setPassword(passwordEncoder.encode(rawPassword));
 
+        // ✅ SET THE ROLE - THIS WAS MISSING!
+        staff.setRole("STAFF");
+
+        System.out.println("   Role assigned: STAFF");
+
         staffRepo.save(staff);
+
+        System.out.println("✅ Staff account created successfully");
 
         try {
             emailService.sendCredentialsEmail(staffDTO.getEmail(), username, rawPassword);
+            System.out.println("✅ Credentials email sent to: " + staffDTO.getEmail());
             return ResponseEntity.ok(Map.of("message", "Staff created and credentials emailed."));
         } catch (Exception e) {
+            System.err.println("❌ Failed to send credentials email: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of(
                     "message", "Staff created but failed to send email. Please check email settings.",
@@ -92,6 +106,11 @@ public class AdminController {
 
         String username = generateUniqueUsername(doctorDTO.getLastName(), false);
         String rawPassword = PasswordGenerator.generateRandomPassword();
+
+        System.out.println("👨‍⚕️ Creating new doctor account:");
+        System.out.println("   Name: " + doctorDTO.getFirstName() + " " + doctorDTO.getLastName());
+        System.out.println("   Username: " + username);
+        System.out.println("   Email: " + doctorDTO.getEmail());
 
         Doctor doctor = new Doctor();
         doctor.setFirstName(doctorDTO.getFirstName());
@@ -112,10 +131,14 @@ public class AdminController {
 
         doctorRepo.save(doctor);
 
+        System.out.println("✅ Doctor account created successfully");
+
         try {
             emailService.sendCredentialsEmail(doctorDTO.getEmail(), username, rawPassword);
+            System.out.println("✅ Credentials email sent to: " + doctorDTO.getEmail());
             return ResponseEntity.ok(Map.of("message", "Doctor created and credentials emailed."));
         } catch (Exception e) {
+            System.err.println("❌ Failed to send credentials email: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of(
                     "message", "Doctor created but failed to send email. Please check email settings.",

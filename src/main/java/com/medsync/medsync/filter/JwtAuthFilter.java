@@ -63,12 +63,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
+                // Store user info in request attributes for easy access
                 if (user instanceof CustomStaffDetails customUser) {
                     request.setAttribute("loggedStaff", customUser.getStaff());
+                    request.setAttribute("userRole", "STAFF");
+                } else {
+                    // For doctors
+                    request.setAttribute("userRole", "DOCTOR");
                 }
-            }
 
+                System.out.println("✅ Authenticated user: " + username + " with authorities: " + user.getAuthorities());
+            }
         } catch (JwtException e) {
+            System.err.println("❌ JWT validation failed: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
