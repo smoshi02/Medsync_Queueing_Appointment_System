@@ -18,10 +18,10 @@ public class MailConfig {
         mailSender.setPort(587);
 
         // Your Gmail email
-        mailSender.setUsername("roineillgenove@gmail.com");
+        mailSender.setUsername("medsyncsg@gmail.com");
 
         // Use the 16-character App Password you generated
-        mailSender.setPassword("fgpxdlblfomkrijd ");
+        mailSender.setPassword("yxerapxrhiiwhggj");
 
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");

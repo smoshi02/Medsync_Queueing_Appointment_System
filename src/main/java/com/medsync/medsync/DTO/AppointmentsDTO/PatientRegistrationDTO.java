@@ -1,6 +1,7 @@
 package com.medsync.medsync.DTO.AppointmentsDTO;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 public record PatientRegistrationDTO(
         String firstName,
@@ -11,6 +12,7 @@ public record PatientRegistrationDTO(
         LocalDate dateOfBirth,
         String civilStatus,
         String contactNumber,
+        String email,
         String emergencyContactNumber,
         String addressStreet,
         String addressBarangay,
@@ -21,5 +23,8 @@ public record PatientRegistrationDTO(
         String weight,
         String bloodType,
         String medicalHistory,
-        String healthConcern
+        String healthConcern,
+        LocalDate date,  // ← Appointment date from form
+        LocalTime time
+
 ) {}

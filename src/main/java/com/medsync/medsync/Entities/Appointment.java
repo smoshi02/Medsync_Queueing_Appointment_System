@@ -3,6 +3,7 @@ package com.medsync.medsync.Entities;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "appointment")
@@ -16,6 +17,7 @@ public class Appointment {
     private String type;
     private String status;
     private String healthConcern;
+    private LocalTime time;
 
     private LocalDateTime bookingDate;
     private LocalDateTime confirmedDate;
@@ -130,5 +132,13 @@ public class Appointment {
 
     public void setCancellation(Cancellation cancellation) {
         this.cancellation = cancellation;
+    }
+
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
     }
 }

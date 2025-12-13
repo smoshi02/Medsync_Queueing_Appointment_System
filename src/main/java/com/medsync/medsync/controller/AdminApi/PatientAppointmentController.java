@@ -7,13 +7,17 @@ import com.medsync.medsync.Entities.Appointment;
 import com.medsync.medsync.Entities.Patient;
 import com.medsync.medsync.Repo.AppointmentRepository;
 import com.medsync.medsync.Repo.PatientRepository;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/patient")
@@ -36,134 +40,185 @@ public class PatientAppointmentController {
 
     // ✅ GET all appointments
     @GetMapping("/appointments")
-    public List<AppointmentsDTO> getAllAppointments() {
-        return appointmentRepository.findAll().stream()
-                .map(a -> new AppointmentsDTO(
-                        a.getAppointmentId(),
-                        a.getPatient().getFirstName() + " " + a.getPatient().getLastName(),
-                        "N/A",
-                        a.getDate(),
-                        a.getStatus()
-                ))
-                .toList();
+    public ResponseEntity<List<AppointmentsDTO>> getAllAppointments() {
+        try {
+            List<AppointmentsDTO> appointments = appointmentRepository.loadAppointments();
+            return ResponseEntity.ok(appointments);
+        } catch (Exception e) {
+            System.err.println("Error loading appointments: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
+    // ✅ UPDATE appointment
     @PutMapping("/appointments/{id}")
-    public AppointmentsDTO updateAppointment(
+    @Transactional
+    public ResponseEntity<AppointmentsDTO> updateAppointment(
             @PathVariable Long id,
             @RequestBody AppointmentDTO dto
     ) {
-        Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+        try {
+            Appointment appointment = appointmentRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        appointment.setStatus(dto.getStatus());
-        appointment.setDate(dto.getDate());
-        appointment.setHealthConcern(dto.getHealthConcern());
-        appointment.setType(dto.getType());
+            appointment.setStatus(dto.getStatus());
+            appointment.setDate(dto.getDate());
+            appointment.setHealthConcern(dto.getHealthConcern());
+            appointment.setType(dto.getType());
 
-        if (dto.getConfirmedDate() != null)
-            appointment.setConfirmedDate(dto.getConfirmedDate());
+            if (dto.getConfirmedDate() != null)
+                appointment.setConfirmedDate(dto.getConfirmedDate());
 
-        if (dto.getCheckedInTime() != null)
-            appointment.setCheckedInTime(dto.getCheckedInTime());
+            if (dto.getCheckedInTime() != null)
+                appointment.setCheckedInTime(dto.getCheckedInTime());
 
-        if (dto.getCompletedTime() != null)
-            appointment.setCompletedTime(dto.getCompletedTime());
+            if (dto.getCompletedTime() != null)
+                appointment.setCompletedTime(dto.getCompletedTime());
 
-        appointmentRepository.save(appointment);
+            appointmentRepository.save(appointment);
 
-        // Reload full list
-        List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
+            List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
 
-        // Broadcast updated list to frontend via WebSocket
-        messagingTemplate.convertAndSend(
-                "/topic/private/appointments",
-                new WebSocketMessage("appointments-update", updatedList)
-        );
+            // WebSocket broadcast
+            broadcastAppointmentUpdate(updatedList);
 
-        messagingTemplate.convertAndSend(
-                "/topic/public/appointments",
-                new WebSocketMessage("appointments-update", updatedList)
-        );
+            AppointmentsDTO result = updatedList.stream()
+                    .filter(a -> a.appointmentId().equals(id))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Updated appointment not found"));
 
-        return new AppointmentsDTO(
-                appointment.getAppointmentId(),
-                appointment.getPatient().getFirstName() + " " + appointment.getPatient().getLastName(),
-                "N/A",
-                appointment.getDate(),
-                appointment.getStatus()
-        );
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("Error updating appointment: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-
-    // ✅ POST new patient appointment
+    // ✅ CREATE patient + appointment
     @PostMapping("/appointments")
-    public AppointmentsDTO createPatientAppointment(@RequestBody PatientRegistrationDTO dto) {
+    @Transactional
+    public ResponseEntity<?> createPatientAppointment(@RequestBody PatientRegistrationDTO dto) {
+        try {
+            System.out.println("=== Creating Patient Appointment ===");
+            System.out.println("DTO received: " + dto);
 
-        // 1️⃣ Save Patient
-        Patient p = new Patient();
-        p.setFirstName(dto.firstName() != null ? dto.firstName() : "");
-        p.setMiddleName(dto.middleName() != null ? dto.middleName() : "");
-        p.setLastName(dto.lastName() != null ? dto.lastName() : "");
-        p.setSuffix(dto.suffix() != null ? dto.suffix() : "");
-        p.setGender(dto.gender() != null ? dto.gender() : "");
-        p.setCivilStatus(dto.civilStatus() != null ? dto.civilStatus() : "");
+            // Validate required fields
+            if (dto.firstName() == null || dto.firstName().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(createErrorResponse("First name is required"));
+            }
+            if (dto.lastName() == null || dto.lastName().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(createErrorResponse("Last name is required"));
+            }
+            if (dto.dateOfBirth() == null) {
+                return ResponseEntity.badRequest().body(createErrorResponse("Date of birth is required"));
+            }
 
-        // LocalDate is now directly mapped
-        p.setDateOfBirth(dto.dateOfBirth());
+            // 1️⃣ Save Patient
+            Patient p = new Patient();
+            p.setFirstName(dto.firstName().trim());
+            p.setMiddleName(dto.middleName() != null ? dto.middleName().trim() : "");
+            p.setLastName(dto.lastName().trim());
+            p.setSuffix(dto.suffix() != null ? dto.suffix().trim() : "");
+            p.setGender(dto.gender() != null ? dto.gender() : "");
+            p.setCivilStatus(dto.civilStatus() != null ? dto.civilStatus() : "");
+            p.setDateOfBirth(dto.dateOfBirth());
+            p.setContactNumber(dto.contactNumber() != null ? dto.contactNumber().trim() : "");
+            p.setEmail(dto.email() != null ? dto.email().trim() : "");
+            p.setEmergencyContactNumber(dto.emergencyContactNumber() != null ? dto.emergencyContactNumber().trim() : "");
+            p.setAddressStreet(dto.addressStreet() != null ? dto.addressStreet().trim() : "");
+            p.setAddressBarangay(dto.addressBarangay() != null ? dto.addressBarangay().trim() : "");
+            p.setAddressMunicipality(dto.addressMunicipality() != null ? dto.addressMunicipality().trim() : "");
+            p.setAddressProvince(dto.addressProvince() != null ? dto.addressProvince().trim() : "");
+            p.setPriorityCategory(dto.priorityCategory() != null ? dto.priorityCategory() : "");
+            p.setHeight(dto.height() != null ? dto.height() : "");
+            p.setWeight(dto.weight() != null ? dto.weight() : "");
+            p.setBloodType(dto.bloodType() != null ? dto.bloodType() : "");
+            p.setMedicalHistory(dto.medicalHistory() != null ? dto.medicalHistory().trim() : "");
+            p.setHealthConcern(dto.healthConcern() != null ? dto.healthConcern().trim() : "");
 
-        p.setContactNumber(dto.contactNumber() != null ? dto.contactNumber() : "");
-        p.setEmergencyContactNumber(dto.emergencyContactNumber() != null ? dto.emergencyContactNumber() : "");
+            Patient savedPatient = patientRepository.save(p);
+            System.out.println("Patient saved with ID: " + savedPatient.getPatientId());
 
-        p.setAddressStreet(dto.addressStreet() != null ? dto.addressStreet() : "");
-        p.setAddressBarangay(dto.addressBarangay() != null ? dto.addressBarangay() : "");
-        p.setAddressMunicipality(dto.addressMunicipality() != null ? dto.addressMunicipality() : "");
-        p.setAddressProvince(dto.addressProvince() != null ? dto.addressProvince() : "");
+            // 2️⃣ Create Appointment
+            Appointment appointment = new Appointment();
+            appointment.setPatient(savedPatient);
+            appointment.setDate(dto.date() != null ? dto.date() : LocalDate.now());
 
-        p.setPriorityCategory(dto.priorityCategory() != null ? dto.priorityCategory() : "");
+            // Handle time field - check if it can be null in your entity
+            if (dto.time() != null) {
+                appointment.setTime(dto.time());
+            }
 
-        // Optional fields
-        p.setHeight(dto.height() != null ? dto.height() : "");
-        p.setWeight(dto.weight() != null ? dto.weight() : "");
-        p.setBloodType(dto.bloodType() != null ? dto.bloodType() : "");
-        p.setMedicalHistory(dto.medicalHistory() != null ? dto.medicalHistory() : "");
+            appointment.setHealthConcern(dto.healthConcern() != null ? dto.healthConcern().trim() : "");
+            appointment.setType("Consultation");
+            appointment.setStatus("Pending");
+            appointment.setBookingDate(LocalDateTime.now());
 
-        patientRepository.save(p);
+            Appointment savedAppointment = appointmentRepository.save(appointment);
+            System.out.println("Appointment saved with ID: " + savedAppointment.getAppointmentId());
 
-        // 2️⃣ Create Appointment
-        Appointment appointment = new Appointment();
-        appointment.setPatient(p);
-        appointment.setDate(LocalDate.now());
-        appointment.setHealthConcern(dto.healthConcern() != null ? dto.healthConcern() : "");
-        appointment.setType("Consultation");
-        appointment.setStatus("Pending");
-        appointment.setBookingDate(LocalDateTime.now());
+            // 3️⃣ Reload full list
+            List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
 
-        appointmentRepository.save(appointment);
+            // 4️⃣ WebSocket broadcast
+            broadcastAppointmentUpdate(updatedList);
 
-        // 3️⃣ Prepare response DTO
-        AppointmentsDTO response = new AppointmentsDTO(
-                appointment.getAppointmentId(),
-                p.getFirstName() + " " + p.getLastName(),
-                "N/A",
-                appointment.getDate(),
-                appointment.getStatus()
-        );
+            // 5️⃣ Return created appointment
+            AppointmentsDTO result = updatedList.stream()
+                    .filter(a -> a.appointmentId().equals(savedAppointment.getAppointmentId()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Created appointment not found in list"));
 
-        // 4️⃣ Broadcast updated list via WebSocket
-        List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
+            System.out.println("=== Appointment Created Successfully ===");
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
 
-        messagingTemplate.convertAndSend("/topic/private/appointments",
-                new WebSocketMessage("appointments-update", updatedList));
+        } catch (Exception e) {
+            System.err.println("=== ERROR Creating Appointment ===");
+            System.err.println("Error message: " + e.getMessage());
+            System.err.println("Error type: " + e.getClass().getName());
+            e.printStackTrace();
 
-        messagingTemplate.convertAndSend("/topic/public/appointments",
-                new WebSocketMessage("appointments-update", updatedList));
-
-        return response;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Failed to create appointment: " + e.getMessage()));
+        }
     }
 
+    // ✅ WebSocket broadcast helper
+    private void broadcastAppointmentUpdate(List<AppointmentsDTO> updatedList) {
+        try {
+            Map<String, Object> payload = createPayload("appointments-update", updatedList);
+            messagingTemplate.convertAndSend("/topic/private/appointments", null, payload);
+            messagingTemplate.convertAndSend("/topic/public/appointments", null, payload);
+        } catch (Exception e) {
+            System.err.println("Error broadcasting update: " + e.getMessage());
+            // Don't fail the main operation if WebSocket broadcast fails
+        }
+    }
 
-    // WebSocket message structure
-    record WebSocketMessage(String type, Object data) {}
+    // ✅ WebSocket payload helper
+    private Map<String, Object> createPayload(String type, Object data) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", type);
+        payload.put("data", data);
+        return payload;
+    }
 
+    // ✅ Error response helper
+    private Map<String, String> createErrorResponse(String message) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", message);
+        error.put("timestamp", LocalDateTime.now().toString());
+        return error;
+    }
+
+    // ✅ Global exception handler
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleException(Exception e) {
+        System.err.println("Unhandled exception: " + e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse(e.getMessage()));
+    }
 }
