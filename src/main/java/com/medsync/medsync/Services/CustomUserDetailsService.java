@@ -38,6 +38,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .password(doctor.getPassword())
                     .roles("DOCTOR")
                     .build();
+
         }
 
         throw new UsernameNotFoundException("No account found for: " + username);

@@ -11,7 +11,6 @@ import java.util.List;
 @Repository
 public interface MedicalRecordsRepository extends JpaRepository<MedicalRecords, Long> {
 
-    // Existing method returning DTOs
     @Query("""
        SELECT new com.medsync.medsync.DTO.MedicalRecordDTOs.MedicalRecordDTO(
            m.recordId,
@@ -24,14 +23,30 @@ public interface MedicalRecordsRepository extends JpaRepository<MedicalRecords, 
            m.followUpRequired,
            m.followUpDate,
            m.doctorNotes,
-           m.recordCreatedDate
+           m.recordCreatedDate,
+           m.status
        )
        FROM MedicalRecords m
        JOIN m.patient p
+       ORDER BY m.recordCreatedDate DESC
        """)
     List<MedicalRecordDTO> loadMedicalRecords();
 
-    // NEW METHOD: return full entities for dashboard completed services
-    @Query("SELECT m FROM MedicalRecords m JOIN FETCH m.patient LEFT JOIN FETCH m.doctor")
+    @Query("""
+        SELECT m
+        FROM MedicalRecords m
+        JOIN FETCH m.patient
+        LEFT JOIN FETCH m.doctor
+        ORDER BY m.recordCreatedDate DESC
+    """)
     List<MedicalRecords> loadMedicalRecordsEntity();
+
+    @Query("""
+        SELECT m
+        FROM MedicalRecords m
+        JOIN FETCH m.patient
+        LEFT JOIN FETCH m.doctor
+        WHERE m.patient.patientId = :patientId
+    """)
+    List<MedicalRecords> findByPatientId(Long patientId);
 }

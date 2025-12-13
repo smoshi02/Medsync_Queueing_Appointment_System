@@ -3,9 +3,12 @@ package com.medsync.medsync.controller.AdminApi;
 import com.medsync.medsync.DTO.AppointmentDTO;
 import com.medsync.medsync.DTO.AppointmentsDTO.AppointmentsDTO;
 import com.medsync.medsync.DTO.AppointmentsDTO.PatientRegistrationDTO;
+import com.medsync.medsync.DTO.MedicalRecordDTOs.MedicalRecordDTO;
 import com.medsync.medsync.Entities.Appointment;
+import com.medsync.medsync.Entities.MedicalRecords;
 import com.medsync.medsync.Entities.Patient;
 import com.medsync.medsync.Repo.AppointmentRepository;
+import com.medsync.medsync.Repo.MedicalRecordsRepository;
 import com.medsync.medsync.Repo.PatientRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,15 +29,18 @@ public class PatientAppointmentController {
 
     private final PatientRepository patientRepository;
     private final AppointmentRepository appointmentRepository;
+    private final MedicalRecordsRepository medicalRecordsRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     public PatientAppointmentController(
             PatientRepository patientRepository,
             AppointmentRepository appointmentRepository,
+            MedicalRecordsRepository medicalRecordsRepository,
             SimpMessagingTemplate messagingTemplate
     ) {
         this.patientRepository = patientRepository;
         this.appointmentRepository = appointmentRepository;
+        this.medicalRecordsRepository = medicalRecordsRepository;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -96,7 +102,7 @@ public class PatientAppointmentController {
         }
     }
 
-    // ✅ CREATE patient + appointment
+    // ✅ CREATE patient + appointment + medical record
     @PostMapping("/appointments")
     @Transactional
     public ResponseEntity<?> createPatientAppointment(@RequestBody PatientRegistrationDTO dto) {
@@ -139,14 +145,13 @@ public class PatientAppointmentController {
             p.setHealthConcern(dto.healthConcern() != null ? dto.healthConcern().trim() : "");
 
             Patient savedPatient = patientRepository.save(p);
-            System.out.println("Patient saved with ID: " + savedPatient.getPatientId());
+            System.out.println("✅ Patient saved with ID: " + savedPatient.getPatientId());
 
             // 2️⃣ Create Appointment
             Appointment appointment = new Appointment();
             appointment.setPatient(savedPatient);
             appointment.setDate(dto.date() != null ? dto.date() : LocalDate.now());
 
-            // Handle time field - check if it can be null in your entity
             if (dto.time() != null) {
                 appointment.setTime(dto.time());
             }
@@ -157,21 +162,62 @@ public class PatientAppointmentController {
             appointment.setBookingDate(LocalDateTime.now());
 
             Appointment savedAppointment = appointmentRepository.save(appointment);
-            System.out.println("Appointment saved with ID: " + savedAppointment.getAppointmentId());
+            System.out.println("✅ Appointment saved with ID: " + savedAppointment.getAppointmentId());
 
-            // 3️⃣ Reload full list
-            List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
+            // 3️⃣ Create Medical Record automatically with patient information
+            MedicalRecords medicalRecord = new MedicalRecords();
+            medicalRecord.setPatient(savedPatient);
 
-            // 4️⃣ WebSocket broadcast
-            broadcastAppointmentUpdate(updatedList);
+            // Chief Complaint = Health Concern from patient form
+            medicalRecord.setChiefComplaint(dto.healthConcern() != null ? dto.healthConcern().trim() : "");
 
-            // 5️⃣ Return created appointment
-            AppointmentsDTO result = updatedList.stream()
+            // Build Vitals string from patient data
+            StringBuilder vitals = new StringBuilder();
+            if (dto.height() != null && !dto.height().isEmpty()) {
+                vitals.append("Height: ").append(dto.height()).append(" cm");
+            }
+            if (dto.weight() != null && !dto.weight().isEmpty()) {
+                if (vitals.length() > 0) vitals.append(", ");
+                vitals.append("Weight: ").append(dto.weight()).append(" kg");
+            }
+            if (dto.bloodType() != null && !dto.bloodType().isEmpty()) {
+                if (vitals.length() > 0) vitals.append(", ");
+                vitals.append("Blood Type: ").append(dto.bloodType());
+            }
+            medicalRecord.setVitals(vitals.toString());
+
+            // Additional Notes = Medical History from patient
+            medicalRecord.setAdditionalNotes(dto.medicalHistory() != null ? dto.medicalHistory().trim() : "No known medical history");
+
+            // Set initial values (to be filled by doctor)
+            medicalRecord.setDiagnosis(""); // Doctor will fill
+            medicalRecord.setPrescription(""); // Doctor will fill
+            medicalRecord.setDoctorNotes(""); // Doctor will fill
+            medicalRecord.setFollowUpRequired(false);
+            medicalRecord.setFollowUpDate(null);
+
+            // Set record metadata
+            medicalRecord.setRecordCreatedDate(LocalDate.now());
+            medicalRecord.setStatus("Pending Review"); // Waiting for doctor to review
+
+            MedicalRecords savedRecord = medicalRecordsRepository.save(medicalRecord);
+            System.out.println("✅ Medical Record created with ID: " + savedRecord.getRecordId());
+
+            // 4️⃣ Reload full lists
+            List<AppointmentsDTO> updatedAppointments = appointmentRepository.loadAppointments();
+            List<MedicalRecordDTO> updatedRecords = medicalRecordsRepository.loadMedicalRecords();
+
+            // 5️⃣ WebSocket broadcasts
+            broadcastAppointmentUpdate(updatedAppointments);
+            broadcastMedicalRecordsUpdate(updatedRecords);
+
+            // 6️⃣ Return created appointment
+            AppointmentsDTO result = updatedAppointments.stream()
                     .filter(a -> a.appointmentId().equals(savedAppointment.getAppointmentId()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Created appointment not found in list"));
 
-            System.out.println("=== Appointment Created Successfully ===");
+            System.out.println("=== Appointment & Medical Record Created Successfully ===");
             return ResponseEntity.status(HttpStatus.CREATED).body(result);
 
         } catch (Exception e) {
@@ -185,14 +231,27 @@ public class PatientAppointmentController {
         }
     }
 
-    // ✅ WebSocket broadcast helper
+    // ✅ WebSocket broadcast helper for appointments
     private void broadcastAppointmentUpdate(List<AppointmentsDTO> updatedList) {
         try {
             Map<String, Object> payload = createPayload("appointments-update", updatedList);
-            messagingTemplate.convertAndSend("/topic/private/appointments", null, payload);
-            messagingTemplate.convertAndSend("/topic/public/appointments", null, payload);
+            messagingTemplate.convertAndSend("/topic/private/appointments", (Object) payload);
+            messagingTemplate.convertAndSend("/topic/public/appointments", (Object) payload);
+            System.out.println("✅ Appointments WebSocket broadcast successful");
         } catch (Exception e) {
-            System.err.println("Error broadcasting update: " + e.getMessage());
+            System.err.println("❌ Error broadcasting appointments update: " + e.getMessage());
+            // Don't fail the main operation if WebSocket broadcast fails
+        }
+    }
+
+    // ✅ WebSocket broadcast helper for medical records
+    private void broadcastMedicalRecordsUpdate(List<MedicalRecordDTO> updatedRecords) {
+        try {
+            Map<String, Object> payload = createPayload("records-update", updatedRecords);
+            messagingTemplate.convertAndSend("/topic/medical-records", (Object) payload);
+            System.out.println("✅ Medical Records WebSocket broadcast successful");
+        } catch (Exception e) {
+            System.err.println("❌ Error broadcasting medical records update: " + e.getMessage());
             // Don't fail the main operation if WebSocket broadcast fails
         }
     }

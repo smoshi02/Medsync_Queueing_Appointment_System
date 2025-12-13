@@ -1,5 +1,6 @@
 package com.medsync.medsync.filter;
 
+import com.medsync.medsync.Services.CustomStaffDetails;
 import com.medsync.medsync.Services.CustomUserDetailsService;
 import com.medsync.medsync.Services.JwtTokenService;
 import jakarta.servlet.FilterChain;
@@ -28,11 +29,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -43,22 +52,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             String username = jwtTokenService.extractUsername(token);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Load user details
-                var user = userDetailsService.loadUserByUsername(username);
+            if (username != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                // Set Spring Security context
-                var auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                UserDetails user = userDetailsService.loadUserByUsername(username);
+
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                                user, null, user.getAuthorities());
+
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
-                // Set the logged-in Staff entity into request attributes
-                if (user instanceof com.medsync.medsync.Services.CustomStaffDetails customUser) {
+                if (user instanceof CustomStaffDetails customUser) {
                     request.setAttribute("loggedStaff", customUser.getStaff());
                 }
             }
 
         } catch (JwtException e) {
-            // Invalid or expired token -> return 401 immediately
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }

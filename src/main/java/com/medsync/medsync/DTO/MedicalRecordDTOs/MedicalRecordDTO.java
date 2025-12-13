@@ -13,5 +13,6 @@ public record MedicalRecordDTO(
         Boolean followUpRequired,
         LocalDate followUpDate,
         String doctorNotes,
-        LocalDate recordCreatedDate
+        LocalDate recordCreatedDate,
+        String status
 ) {}
