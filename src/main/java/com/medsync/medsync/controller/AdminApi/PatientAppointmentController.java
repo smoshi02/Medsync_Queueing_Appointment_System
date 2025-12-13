@@ -1,22 +1,18 @@
 package com.medsync.medsync.controller.AdminApi;
 
-import com.medsync.medsync.DTO.AppointmentDTO;
 import com.medsync.medsync.DTO.AppointmentsDTO.AppointmentsDTO;
 import com.medsync.medsync.DTO.AppointmentsDTO.PatientRegistrationDTO;
 import com.medsync.medsync.Entities.Appointment;
 import com.medsync.medsync.Entities.Patient;
 import com.medsync.medsync.Repo.AppointmentRepository;
 import com.medsync.medsync.Repo.PatientRepository;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/patient")
 @CrossOrigin(origins = "*")
 public class PatientAppointmentController {
 
@@ -34,73 +30,26 @@ public class PatientAppointmentController {
         this.messagingTemplate = messagingTemplate;
     }
 
-    // ✅ GET all appointments
-    @GetMapping("/appointments")
-    public List<AppointmentsDTO> getAllAppointments() {
+    // ========================
+    // Public Routes (Patients)
+    // ========================
+
+    @GetMapping("/patients/appointments")
+    public List<AppointmentsDTO> getPublicAppointments() {
         return appointmentRepository.findAll().stream()
                 .map(a -> new AppointmentsDTO(
                         a.getAppointmentId(),
                         a.getPatient().getFirstName() + " " + a.getPatient().getLastName(),
-                        "N/A",
+                        a.getPatient().getEmail() != null ? a.getPatient().getEmail() : "N/A",
                         a.getDate(),
-                        a.getStatus()
+                        a.getStatus(),
+                        a.getHealthConcern()
                 ))
                 .toList();
     }
 
-    @PutMapping("/appointments/{id}")
-    public AppointmentsDTO updateAppointment(
-            @PathVariable Long id,
-            @RequestBody AppointmentDTO dto
-    ) {
-        Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
-
-        appointment.setStatus(dto.getStatus());
-        appointment.setDate(dto.getDate());
-        appointment.setHealthConcern(dto.getHealthConcern());
-        appointment.setType(dto.getType());
-
-        if (dto.getConfirmedDate() != null)
-            appointment.setConfirmedDate(dto.getConfirmedDate());
-
-        if (dto.getCheckedInTime() != null)
-            appointment.setCheckedInTime(dto.getCheckedInTime());
-
-        if (dto.getCompletedTime() != null)
-            appointment.setCompletedTime(dto.getCompletedTime());
-
-        appointmentRepository.save(appointment);
-
-        // Reload full list
-        List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
-
-        // Broadcast updated list to frontend via WebSocket
-        messagingTemplate.convertAndSend(
-                "/topic/private/appointments",
-                new WebSocketMessage("appointments-update", updatedList)
-        );
-
-        messagingTemplate.convertAndSend(
-                "/topic/public/appointments",
-                new WebSocketMessage("appointments-update", updatedList)
-        );
-
-        return new AppointmentsDTO(
-                appointment.getAppointmentId(),
-                appointment.getPatient().getFirstName() + " " + appointment.getPatient().getLastName(),
-                "N/A",
-                appointment.getDate(),
-                appointment.getStatus()
-        );
-    }
-
-
-    // ✅ POST new patient appointment
-    @PostMapping("/appointments")
-    public AppointmentsDTO createPatientAppointment(@RequestBody PatientRegistrationDTO dto) {
-
-        // 1️⃣ Save Patient
+    @PostMapping("/patients/queue")
+    public AppointmentsDTO createPublicAppointment(@RequestBody PatientRegistrationDTO dto) {
         Patient p = new Patient();
         p.setFirstName(dto.firstName() != null ? dto.firstName() : "");
         p.setMiddleName(dto.middleName() != null ? dto.middleName() : "");
@@ -109,61 +58,101 @@ public class PatientAppointmentController {
         p.setGender(dto.gender() != null ? dto.gender() : "");
         p.setCivilStatus(dto.civilStatus() != null ? dto.civilStatus() : "");
 
-        // LocalDate is now directly mapped
-        p.setDateOfBirth(dto.dateOfBirth());
+        // ✅ Parse dateOfBirth string safely
+        if (dto.dateOfBirth() != null && !dto.dateOfBirth().isEmpty()) {
+            p.setDateOfBirth(LocalDate.parse(dto.dateOfBirth()));
+        }
 
         p.setContactNumber(dto.contactNumber() != null ? dto.contactNumber() : "");
         p.setEmergencyContactNumber(dto.emergencyContactNumber() != null ? dto.emergencyContactNumber() : "");
-
         p.setAddressStreet(dto.addressStreet() != null ? dto.addressStreet() : "");
         p.setAddressBarangay(dto.addressBarangay() != null ? dto.addressBarangay() : "");
         p.setAddressMunicipality(dto.addressMunicipality() != null ? dto.addressMunicipality() : "");
         p.setAddressProvince(dto.addressProvince() != null ? dto.addressProvince() : "");
-
         p.setPriorityCategory(dto.priorityCategory() != null ? dto.priorityCategory() : "");
-
-        // Optional fields
         p.setHeight(dto.height() != null ? dto.height() : "");
         p.setWeight(dto.weight() != null ? dto.weight() : "");
         p.setBloodType(dto.bloodType() != null ? dto.bloodType() : "");
         p.setMedicalHistory(dto.medicalHistory() != null ? dto.medicalHistory() : "");
+        p.setEmail(dto.email() != null ? dto.email() : ""); // include email
 
         patientRepository.save(p);
 
-        // 2️⃣ Create Appointment
         Appointment appointment = new Appointment();
         appointment.setPatient(p);
         appointment.setDate(LocalDate.now());
         appointment.setHealthConcern(dto.healthConcern() != null ? dto.healthConcern() : "");
-        appointment.setType("Consultation");
         appointment.setStatus("Pending");
-        appointment.setBookingDate(LocalDateTime.now());
 
         appointmentRepository.save(appointment);
 
-        // 3️⃣ Prepare response DTO
-        AppointmentsDTO response = new AppointmentsDTO(
+        return new AppointmentsDTO(
                 appointment.getAppointmentId(),
                 p.getFirstName() + " " + p.getLastName(),
-                "N/A",
+                p.getEmail() != null ? p.getEmail() : "N/A",
                 appointment.getDate(),
-                appointment.getStatus()
+                appointment.getStatus(),
+                appointment.getHealthConcern()
         );
+    }
 
-        // 4️⃣ Broadcast updated list via WebSocket
-        List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
+    // ========================
+    // Admin Routes (Internal)
+    // ========================
+
+    @GetMapping("/api/patient/appointments")
+    public List<AppointmentsDTO> getAdminAppointments() {
+        return appointmentRepository.findAll().stream()
+                .map(a -> new AppointmentsDTO(
+                        a.getAppointmentId(),
+                        a.getPatient().getFirstName() + " " + a.getPatient().getLastName(),
+                        a.getPatient().getEmail() != null ? a.getPatient().getEmail() : "N/A",
+                        a.getDate(),
+                        a.getStatus(),
+                        a.getHealthConcern()
+                ))
+                .toList();
+    }
+
+    @PutMapping("/api/patient/appointments/{id}")
+    public AppointmentsDTO updateAdminAppointment(
+            @PathVariable Long id,
+            @RequestBody AppointmentsDTO dto
+    ) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        appointment.setStatus(dto.status());
+        appointment.setDate(dto.date());
+        appointment.setHealthConcern(dto.healthConcern());
+
+        appointmentRepository.save(appointment);
+
+        List<AppointmentsDTO> updatedList = appointmentRepository.findAll().stream()
+                .map(a -> new AppointmentsDTO(
+                        a.getAppointmentId(),
+                        a.getPatient().getFirstName() + " " + a.getPatient().getLastName(),
+                        a.getPatient().getEmail() != null ? a.getPatient().getEmail() : "N/A",
+                        a.getDate(),
+                        a.getStatus(),
+                        a.getHealthConcern()
+                ))
+                .toList();
 
         messagingTemplate.convertAndSend("/topic/private/appointments",
                 new WebSocketMessage("appointments-update", updatedList));
-
         messagingTemplate.convertAndSend("/topic/public/appointments",
                 new WebSocketMessage("appointments-update", updatedList));
 
-        return response;
+        return new AppointmentsDTO(
+                appointment.getAppointmentId(),
+                appointment.getPatient().getFirstName() + " " + appointment.getPatient().getLastName(),
+                appointment.getPatient().getEmail() != null ? appointment.getPatient().getEmail() : "N/A",
+                appointment.getDate(),
+                appointment.getStatus(),
+                appointment.getHealthConcern()
+        );
     }
 
-
-    // WebSocket message structure
     record WebSocketMessage(String type, Object data) {}
-
 }

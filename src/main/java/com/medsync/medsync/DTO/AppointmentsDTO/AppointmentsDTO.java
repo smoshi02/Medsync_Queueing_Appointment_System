@@ -7,5 +7,6 @@ public record AppointmentsDTO(
         String patientName,
         String staffName,
         LocalDate date,
-        String status
+        String status,
+        String healthConcern
 ) {}

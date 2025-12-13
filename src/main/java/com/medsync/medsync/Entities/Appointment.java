@@ -2,7 +2,6 @@ package com.medsync.medsync.Entities;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "appointment")
@@ -13,14 +12,8 @@ public class Appointment {
     private Long appointmentId;
 
     private LocalDate date;
-    private String type;
     private String status;
     private String healthConcern;
-
-    private LocalDateTime bookingDate;
-    private LocalDateTime confirmedDate;
-    private LocalDateTime checkedInTime;
-    private LocalDateTime completedTime;
 
     @ManyToOne
     @JoinColumn(name = "patient_id")
@@ -28,107 +21,32 @@ public class Appointment {
 
     @ManyToOne
     @JoinColumn(name = "staff_id")
-    private Staff staff;
+    private Doctor staff;
 
-    @OneToOne
-    @JoinColumn(name = "cancel_id")
-    private Cancellation cancellation;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "medical_record_id", referencedColumnName = "recordId")
+    private MedicalRecords medicalRecord;
 
     public Appointment() {}
 
-    public Long getAppointmentId() {
-        return appointmentId;
-    }
+    public Long getAppointmentId() { return appointmentId; }
+    public void setAppointmentId(Long appointmentId) { this.appointmentId = appointmentId; }
 
-    public void setAppointmentId(Long appointmentId) {
-        this.appointmentId = appointmentId;
-    }
+    public LocalDate getDate() { return date; }
+    public void setDate(LocalDate date) { this.date = date; }
 
-    public LocalDate getDate() {
-        return date;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
+    public String getHealthConcern() { return healthConcern; }
+    public void setHealthConcern(String healthConcern) { this.healthConcern = healthConcern; }
 
-    public String getType() {
-        return type;
-    }
+    public Patient getPatient() { return patient; }
+    public void setPatient(Patient patient) { this.patient = patient; }
 
-    public void setType(String type) {
-        this.type = type;
-    }
+    public Doctor getStaff() { return staff; }
+    public void setStaff(Doctor staff) { this.staff = staff; }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getHealthConcern() {
-        return healthConcern;
-    }
-
-    public void setHealthConcern(String healthConcern) {
-        this.healthConcern = healthConcern;
-    }
-
-    public LocalDateTime getBookingDate() {
-        return bookingDate;
-    }
-
-    public void setBookingDate(LocalDateTime bookingDate) {
-        this.bookingDate = bookingDate;
-    }
-
-    public LocalDateTime getConfirmedDate() {
-        return confirmedDate;
-    }
-
-    public void setConfirmedDate(LocalDateTime confirmedDate) {
-        this.confirmedDate = confirmedDate;
-    }
-
-    public LocalDateTime getCheckedInTime() {
-        return checkedInTime;
-    }
-
-    public void setCheckedInTime(LocalDateTime checkedInTime) {
-        this.checkedInTime = checkedInTime;
-    }
-
-    public LocalDateTime getCompletedTime() {
-        return completedTime;
-    }
-
-    public void setCompletedTime(LocalDateTime completedTime) {
-        this.completedTime = completedTime;
-    }
-
-    public Patient getPatient() {
-        return patient;
-    }
-
-    public void setPatient(Patient patient) {
-        this.patient = patient;
-    }
-
-    public Staff getStaff() {
-        return staff;
-    }
-
-    public void setStaff(Staff staff) {
-        this.staff = staff;
-    }
-
-    public Cancellation getCancellation() {
-        return cancellation;
-    }
-
-    public void setCancellation(Cancellation cancellation) {
-        this.cancellation = cancellation;
-    }
+    public MedicalRecords getMedicalRecord() { return medicalRecord; }
+    public void setMedicalRecord(MedicalRecords medicalRecord) { this.medicalRecord = medicalRecord; }
 }

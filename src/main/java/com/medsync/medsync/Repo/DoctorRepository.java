@@ -11,24 +11,21 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Doctor findByUsername(String username);
     boolean existsByUsername(String username);
 
-    // Load doctor settings for update form (MultipartFile handled in controller)
-    // SettingsDTO loadSettings(Long userId); // optional, remove if unused
+    Doctor findFirstByOrderByDoctorIdAsc(); // ✅ ADD THIS
 
-    // Load doctor info to display in frontend (DTO with Strings/Base64)
     @Query("""
-   SELECT new com.medsync.medsync.DTO.SettingsDTO.SettingsResponseDTO(
-       d.firstName,
-       d.middleName,
-       d.lastName,
-       d.email,
-       'Doctor',
-       d.contactNumber,
-       null,
-       d.doctorId
-   )
-   FROM Doctor d
-   WHERE d.doctorId = :userId
-   """)
+       SELECT new com.medsync.medsync.DTO.SettingsDTO.SettingsResponseDTO(
+           d.firstName,
+           d.middleName,
+           d.lastName,
+           d.email,
+           'Doctor',
+           d.contactNumber,
+           null,
+           d.doctorId
+       )
+       FROM Doctor d
+       WHERE d.doctorId = :userId
+    """)
     SettingsResponseDTO loadSettingsResponse(Long userId);
-
 }
