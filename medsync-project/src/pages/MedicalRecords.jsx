@@ -14,13 +14,20 @@ function MedicalRecords() {
     try {
       setLoading(true);
       const data = await fetchWithAuth("/api/medical-records");
+      console.log("📋 Loaded medical records:", data);
       setRecords(data);
       
-      // Get user role from localStorage
-      const role = localStorage.getItem("userRole") || "";
-      setUserRole(role);
-      console.log("User role:", role);
+      // Get user role from localStorage and normalize it
+      const roleRaw = localStorage.getItem("role") || "";
+      const normalizedRole = roleRaw.replace(/^(ROLE_)+/g, "").toUpperCase();
+      
+      console.log("👤 User role check in MedicalRecords:");
+      console.log("  - Raw role from storage:", roleRaw);
+      console.log("  - Normalized role:", normalizedRole);
+      
+      setUserRole(normalizedRole);
     } catch (err) {
+      console.error("❌ Error loading records:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -30,7 +37,10 @@ function MedicalRecords() {
   useEffect(() => { loadRecords(); }, []);
 
   useStompWebSocket(["/topic/medical-records"], (msg) => {
-    if (msg.type === "records-update") setRecords(msg.data);
+    if (msg.type === "records-update") {
+      console.log("📡 WebSocket update received");
+      setRecords(msg.data);
+    }
   });
 
   const filteredRecords = records.filter(r =>
@@ -75,6 +85,9 @@ function MedicalRecords() {
             Medical Records
           </h1>
           <p className="text-gray-600">Complete patient information and medical assessments</p>
+          {userRole && (
+            <p className="text-sm text-gray-500 mt-1">Logged in as: <span className="font-semibold">{userRole}</span></p>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-violet-100">
@@ -102,6 +115,13 @@ function MedicalRecords() {
                 <p className="text-2xl font-bold text-purple-600">{filteredRecords.length}</p>
                 <p className="text-xs text-gray-600 uppercase tracking-wide">Showing</p>
               </div>
+              <div className="h-10 w-px bg-violet-200"></div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">
+                  {records.filter(r => r.status === "Completed").length}
+                </p>
+                <p className="text-xs text-gray-600 uppercase tracking-wide">Completed</p>
+              </div>
             </div>
           </div>
         </div>
@@ -121,11 +141,12 @@ function MedicalRecords() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[1000px]">
                 <thead>
                   <tr className="bg-gradient-to-r from-violet-100 to-purple-100">
                     <th className="p-4 text-left text-violet-900 font-semibold">Record #</th>
                     <th className="p-4 text-left text-violet-900 font-semibold">Patient</th>
+                    <th className="p-4 text-left text-violet-900 font-semibold">Contact</th>
                     <th className="p-4 text-left text-violet-900 font-semibold">Chief Complaint</th>
                     <th className="p-4 text-left text-violet-900 font-semibold">Diagnosis</th>
                     <th className="p-4 text-left text-violet-900 font-semibold">Status</th>
@@ -144,6 +165,9 @@ function MedicalRecords() {
                           </div>
                           <span className="font-medium text-gray-800">{record.patientName}</span>
                         </div>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-gray-700">{record.contactNumber || "—"}</span>
                       </td>
                       <td className="p-4 max-w-xs">
                         <span className="text-gray-700 line-clamp-2">{record.chiefComplaint || "—"}</span>
@@ -178,7 +202,7 @@ function MedicalRecords() {
                           onClick={() => setSelectedRecord(record)}
                           className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg hover:from-violet-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 text-sm font-medium"
                         >
-                          View Full Record
+                          View/Edit
                         </button>
                       </td>
                     </tr>
@@ -213,14 +237,26 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
     followUpDate: record.followUpDate || ""
   });
 
-  const isDoctor = userRole === "DOCTOR" || userRole === "ROLE_DOCTOR";
+  // Normalize role and check if user is a doctor
+  const normalizedRole = userRole.replace(/^(ROLE_)+/g, "").toUpperCase();
+  const isDoctor = normalizedRole === "DOCTOR";
   const canEdit = isDoctor && record.status !== "Completed";
+
+  console.log("👤 Modal Role Check:");
+  console.log("  - Raw user role:", userRole);
+  console.log("  - Normalized role:", normalizedRole);
+  console.log("  - Is Doctor:", isDoctor);
+  console.log("  - Can Edit:", canEdit);
+  console.log("  - Record status:", record.status);
 
   const handleSave = async () => {
     if (!doctorNotes.diagnosis.trim()) {
-      alert("Please enter a diagnosis");
+      alert("⚠️ Please enter a diagnosis");
       return;
     }
+
+    console.log("💾 Saving doctor assessment...");
+    console.log("Data to save:", doctorNotes);
 
     setSaving(true);
     try {
@@ -230,15 +266,18 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
         body: JSON.stringify(doctorNotes)
       });
 
-      if (res.status === "success") {
+      console.log("📤 Server response:", res);
+
+      if (res.status === "success" || res.message?.includes("success")) {
         alert("✅ Medical record updated successfully!");
         setIsEditing(false);
         onUpdate();
         onClose();
       } else {
-        alert("⚠️ " + (res.message || "Failed to update"));
+        alert("⚠️ " + (res.message || res.error || "Failed to update"));
       }
     } catch (err) {
+      console.error("❌ Update error:", err);
       alert("❌ Failed: " + err.message);
     } finally {
       setSaving(false);
@@ -248,7 +287,6 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
         <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-6 flex justify-between items-center sticky top-0 z-10">
           <div>
             <h2 className="text-3xl font-bold mb-1">Medical Record #{record.recordId}</h2>
@@ -262,7 +300,6 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
         </div>
 
         <div className="p-8 space-y-8">
-          {/* Status & Action Bar */}
           <div className="flex justify-between items-center flex-wrap gap-4">
             <span className={`px-6 py-3 rounded-full text-lg font-bold border-2 ${
               record.status === "Completed" 
@@ -289,19 +326,55 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
             
             {!isDoctor && (
               <div className="bg-gray-100 border-2 border-gray-300 rounded-lg px-4 py-2">
-                <p className="text-gray-600 font-semibold text-sm">👁️ View Only ({userRole || "Staff/Admin"})</p>
+                <p className="text-gray-600 font-semibold text-sm">👁️ View Only ({normalizedRole})</p>
               </div>
             )}
           </div>
 
-          {/* PATIENT INFORMATION - From Appointment Form (Purple Section) */}
           <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-8 border-2 border-violet-200">
             <h3 className="text-2xl font-bold text-violet-900 mb-6 flex items-center gap-3">
-              <span className="text-3xl">📋</span> Patient Information (From Appointment Form)
+              <span className="text-3xl">📋</span> Patient Information
             </h3>
             
             <div className="space-y-6">
-              {/* Chief Complaint - Highlighted */}
+              {/* Personal Information Card */}
+              <div className="bg-white rounded-xl p-6 border-2 border-violet-300 shadow-md">
+                <h4 className="text-lg font-bold text-violet-800 mb-4 flex items-center gap-2">
+                  <span>👤</span> Personal Information
+                </h4>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600 font-medium">Full Name:</p>
+                    <p className="text-gray-900 font-semibold text-base">{record.patientName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 font-medium">Contact Number:</p>
+                    <p className="text-gray-900 font-semibold">{record.contactNumber || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 font-medium">Email:</p>
+                    <p className="text-gray-900 font-semibold">{record.email || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 font-medium">Date of Birth:</p>
+                    <p className="text-gray-900 font-semibold">
+                      {record.dateOfBirth 
+                        ? new Date(record.dateOfBirth).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 font-medium">Blood Type:</p>
+                    <p className="text-gray-900 font-semibold">{record.bloodType || "—"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Chief Complaint Card */}
               <div className="bg-white rounded-xl p-6 border-2 border-violet-300 shadow-md">
                 <h4 className="text-lg font-bold text-violet-800 mb-3 flex items-center gap-2">
                   <span>🩺</span> Chief Complaint / Health Concern
@@ -311,33 +384,33 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
                 </p>
               </div>
 
-              {/* Vitals */}
+              {/* Vital Signs Card */}
               {record.vitals && (
                 <div className="bg-white rounded-xl p-6 border border-violet-200">
                   <h4 className="text-lg font-bold text-violet-800 mb-3 flex items-center gap-2">
                     <span>💊</span> Vital Signs
                   </h4>
-                  <p className="text-gray-700 font-medium">{record.vitals}</p>
+                  <p className="text-gray-700 font-medium whitespace-pre-wrap">{record.vitals}</p>
                 </div>
               )}
 
-              {/* Complete Patient Details */}
-              <div className="bg-white rounded-xl p-6 border border-violet-200">
-                <h4 className="text-lg font-bold text-violet-800 mb-4 flex items-center gap-2">
-                  <span>📄</span> Complete Patient Details
-                </h4>
-                <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
-{record.additionalNotes || "No additional patient information available"}
-                  </pre>
+              {/* Additional Notes Card */}
+              {record.additionalNotes && (
+                <div className="bg-white rounded-xl p-6 border border-violet-200">
+                  <h4 className="text-lg font-bold text-violet-800 mb-4 flex items-center gap-2">
+                    <span>📄</span> Additional Patient Information
+                  </h4>
+                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+{record.additionalNotes}
+                    </pre>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* DOCTOR'S ASSESSMENT SECTION (Blue Section) */}
           {!isEditing ? (
-            // View Mode
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border-2 border-blue-200">
               <h3 className="text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
                 <span className="text-3xl">👨‍⚕️</span> Doctor's Clinical Assessment
@@ -383,7 +456,6 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
               </div>
             </div>
           ) : (
-            // Edit Mode - ONLY FOR DOCTORS
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 border-2 border-green-300">
               <h3 className="text-2xl font-bold text-green-900 mb-6 flex items-center gap-3">
                 <span className="text-3xl">✍️</span> Complete Doctor Assessment
@@ -469,7 +541,6 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
             </div>
           )}
 
-          {/* Record Metadata */}
           <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
             <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
               <span>📅</span> Record Information
@@ -494,7 +565,6 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="bg-gradient-to-r from-violet-50 to-purple-50 px-8 py-6 border-t-2 border-violet-200 flex justify-end sticky bottom-0">
           <button
             onClick={onClose}
