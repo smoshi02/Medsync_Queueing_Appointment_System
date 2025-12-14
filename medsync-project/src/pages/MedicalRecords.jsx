@@ -36,10 +36,22 @@ function MedicalRecords() {
 
   useEffect(() => { loadRecords(); }, []);
 
+  // Updated WebSocket handler to handle both formats
   useStompWebSocket(["/topic/medical-records"], (msg) => {
-    if (msg.type === "records-update") {
-      console.log("📡 WebSocket update received");
-      setRecords(msg.data);
+    console.log("📡 WebSocket message received:", msg);
+    
+    // Handle both wrapped payload and direct list
+    if (msg && typeof msg === 'object') {
+      if (msg.type === "records-update" && msg.data) {
+        console.log("📡 Processing wrapped payload update");
+        setRecords(msg.data);
+      } else if (Array.isArray(msg)) {
+        console.log("📡 Processing direct list update");
+        setRecords(msg);
+      } else {
+        console.log("📡 Unknown message format, reloading...");
+        loadRecords();
+      }
     }
   });
 
@@ -337,7 +349,6 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
             </h3>
             
             <div className="space-y-6">
-              {/* Personal Information Card */}
               <div className="bg-white rounded-xl p-6 border-2 border-violet-300 shadow-md">
                 <h4 className="text-lg font-bold text-violet-800 mb-4 flex items-center gap-2">
                   <span>👤</span> Personal Information
@@ -374,7 +385,6 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
                 </div>
               </div>
 
-              {/* Chief Complaint Card */}
               <div className="bg-white rounded-xl p-6 border-2 border-violet-300 shadow-md">
                 <h4 className="text-lg font-bold text-violet-800 mb-3 flex items-center gap-2">
                   <span>🩺</span> Chief Complaint / Health Concern
@@ -384,7 +394,6 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
                 </p>
               </div>
 
-              {/* Vital Signs Card */}
               {record.vitals && (
                 <div className="bg-white rounded-xl p-6 border border-violet-200">
                   <h4 className="text-lg font-bold text-violet-800 mb-3 flex items-center gap-2">
@@ -394,16 +403,13 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
                 </div>
               )}
 
-              {/* Additional Notes Card */}
               {record.additionalNotes && (
                 <div className="bg-white rounded-xl p-6 border border-violet-200">
                   <h4 className="text-lg font-bold text-violet-800 mb-4 flex items-center gap-2">
                     <span>📄</span> Additional Patient Information
                   </h4>
                   <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
-{record.additionalNotes}
-                    </pre>
+                    <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">{record.additionalNotes}</pre>
                   </div>
                 </div>
               )}

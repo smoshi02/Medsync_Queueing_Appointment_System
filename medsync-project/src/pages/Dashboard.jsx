@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from "react";
 import { fetchWithAuth } from "../js/fetchHelper";
 import { useStompWebSocket } from "../js/useStompWebSocket";
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Cell,
 } from "recharts";
 
 function Dashboard() {
@@ -22,24 +23,44 @@ function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [chartFilter, setChartFilter] = useState("weekly");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showYearPicker, setShowYearPicker] = useState(false);
+
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
 
   // =======================
   // Load dashboard data
   // =======================
-  const loadStats = async () => {
+  const loadStats = async (filter = "weekly", month = null, year = null) => {
     try {
       setLoading(true);
 
-      const [stats, weekly, recent] = await Promise.all([
+      let chartEndpoint = `/api/dashboard/served?filter=${filter}`;
+      if (filter === "monthly" && month) {
+        chartEndpoint += `&month=${month}&year=${year || selectedYear}`;
+      } else if (filter === "yearly" && year) {
+        chartEndpoint += `&year=${year}`;
+      }
+
+      const [stats, chartData, recent] = await Promise.all([
         fetchWithAuth("/api/dashboard/stats"),
-        fetchWithAuth("/api/dashboard/weekly-served"),
+        fetchWithAuth(chartEndpoint),
         fetchWithAuth("/api/dashboard/recent-activity"),
       ]);
 
-      const weeklyData = Array.isArray(weekly)
-        ? weekly.map((w) => ({
-            weekLabel: w.weekLabel,
-            totalServed: w.totalServed ?? 0,
+      const processedData = Array.isArray(chartData)
+        ? chartData.map((w) => ({
+            label: w.weekLabel,
+            count: w.totalServed ?? 0,
           }))
         : [];
 
@@ -47,7 +68,7 @@ function Dashboard() {
         totalPatients: stats.totalPatients ?? 0,
         activeQueue: stats.activeQueue ?? 0,
         completedServices: stats.completedServices ?? 0,
-        weeklyStats: weeklyData,
+        weeklyStats: processedData,
         activityLogs: Array.isArray(recent) ? recent : [],
       });
     } catch (err) {
@@ -58,8 +79,14 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    loadStats();
-  }, []);
+    if (chartFilter === "monthly") {
+      loadStats(chartFilter, selectedMonth, selectedYear);
+    } else if (chartFilter === "yearly") {
+      loadStats(chartFilter, null, selectedYear);
+    } else {
+      loadStats(chartFilter);
+    }
+  }, [chartFilter, selectedMonth, selectedYear]);
 
   // =======================
   // Realtime updates via WebSocket
@@ -68,19 +95,49 @@ function Dashboard() {
     if (msg.type === "stats-update") {
       setSummary((prev) => ({
         ...prev,
-        ...msg.data,
+        totalPatients: msg.data.totalPatients ?? prev.totalPatients,
+        activeQueue: msg.data.activeQueue ?? prev.activeQueue,
+        completedServices: msg.data.completedServices ?? prev.completedServices,
       }));
+      if (chartFilter === "monthly") {
+        loadStats(chartFilter, selectedMonth, selectedYear);
+      } else if (chartFilter === "yearly") {
+        loadStats(chartFilter, null, selectedYear);
+      } else {
+        loadStats(chartFilter);
+      }
     }
   });
 
   // =======================
-  // Memoized sorted weekly stats
+  // Chart colors based on value
   // =======================
-  const sortedWeeklyStats = useMemo(() => {
-    return [...summary.weeklyStats].sort((a, b) =>
-      a.weekLabel.localeCompare(b.weekLabel)
-    );
+  const getBarColor = (value, maxValue) => {
+    const ratio = value / maxValue;
+    if (ratio > 0.7) return "#7c3aed";
+    if (ratio > 0.4) return "#a78bfa";
+    return "#c4b5fd";
+  };
+
+  const maxCount = useMemo(() => {
+    return Math.max(...summary.weeklyStats.map((d) => d.count), 1);
   }, [summary.weeklyStats]);
+
+  const handleFilterChange = (filter) => {
+    setChartFilter(filter);
+    setShowMonthPicker(false);
+    setShowYearPicker(false);
+  };
+
+  const handleMonthSelect = (monthIndex) => {
+    setSelectedMonth(monthIndex + 1);
+    setShowMonthPicker(false);
+  };
+
+  const handleYearSelect = (year) => {
+    setSelectedYear(year);
+    setShowYearPicker(false);
+  };
 
   if (loading)
     return (
@@ -134,41 +191,167 @@ function Dashboard() {
           />
         </div>
 
-        {/* WEEKLY CHART */}
+        {/* HISTOGRAM CHART WITH FILTERS */}
         <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-violet-100">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Weekly Served Patients</h2>
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold text-gray-800">Patients Served</h2>
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+            </div>
+            
+            {/* Filter Buttons */}
+            <div className="flex gap-2 bg-violet-50 p-1 rounded-lg flex-wrap">
+              <button
+                onClick={() => handleFilterChange("today")}
+                className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 ${
+                  chartFilter === "today"
+                    ? "bg-violet-600 text-white shadow-md"
+                    : "text-violet-700 hover:bg-violet-100"
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => handleFilterChange("weekly")}
+                className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 ${
+                  chartFilter === "weekly"
+                    ? "bg-violet-600 text-white shadow-md"
+                    : "text-violet-700 hover:bg-violet-100"
+                }`}
+              >
+                Weekly
+              </button>
+              
+              {/* Monthly with Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    handleFilterChange("monthly");
+                    setShowMonthPicker(!showMonthPicker);
+                  }}
+                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 flex items-center gap-2 ${
+                    chartFilter === "monthly"
+                      ? "bg-violet-600 text-white shadow-md"
+                      : "text-violet-700 hover:bg-violet-100"
+                  }`}
+                >
+                  {chartFilter === "monthly" ? months[selectedMonth - 1] : "Monthly"}
+                  <span className="text-xs">▼</span>
+                </button>
+                
+                {showMonthPicker && chartFilter === "monthly" && (
+                  <div className="absolute top-full mt-2 bg-white rounded-lg shadow-xl border border-violet-200 p-2 z-50 grid grid-cols-3 gap-2 max-h-80 overflow-y-auto">
+                    {months.map((month, index) => (
+                      <button
+                        key={month}
+                        onClick={() => handleMonthSelect(index)}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                          selectedMonth === index + 1
+                            ? "bg-violet-600 text-white"
+                            : "bg-violet-50 text-violet-700 hover:bg-violet-100"
+                        }`}
+                      >
+                        {month}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Yearly with Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    handleFilterChange("yearly");
+                    setShowYearPicker(!showYearPicker);
+                  }}
+                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 flex items-center gap-2 ${
+                    chartFilter === "yearly"
+                      ? "bg-violet-600 text-white shadow-md"
+                      : "text-violet-700 hover:bg-violet-100"
+                  }`}
+                >
+                  {chartFilter === "yearly" ? selectedYear : "Yearly"}
+                  <span className="text-xs">▼</span>
+                </button>
+                
+                {showYearPicker && chartFilter === "yearly" && (
+                  <div className="absolute top-full mt-2 bg-white rounded-lg shadow-xl border border-violet-200 p-2 z-50 max-h-60 overflow-y-auto">
+                    {yearOptions.map((year) => (
+                      <button
+                        key={year}
+                        onClick={() => handleYearSelect(year)}
+                        className={`block w-full px-4 py-2 rounded-md text-sm font-medium transition-all text-left ${
+                          selectedYear === year
+                            ? "bg-violet-600 text-white"
+                            : "bg-violet-50 text-violet-700 hover:bg-violet-100"
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          {sortedWeeklyStats.length === 0 ? (
+
+          {summary.weeklyStats.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📊</div>
-              <p className="text-gray-500 font-medium">No weekly data yet.</p>
+              <p className="text-gray-500 font-medium">
+                No data available for the selected period.
+              </p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={320}>
-              <AreaChart data={sortedWeeklyStats} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="violetGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e9d5ff" />
-                <XAxis dataKey="weekLabel" stroke="#7c3aed" style={{ fontSize: '14px', fontWeight: '500' }} />
-                <YAxis allowDecimals={false} stroke="#7c3aed" style={{ fontSize: '14px', fontWeight: '500' }} />
+            <ResponsiveContainer width="100%" height={340}>
+              <BarChart 
+                data={summary.weeklyStats} 
+                margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e9d5ff" vertical={false} />
+                <XAxis 
+                  dataKey="label" 
+                  stroke="#7c3aed" 
+                  style={{ fontSize: '13px', fontWeight: '600' }}
+                  tickLine={false}
+                  angle={chartFilter === "monthly" ? -45 : 0}
+                  textAnchor={chartFilter === "monthly" ? "end" : "middle"}
+                  height={chartFilter === "monthly" ? 80 : 60}
+                />
+                <YAxis 
+                  allowDecimals={false} 
+                  stroke="#7c3aed" 
+                  style={{ fontSize: '13px', fontWeight: '600' }}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#7c3aed",
+                    backgroundColor: "#1f2937",
                     border: "none",
                     borderRadius: "12px",
                     color: "white",
-                    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+                    padding: "12px 16px",
                   }}
-                  cursor={{ stroke: '#8b5cf6', strokeWidth: 2 }}
+                  cursor={{ fill: 'rgba(124, 58, 237, 0.1)' }}
+                  labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
                 />
-                <Area type="monotone" dataKey="totalServed" stroke="#7c3aed" strokeWidth={3} fill="url(#violetGradient)" animationDuration={1000} />
-              </AreaChart>
+                <Bar 
+                  dataKey="count" 
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={chartFilter === "monthly" ? 40 : 80}
+                  animationDuration={800}
+                >
+                  {summary.weeklyStats.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={getBarColor(entry.count, maxCount)}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           )}
         </div>
