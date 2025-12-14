@@ -1,11 +1,14 @@
 package com.medsync.medsync.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.List;
 
 @Entity
-@Table(name = "service")
+@Table(name = "service", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_service_name", columnNames = "serviceName")
+})
 public class Service {
 
     @Id
@@ -17,6 +20,7 @@ public class Service {
     private String serviceStatus;
 
     @OneToMany(mappedBy = "service")
+    @JsonIgnore
     private List<Queue> queues;
 
 

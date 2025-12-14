@@ -3,6 +3,7 @@ package com.medsync.medsync.controller.AdminApi;
 import com.medsync.medsync.DTO.MedicalRecordDTOs.MedicalRecordDTO;
 import com.medsync.medsync.Entities.MedicalRecords;
 import com.medsync.medsync.Repo.MedicalRecordsRepository;
+import com.medsync.medsync.Services.EmailService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -11,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,11 +24,14 @@ public class MedicalRecordsController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final MedicalRecordsRepository medicalRecordsRepository;
+    private final EmailService emailService; // ADD THIS
 
     public MedicalRecordsController(SimpMessagingTemplate messagingTemplate,
-                                    MedicalRecordsRepository medicalRecordsRepository) {
+                                    MedicalRecordsRepository medicalRecordsRepository,
+                                    EmailService emailService) { // ADD THIS PARAMETER
         this.messagingTemplate = messagingTemplate;
         this.medicalRecordsRepository = medicalRecordsRepository;
+        this.emailService = emailService; // ADD THIS
     }
 
     // ✅ GET all medical records (accessible by all authenticated users)
@@ -60,7 +65,7 @@ public class MedicalRecordsController {
         }
     }
 
-    // ✅ UPDATE medical record (DOCTOR ONLY)
+    // ✅ UPDATE medical record (DOCTOR ONLY) - WITH EMAIL NOTIFICATION
     @PutMapping("/{id}/doctor-update")
     public ResponseEntity<?> updateMedicalRecord(
             @PathVariable Long id,
@@ -140,11 +145,50 @@ public class MedicalRecordsController {
             medicalRecordsRepository.save(record);
             System.out.println("✅ Medical record saved successfully");
 
+            // ====== NEW: SEND EMAIL TO PATIENT ======
+            try {
+                // Get patient info from the record
+                MedicalRecordDTO patientInfo = medicalRecordsRepository.loadMedicalRecords()
+                        .stream()
+                        .filter(r -> r.recordId().equals(id))
+                        .findFirst()
+                        .orElse(null);
+
+                if (patientInfo != null && patientInfo.email() != null && !patientInfo.email().trim().isEmpty()) {
+                    System.out.println("📧 Sending email notification to: " + patientInfo.email());
+
+                    // Format follow-up date for email
+                    String followUpDateStr = request.followUpDate() != null
+                            ? request.followUpDate().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"))
+                            : null;
+
+                    emailService.sendMedicalRecordCompletedEmail(
+                            patientInfo.email(),
+                            patientInfo.patientName(),
+                            id,
+                            request.diagnosis(),
+                            request.prescription(),
+                            request.doctorNotes(),
+                            request.followUpRequired() != null && request.followUpRequired(),
+                            followUpDateStr
+                    );
+
+                    System.out.println("✅ Email notification sent successfully");
+                } else {
+                    System.out.println("⚠️ No email address found for patient, skipping email notification");
+                }
+            } catch (Exception emailError) {
+                // Don't fail the whole request if email fails
+                System.err.println("⚠️ Failed to send email notification: " + emailError.getMessage());
+                emailError.printStackTrace();
+            }
+            // ====== END EMAIL NOTIFICATION ======
+
             // Broadcast update via WebSocket
             broadcastMedicalRecordsUpdate();
 
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Medical record updated successfully");
+            response.put("message", "Medical record updated successfully and patient notified");
             response.put("status", "success");
             response.put("recordId", id);
 

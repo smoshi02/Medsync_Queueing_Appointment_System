@@ -6,8 +6,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity // Enable @PreAuthorize annotations
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
@@ -44,7 +47,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174", "http://192.168.0.102:5173"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
@@ -64,12 +67,41 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // ========================================
+                        // PUBLIC PATIENT QUEUE ENDPOINTS
+                        // ========================================
+
+                        // Allow GET requests (view-only access for everyone)
+                        .requestMatchers(HttpMethod.GET, "/api/patient-queue/cards").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/patient-queue/service/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/patient-queue/**").permitAll()
+
+                        // Allow POST for patient self-registration
+                        .requestMatchers(HttpMethod.POST, "/api/patient-queue").permitAll()
+
+                        // Protected: PUT, DELETE, PATCH require STAFF or DOCTOR role
+                        // These are enforced by @PreAuthorize in the controller
+                        .requestMatchers(HttpMethod.PUT, "/api/patient-queue/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/patient-queue/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/patient-queue/**").authenticated()
+
+                        // ========================================
+                        // OTHER PUBLIC ENDPOINTS
+                        // ========================================
+
                         // Public patient appointment endpoint
                         .requestMatchers("/api/patient/appointments").permitAll()
+
                         // Allow login/auth endpoints without token
                         .requestMatchers("/api/auth/**").permitAll()
-                        // Allow dashboard endpoints for testing
+
+                        // Allow dashboard endpoints
                         .requestMatchers("/api/dashboard/**").permitAll()
+
+                        // ========================================
+                        // ALL OTHER API ENDPOINTS
+                        // ========================================
+
                         // All other API endpoints require authentication
                         .anyRequest().authenticated()
                 )
@@ -81,14 +113,12 @@ public class SecurityConfig {
                         .authenticationEntryPoint((req, res, excep) -> {
                             res.setContentType("application/json");
                             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            res.getWriter().write("{\"error\":\"Unauthorized\"}");
+                            res.getWriter().write("{\"error\":\"Unauthorized - Authentication required\"}");
                         })
                 );
 
         return http.build();
     }
-
-
 
     // --- Web Security (HTML + WebSocket handshake) ---
     @Bean

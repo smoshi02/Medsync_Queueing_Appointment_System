@@ -142,4 +142,79 @@ public class EmailService {
             e.printStackTrace();
         }
     }
+
+    /**
+     * NEW METHOD: Send email when doctor completes medical record assessment
+     */
+    public void sendMedicalRecordCompletedEmail(
+            String toEmail,
+            String patientName,
+            Long recordId,
+            String diagnosis,
+            String prescription,
+            String doctorNotes,
+            boolean followUpRequired,
+            String followUpDate
+    ) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("medsyncsg@gmail.com");
+            message.setTo(toEmail);
+            message.setSubject("MedSync - Your Medical Assessment is Ready");
+
+            StringBuilder emailBody = new StringBuilder();
+            emailBody.append(String.format("Dear %s,\n\n", patientName));
+            emailBody.append("Your doctor has completed the assessment of your medical record.\n\n");
+            emailBody.append(String.format("📋 Medical Record ID: #%d\n\n", recordId));
+
+            emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            emailBody.append("🔬 DIAGNOSIS\n");
+            emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            emailBody.append(diagnosis != null ? diagnosis : "Not specified").append("\n\n");
+
+            if (prescription != null && !prescription.trim().isEmpty()) {
+                emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                emailBody.append("💊 PRESCRIPTION\n");
+                emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                emailBody.append(prescription).append("\n\n");
+            }
+
+            if (doctorNotes != null && !doctorNotes.trim().isEmpty()) {
+                emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                emailBody.append("📝 DOCTOR'S NOTES\n");
+                emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                emailBody.append(doctorNotes).append("\n\n");
+            }
+
+            if (followUpRequired) {
+                emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                emailBody.append("⚠️  FOLLOW-UP APPOINTMENT REQUIRED\n");
+                emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                if (followUpDate != null && !followUpDate.trim().isEmpty()) {
+                    emailBody.append("Scheduled Date: ").append(followUpDate).append("\n");
+                } else {
+                    emailBody.append("Please contact us to schedule your follow-up appointment.\n");
+                }
+                emailBody.append("\n");
+            }
+
+            emailBody.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
+            emailBody.append("If you have any questions or concerns about your assessment,\n");
+            emailBody.append("please don't hesitate to contact us:\n\n");
+            emailBody.append("📞 Phone: +63-XXX-XXX-XXXX\n");
+            emailBody.append("📧 Email: medsyncsg@gmail.com\n\n");
+            emailBody.append("Thank you for trusting MedSync with your healthcare.\n\n");
+            emailBody.append("Best regards,\n");
+            emailBody.append("MedSync Medical Team");
+
+            message.setText(emailBody.toString());
+            mailSender.send(message);
+
+            System.out.println("✅ Medical record completion email sent to " + toEmail);
+        } catch (Exception e) {
+            System.err.println("❌ Failed to send medical record completion email: " + e.getMessage());
+            e.printStackTrace();
+            // Don't throw - we don't want email failure to break the medical record update
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.medsync.medsync.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -38,14 +39,22 @@ public class Patient {
     private String healthConcern; // added health concern
 
     @OneToMany(mappedBy = "patient")
+    @JsonIgnore
+    private List<Queue> queues;
+
+
+    @OneToMany(mappedBy = "patient")
+    @JsonIgnore
     private List<Appointment> appointments;
 
     @ManyToOne
     @JoinColumn(name = "doctor_id")
+    @JsonIgnore
     private Doctor doctor;
 
     @ManyToOne
     @JoinColumn(name = "queue_id")
+    @JsonIgnore
     private Queue queue;
 
     public Patient() {}
@@ -241,5 +250,13 @@ public class Patient {
 
     public void setQueue(Queue queue) {
         this.queue = queue;
+    }
+
+    public List<Queue> getQueues() {
+        return queues;
+    }
+
+    public void setQueues(List<Queue> queues) {
+        this.queues = queues;
     }
 }
