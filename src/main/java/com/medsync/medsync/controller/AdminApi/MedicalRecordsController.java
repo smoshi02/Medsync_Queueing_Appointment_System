@@ -2,7 +2,10 @@ package com.medsync.medsync.controller.AdminApi;
 
 import com.medsync.medsync.DTO.MedicalRecordDTOs.MedicalRecordDTO;
 import com.medsync.medsync.Entities.MedicalRecords;
+import com.medsync.medsync.Entities.Queue;
+import com.medsync.medsync.Entities.Patient;
 import com.medsync.medsync.Repo.MedicalRecordsRepository;
+import com.medsync.medsync.Repo.QueueRepository;
 import com.medsync.medsync.Services.EmailService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +15,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/medical-records")
@@ -24,14 +27,17 @@ public class MedicalRecordsController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final MedicalRecordsRepository medicalRecordsRepository;
-    private final EmailService emailService; // ADD THIS
+    private final QueueRepository queueRepository;
+    private final EmailService emailService;
 
     public MedicalRecordsController(SimpMessagingTemplate messagingTemplate,
                                     MedicalRecordsRepository medicalRecordsRepository,
-                                    EmailService emailService) { // ADD THIS PARAMETER
+                                    QueueRepository queueRepository,
+                                    EmailService emailService) {
         this.messagingTemplate = messagingTemplate;
         this.medicalRecordsRepository = medicalRecordsRepository;
-        this.emailService = emailService; // ADD THIS
+        this.queueRepository = queueRepository;
+        this.emailService = emailService;
     }
 
     // ✅ GET all medical records (accessible by all authenticated users)
@@ -62,6 +68,139 @@ public class MedicalRecordsController {
             error.put("error", "Medical record not found");
             error.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+    }
+
+    // ✅ NEW: GET medical record by queue ID
+    @GetMapping("/queue/{queueId}")
+    public ResponseEntity<?> getRecordByQueueId(@PathVariable Long queueId) {
+        try {
+            System.out.println("🔍 Searching for medical record with queueId: " + queueId);
+
+            Optional<MedicalRecords> recordOpt = medicalRecordsRepository.findByQueueId(queueId);
+
+            if (recordOpt.isPresent()) {
+                System.out.println("✅ Found existing medical record for queue #" + queueId);
+                return ResponseEntity.ok(recordOpt.get());
+            } else {
+                System.out.println("ℹ️ No medical record found for queue #" + queueId);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error checking medical record for queue: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // ✅ NEW: CREATE medical record from queue completion
+    @PostMapping
+    public ResponseEntity<?> createMedicalRecordFromQueue(@RequestBody CreateMedicalRecordRequest request) {
+        try {
+            System.out.println("📝 Creating new medical record for queue #" + request.queueId());
+
+            // Check if record already exists for this queue
+            Optional<MedicalRecords> existingRecord = medicalRecordsRepository.findByQueueId(request.queueId());
+            if (existingRecord.isPresent()) {
+                System.out.println("⚠️ Medical record already exists for queue #" + request.queueId());
+                return ResponseEntity.ok(existingRecord.get());
+            }
+
+            // Get queue details
+            Optional<Queue> queueOpt = queueRepository.findById(request.queueId());
+            if (queueOpt.isEmpty()) {
+                System.err.println("❌ Queue not found: " + request.queueId());
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Queue not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
+
+            Queue queue = queueOpt.get();
+            Patient patient = queue.getPatient();
+
+            // Create new medical record
+            MedicalRecords record = new MedicalRecords();
+            record.setQueueId(request.queueId());
+            record.setPatient(patient);
+
+            // Set chief complaint from request or use default
+            String chiefComplaint = request.chiefComplaint() != null && !request.chiefComplaint().trim().isEmpty()
+                    ? request.chiefComplaint()
+                    : "General Consultation - " + queue.getService().getServiceName();
+            record.setChiefComplaint(chiefComplaint);
+
+            // Set initial status
+            record.setStatus(request.status() != null ? request.status() : "Pending");
+            record.setRecordCreatedDate(LocalDate.now());
+
+            // Initialize other fields as null (to be filled by doctor)
+            record.setDiagnosis(null);
+            record.setPrescription(null);
+            record.setDoctorNotes(null);
+            record.setVitals(null);
+            record.setAdditionalNotes(null);
+            record.setFollowUpRequired(false);
+            record.setFollowUpDate(null);
+
+            // Save the record
+            MedicalRecords savedRecord = medicalRecordsRepository.save(record);
+            System.out.println("✅ Medical record created successfully: #" + savedRecord.getRecordId());
+
+            // Broadcast update
+            broadcastMedicalRecordsUpdate();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Medical record created successfully");
+            response.put("status", "success");
+            response.put("recordId", savedRecord.getRecordId());
+            response.put("record", savedRecord);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error creating medical record: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to create medical record");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    // ✅ NEW: COMPLETE/UPDATE medical record status
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<?> completeRecord(@PathVariable Long id) {
+        try {
+            System.out.println("✅ Marking medical record #" + id + " as ready for doctor review");
+
+            MedicalRecords record = medicalRecordsRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Medical record not found"));
+
+            // Update status to indicate patient has been seen
+            record.setStatus("Pending"); // Pending doctor assessment
+            medicalRecordsRepository.save(record);
+
+            System.out.println("✅ Medical record #" + id + " status updated to Pending");
+
+            // Broadcast update
+            broadcastMedicalRecordsUpdate();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Medical record status updated");
+            response.put("status", "success");
+            response.put("recordId", id);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error completing medical record: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to update medical record");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 
@@ -145,26 +284,20 @@ public class MedicalRecordsController {
             medicalRecordsRepository.save(record);
             System.out.println("✅ Medical record saved successfully");
 
-            // ====== NEW: SEND EMAIL TO PATIENT ======
+            // ====== SEND EMAIL TO PATIENT ======
             try {
-                // Get patient info from the record
-                MedicalRecordDTO patientInfo = medicalRecordsRepository.loadMedicalRecords()
-                        .stream()
-                        .filter(r -> r.recordId().equals(id))
-                        .findFirst()
-                        .orElse(null);
+                Patient patient = record.getPatient();
+                if (patient != null && patient.getEmail() != null && !patient.getEmail().trim().isEmpty()) {
+                    System.out.println("📧 Sending email notification to: " + patient.getEmail());
 
-                if (patientInfo != null && patientInfo.email() != null && !patientInfo.email().trim().isEmpty()) {
-                    System.out.println("📧 Sending email notification to: " + patientInfo.email());
-
-                    // Format follow-up date for email
+                    String patientName = patient.getFirstName() + " " + patient.getLastName();
                     String followUpDateStr = request.followUpDate() != null
-                            ? request.followUpDate().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"))
+                            ? request.followUpDate().toString()
                             : null;
 
                     emailService.sendMedicalRecordCompletedEmail(
-                            patientInfo.email(),
-                            patientInfo.patientName(),
+                            patient.getEmail(),
+                            patientName,
                             id,
                             request.diagnosis(),
                             request.prescription(),
@@ -178,11 +311,9 @@ public class MedicalRecordsController {
                     System.out.println("⚠️ No email address found for patient, skipping email notification");
                 }
             } catch (Exception emailError) {
-                // Don't fail the whole request if email fails
                 System.err.println("⚠️ Failed to send email notification: " + emailError.getMessage());
                 emailError.printStackTrace();
             }
-            // ====== END EMAIL NOTIFICATION ======
 
             // Broadcast update via WebSocket
             broadcastMedicalRecordsUpdate();
@@ -223,7 +354,13 @@ public class MedicalRecordsController {
         }
     }
 
-    // ✅ DTO for doctor update request
+    // ✅ DTOs
+    public record CreateMedicalRecordRequest(
+            Long queueId,
+            String chiefComplaint,
+            String status
+    ) {}
+
     public record DoctorUpdateRequest(
             String diagnosis,
             String prescription,

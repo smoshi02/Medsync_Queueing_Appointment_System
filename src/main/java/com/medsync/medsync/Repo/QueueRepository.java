@@ -7,6 +7,7 @@ import com.medsync.medsync.DTO.QueueCardDTO.PatientQueueCardDTO;
 import com.medsync.medsync.DTO.QueueCardDTO.PatientQueueTableDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -31,29 +32,28 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<QueueCardDTO> loadQueueCards();
 
     @Query("""
-           SELECT new com.medsync.medsync.DTO.QueueCardDTO.QueueTableDTO(
-               q.queueId,
-               CONCAT(p.firstName, ' ', p.lastName),
-               q.priorityLevel,
-               CONCAT(st.firstName, ' ', st.lastName),
-               q.status,
-               q.timeRegistered
-           )
-           FROM Queue q
-           JOIN q.patient p
-           JOIN q.staff st
-           WHERE q.service.serviceId = :serviceId
-           ORDER BY q.queueNumber
-           """)
-    List<QueueTableDTO> loadQueueTable(Long serviceId);
+    SELECT new com.medsync.medsync.DTO.QueueCardDTO.QueueTableDTO(
+        q.queueId,
+        CONCAT(p.firstName, ' ', p.lastName),
+        q.priorityLevel,
+        CASE WHEN st IS NOT NULL THEN CONCAT(st.firstName, ' ', st.lastName) ELSE 'Unassigned' END,
+        q.status,
+        q.timeRegistered
+    )
+    FROM Queue q
+    JOIN q.patient p
+    LEFT JOIN q.staff st
+    WHERE q.service.serviceId = :serviceId
+    ORDER BY q.queueNumber
+""")
+    List<QueueTableDTO> loadQueueTable(@Param("serviceId") Long serviceId);
 
     // ========================================
-    // NEW QUERIES FOR PATIENT QUEUE
+    // PATIENT QUEUE QUERIES
     // ========================================
 
     /**
      * Load patient queue cards grouped by service
-     * Shows: service name, total completed/served, and currently active patients
      */
     @Query("""
     SELECT new com.medsync.medsync.DTO.QueueCardDTO.PatientQueueCardDTO(
@@ -70,39 +70,52 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<PatientQueueCardDTO> loadPatientQueueCards();
 
     /**
-     * Load patient queue table with full patient details
-     * Shows: patient info, vital signs, priority, staff assigned, status, time
+     * Load patient queue table with full patient details by service name
+     * Orders priority patients first (Pregnant, Senior Citizen, PWD, Infant, Priority)
+     * Uses LEFT JOIN for staff to include queues without assigned staff
+     * NOW INCLUDES EMAIL FIELD
      */
     @Query("""
-        SELECT new com.medsync.medsync.DTO.QueueCardDTO.PatientQueueTableDTO(
-            q.queueId,
-            CONCAT(p.firstName, ' ', 
-                   CASE WHEN p.middleName IS NOT NULL THEN CONCAT(p.middleName, ' ') ELSE '' END,
-                   p.lastName,
-                   CASE WHEN p.suffix IS NOT NULL THEN CONCAT(' ', p.suffix) ELSE '' END),
-            p.dateOfBirth,
-            p.contactNumber,
-            p.emergencyContactNumber,
-            CONCAT(p.addressStreet, ', ', p.addressBarangay, ', ', 
-                   p.addressMunicipality, ', ', p.addressProvince),
-            p.priorityCategory,
-            p.height,
-            p.weight,
-            p.bloodType,
-            q.priorityLevel,
-            CASE WHEN q.staff IS NOT NULL 
-                 THEN CONCAT(q.staff.firstName, ' ', q.staff.lastName)
-                 ELSE NULL END,
-            q.status,
-            q.timeRegistered
-        )
-        FROM Queue q
-        JOIN q.patient p
-        WHERE q.service.serviceName = :serviceName
-        ORDER BY q.queueNumber
-    """)
-    List<PatientQueueTableDTO> loadPatientQueueTable(String serviceName);
+    SELECT new com.medsync.medsync.DTO.QueueCardDTO.PatientQueueTableDTO(
+        q.queueId,
+        CONCAT(p.firstName, ' ', 
+               CASE WHEN p.middleName IS NOT NULL THEN CONCAT(p.middleName, ' ') ELSE '' END,
+               p.lastName,
+               CASE WHEN p.suffix IS NOT NULL THEN CONCAT(' ', p.suffix) ELSE '' END),
+        p.dateOfBirth,
+        p.email,
+        p.contactNumber,
+        p.emergencyContactNumber,
+        CONCAT(COALESCE(p.addressStreet, ''), ', ', 
+               COALESCE(p.addressBarangay, ''), ', ',
+               COALESCE(p.addressMunicipality, ''), ', ', 
+               COALESCE(p.addressProvince, '')),
+        COALESCE(p.priorityCategory, 'Regular'),
+        p.height,
+        p.weight,
+        p.bloodType,
+        COALESCE(q.priorityLevel, 'Normal'),
+        CASE WHEN q.staff IS NOT NULL
+             THEN CONCAT(q.staff.firstName, ' ', q.staff.lastName)
+             ELSE NULL END,
+        q.status,
+        q.timeRegistered
+    )
+    FROM Queue q
+    JOIN q.patient p
+    LEFT JOIN q.staff s
+    WHERE q.service.serviceName = :serviceName
+    ORDER BY 
+        CASE 
+            WHEN COALESCE(p.priorityCategory, 'Regular') IN ('Priority', 'Senior Citizen', 'PWD', 'Pregnant', 'Infant') THEN 0
+            ELSE 1
+        END,
+        q.timeRegistered ASC
+""")
+    List<PatientQueueTableDTO> loadPatientQueueTableByServiceName(
+            @Param("serviceName") String serviceName
+    );
 
-    // ➜ REQUIRED for safe deletion of Staff
+    // Required for safe deletion of Staff
     boolean existsByStaff_StaffId(Long staffId);
 }

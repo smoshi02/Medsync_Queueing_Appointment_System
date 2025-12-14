@@ -22,6 +22,10 @@ public class MedicalRecords {
     private String doctorNotes;
     private LocalDate recordCreatedDate;
 
+    // ADD THIS FIELD
+    @Column(name = "queue_id")
+    private Long queueId;
+
     @ManyToOne
     @JoinColumn(name = "patient_id")
     private Patient patient;
@@ -134,6 +138,14 @@ public class MedicalRecords {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getQueueId() {
+        return queueId;
+    }
+
+    public void setQueueId(Long queueId) {
+        this.queueId = queueId;
     }
 
     // Getters and Setters

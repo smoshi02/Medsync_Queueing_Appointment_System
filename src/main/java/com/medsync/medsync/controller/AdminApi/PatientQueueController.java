@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,13 +67,42 @@ public class PatientQueueController {
     public ResponseEntity<List<PatientQueueTableDTO>> loadServiceTable(
             @PathVariable String serviceName) {
         try {
-            List<PatientQueueTableDTO> table = queueRepository.loadPatientQueueTable(serviceName);
+            System.out.println("🔍 Loading service table for: '" + serviceName + "'");
+
+            // Check if service exists
+            Optional<Service> service = serviceRepository.findByServiceName(serviceName);
+            if (service.isEmpty()) {
+                System.err.println("❌ Service not found: " + serviceName);
+                List<Service> allServices = serviceRepository.findAll();
+                System.err.println("📋 Available services:");
+                allServices.forEach(s -> System.err.println("   - " + s.getServiceName()));
+                return ResponseEntity.ok(new ArrayList<>()); // Return empty list
+            }
+
+            System.out.println("✅ Service found: " + service.get().getServiceName());
+
+            List<PatientQueueTableDTO> table =
+                    queueRepository.loadPatientQueueTableByServiceName(serviceName);
+
+            System.out.println("📊 Found " + table.size() + " patients in queue");
+
+            if (!table.isEmpty()) {
+                PatientQueueTableDTO sample = table.get(0);
+                System.out.println("📋 Sample patient data:");
+                System.out.println("   - ID: " + sample.getQueueId());
+                System.out.println("   - Name: " + sample.getPatientName());
+                System.out.println("   - Category: " + sample.getCategory());
+                System.out.println("   - Status: " + sample.getStatus());
+            }
+
             return ResponseEntity.ok(table);
         } catch (Exception e) {
+            System.err.println("❌ Error loading service table: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 
     /**
      * GET /api/patient-queue/{id}
@@ -94,9 +124,33 @@ public class PatientQueueController {
      * POST /api/patient-queue
      * Create new patient and queue entry (PUBLIC - no auth required for patient registration)
      */
+    /**
+     * POST /api/patient-queue
+     * Create new patient and queue entry (PUBLIC - no auth required for patient registration)
+     */
     @PostMapping
-    public ResponseEntity<Queue> createPatientQueue(@RequestBody PatientQueueRequest request) {
+    public ResponseEntity<?> createPatientQueue(@RequestBody PatientQueueRequest request) {
         try {
+            System.out.println("📝 Received patient registration request:");
+            System.out.println("   Name: " + request.getFirstName() + " " + request.getLastName());
+            System.out.println("   Email: " + request.getEmail()); // ADDED LOG FOR EMAIL
+            System.out.println("   Service: " + request.getServiceRequired());
+            System.out.println("   Category: " + request.getCategory());
+
+            // Validate required fields
+            if (request.getFirstName() == null || request.getFirstName().isEmpty()) {
+                return ResponseEntity.badRequest().body("First name is required");
+            }
+            if (request.getLastName() == null || request.getLastName().isEmpty()) {
+                return ResponseEntity.badRequest().body("Last name is required");
+            }
+            if (request.getServiceRequired() == null || request.getServiceRequired().isEmpty()) {
+                return ResponseEntity.badRequest().body("Service is required");
+            }
+            if (request.getEmail() == null || request.getEmail().isEmpty()) {
+                return ResponseEntity.badRequest().body("Email is required");
+            }
+
             // Create and save patient
             Patient patient = new Patient();
             patient.setFirstName(request.getFirstName());
@@ -105,6 +159,7 @@ public class PatientQueueController {
             patient.setSuffix(request.getSuffix());
             patient.setDateOfBirth(request.getDateOfBirth());
             patient.setGender(request.getGender());
+            patient.setEmail(request.getEmail()); // ⭐ ADDED THIS LINE - SAVE EMAIL
             patient.setContactNumber(request.getContactNumber());
             patient.setEmergencyContactNumber(request.getEmergencyContactNumber());
             patient.setAddressStreet(request.getAddressStreet());
@@ -117,11 +172,14 @@ public class PatientQueueController {
             patient.setBloodType(request.getBloodType());
 
             Patient savedPatient = patientRepository.save(patient);
+            System.out.println("✅ Patient saved with ID: " + savedPatient.getPatientId());
+            System.out.println("✅ Email saved: " + savedPatient.getEmail()); // ADDED LOG
 
             // Find service
             Optional<Service> serviceOpt = serviceRepository.findByServiceName(request.getServiceRequired());
             if (serviceOpt.isEmpty()) {
-                return ResponseEntity.badRequest().build();
+                System.err.println("❌ Service not found: " + request.getServiceRequired());
+                return ResponseEntity.badRequest().body("Service not found: " + request.getServiceRequired());
             }
 
             // Create queue
@@ -138,6 +196,7 @@ public class PatientQueueController {
             queue.setQueueNumber(queueNum);
 
             Queue savedQueue = queueRepository.save(queue);
+            System.out.println("✅ Queue created with ID: " + savedQueue.getQueueId());
 
             // Send WebSocket notification
             messagingTemplate.convertAndSend("/topic/patient-queue", savedQueue);
@@ -145,8 +204,10 @@ public class PatientQueueController {
 
             return ResponseEntity.status(HttpStatus.CREATED).body(savedQueue);
         } catch (Exception e) {
+            System.err.println("❌ Error creating patient queue: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
         }
     }
 
@@ -174,6 +235,7 @@ public class PatientQueueController {
             if (request.getLastName() != null) patient.setLastName(request.getLastName());
             if (request.getSuffix() != null) patient.setSuffix(request.getSuffix());
             if (request.getDateOfBirth() != null) patient.setDateOfBirth(request.getDateOfBirth());
+            if (request.getEmail() != null) patient.setEmail(request.getEmail()); // ⭐ ADDED THIS LINE
             if (request.getContactNumber() != null) patient.setContactNumber(request.getContactNumber());
             if (request.getEmergencyContactNumber() != null) patient.setEmergencyContactNumber(request.getEmergencyContactNumber());
             if (request.getAddressStreet() != null) patient.setAddressStreet(request.getAddressStreet());

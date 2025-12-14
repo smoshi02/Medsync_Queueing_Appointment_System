@@ -4,9 +4,11 @@ import com.medsync.medsync.DTO.MedicalRecordDTOs.MedicalRecordDTO;
 import com.medsync.medsync.Entities.MedicalRecords;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MedicalRecordsRepository extends JpaRepository<MedicalRecords, Long> {
@@ -54,4 +56,14 @@ public interface MedicalRecordsRepository extends JpaRepository<MedicalRecords, 
         WHERE m.patient.patientId = :patientId
     """)
     List<MedicalRecords> findByPatientId(Long patientId);
+
+    // NEW: Find medical record by queue ID
+    @Query("""
+        SELECT m
+        FROM MedicalRecords m
+        JOIN FETCH m.patient
+        LEFT JOIN FETCH m.doctor
+        WHERE m.queueId = :queueId
+    """)
+    Optional<MedicalRecords> findByQueueId(@Param("queueId") Long queueId);
 }
