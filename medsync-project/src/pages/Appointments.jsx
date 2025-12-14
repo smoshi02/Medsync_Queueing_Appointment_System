@@ -26,6 +26,26 @@ const calculateAge = (dob) => {
   return age;
 };
 
+// Helper function to get priority badge
+const getPriorityBadge = (priority) => {
+  if (!priority) return <span className="text-gray-400 text-sm">—</span>;
+  
+  const isPriority = priority.toLowerCase().includes('pregnant') || 
+                    priority.toLowerCase().includes('senior') || 
+                    priority.toLowerCase().includes('pwd') || 
+                    priority.toLowerCase().includes('infant');
+  
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+      isPriority 
+        ? 'bg-red-100 text-red-700 border border-red-300' 
+        : 'bg-blue-100 text-blue-700 border border-blue-300'
+    }`}>
+      {priority}
+    </span>
+  );
+};
+
 function Appointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,14 +61,8 @@ function Appointments() {
     try {
       setLoading(true);
       const data = await fetchWithAuth("/api/appointments");
-      console.log("📊 Raw appointments data:", data); // DEBUG LOG
+      console.log("📊 Raw appointments data:", data);
       const mapped = (data || []).map(appt => {
-        console.log("🔍 Appointment fields:", {
-          id: appt.appointmentId,
-          date: appt.date,
-          time: appt.time,
-          allFields: Object.keys(appt)
-        }); // DEBUG LOG
         return { 
           ...appt, 
           firstName: appt.firstName || "", 
@@ -75,7 +89,7 @@ function Appointments() {
           time: appt.time || "" 
         };
       });
-      console.log("✅ Mapped appointments:", mapped); // DEBUG LOG
+      console.log("✅ Mapped appointments:", mapped);
       setAppointments(mapped);
     } catch (err) {
       setError(err.message);
@@ -88,7 +102,7 @@ function Appointments() {
 
   useStompWebSocket(["/topic/private/appointments"], (msg) => {
     if (msg.type === "appointments-update" && Array.isArray(msg.data)) {
-      console.log("📡 WebSocket update received:", msg.data); // DEBUG LOG
+      console.log("📡 WebSocket update received:", msg.data);
       const mapped = msg.data.map(appt => ({ 
         ...appt, 
         firstName: appt.firstName || "", 
@@ -145,7 +159,7 @@ function Appointments() {
   };
 
   const handleRescheduleClick = (appt) => {
-    console.log("🔄 Opening reschedule modal for:", appt); // DEBUG LOG
+    console.log("🔄 Opening reschedule modal for:", appt);
     setSelectedAppointment(appt);
     setRescheduleData({ date: appt.date || "", time: appt.time || "" });
     setShowRescheduleModal(true);
@@ -313,11 +327,12 @@ function Appointments() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1200px]">
+              <table className="w-full min-w-[1300px]">
                 <thead>
                   <tr className="bg-gradient-to-r from-violet-100 to-purple-100 border-b-2 border-violet-200">
                     <th className="p-5 text-left text-violet-900 font-bold text-sm uppercase tracking-wider">Patient</th>
                     <th className="p-5 text-left text-violet-900 font-bold text-sm uppercase tracking-wider">Age</th>
+                    <th className="p-5 text-left text-violet-900 font-bold text-sm uppercase tracking-wider">Priority</th>
                     <th className="p-5 text-left text-violet-900 font-bold text-sm uppercase tracking-wider">Contact</th>
                     <th className="p-5 text-left text-violet-900 font-bold text-sm uppercase tracking-wider">Date</th>
                     <th className="p-5 text-left text-violet-900 font-bold text-sm uppercase tracking-wider">Time</th>
@@ -333,9 +348,6 @@ function Appointments() {
                     const isConfirmed = a.status === "Confirmed";
                     const isRescheduling = a.status === "Rescheduling";
                     const isProcessing = processingId === a.appointmentId;
-                    
-                    // Debug log for each row
-                    console.log(`Row ${idx}:`, { name, date: a.date, time: a.time });
                     
                     return (
                       <tr 
@@ -356,6 +368,10 @@ function Appointments() {
                         
                         <td className="p-5">
                           <span className="text-gray-700 font-medium">{age} years</span>
+                        </td>
+                        
+                        <td className="p-5">
+                          {getPriorityBadge(a.priorityCategory)}
                         </td>
                         
                         <td className="p-5">
@@ -556,6 +572,10 @@ function AppointmentDetailModal({ appointment, onClose, onApprove, onCancel, onR
               <InfoField label="Date of Birth" value={appointment.dateOfBirth ? new Date(appointment.dateOfBirth).toLocaleDateString() : "—"} />
               <InfoField label="Age" value={`${calculateAge(appointment.dateOfBirth)} years`} />
               <InfoField label="Civil Status" value={appointment.civilStatus || "—"} />
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Priority Category</p>
+                {getPriorityBadge(appointment.priorityCategory)}
+              </div>
             </div>
           </div>
 
@@ -592,7 +612,6 @@ function AppointmentDetailModal({ appointment, onClose, onApprove, onCancel, onR
                 <InfoField label="Weight" value={appointment.weight ? `${appointment.weight} kg` : "—"} />
                 <InfoField label="Blood Type" value={appointment.bloodType || "—"} />
               </div>
-              <InfoField label="Priority Category" value={appointment.priorityCategory || "—"} />
               <InfoField label="Medical History" value={appointment.medicalHistory || "None recorded"} />
               <InfoField label="Health Concern" value={appointment.healthConcern || "—"} />
             </div>

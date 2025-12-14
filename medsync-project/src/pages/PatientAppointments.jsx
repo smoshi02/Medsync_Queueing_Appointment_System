@@ -51,7 +51,7 @@ const PatientAppointments = () => {
         try {
           const payload = JSON.parse(message.body);
           console.log("📩 Received WebSocket message:", payload);
-          
+
           if (payload.type === "appointments-update" && Array.isArray(payload.data)) {
             const enrichedAppointments = payload.data.map(appt => ({
               ...appt,
@@ -65,7 +65,7 @@ const PatientAppointments = () => {
               time: appt.time || "",
               status: appt.status || "Pending",
             }));
-            
+
             console.log("✅ Updated appointments:", enrichedAppointments.length);
             setAppointments(enrichedAppointments);
           }
@@ -86,7 +86,7 @@ const PatientAppointments = () => {
     };
 
     stompClient.activate();
-    
+
     return () => {
       console.log("🔌 Cleaning up WebSocket connection");
       stompClient.deactivate();
@@ -177,7 +177,7 @@ const PatientAppointments = () => {
               </h1>
               <p className="text-gray-600 text-lg">Schedule and manage your healthcare appointments</p>
             </div>
-            
+
             {/* WebSocket Connection Status */}
             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md border border-violet-100">
               <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
@@ -194,13 +194,13 @@ const PatientAppointments = () => {
             <div className="text-center py-24">
               <div className="text-7xl mb-6">📅</div>
               <p className="text-gray-500 text-xl font-semibold mb-2">
-                {isConnected 
-                  ? "No appointments scheduled yet" 
+                {isConnected
+                  ? "No appointments scheduled yet"
                   : "Connecting to appointment system..."
                 }
               </p>
               <p className="text-gray-400 text-sm mb-6">
-                {isConnected 
+                {isConnected
                   ? "Click the button below to schedule your first appointment"
                   : "Please wait while we establish a connection"
                 }
@@ -236,9 +236,8 @@ const PatientAppointments = () => {
                     return (
                       <tr
                         key={appt.appointmentId || idx}
-                        className={`border-b border-gray-100 hover:bg-violet-50 transition-colors ${
-                          idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                        }`}
+                        className={`border-b border-gray-100 hover:bg-violet-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                          }`}
                       >
                         <td className="p-5">
                           <div className="flex items-center gap-3">
@@ -263,10 +262,10 @@ const PatientAppointments = () => {
                             <span>
                               {appt.date
                                 ? new Date(appt.date).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })
                                 : "No Date"}
                             </span>
                           </div>
@@ -281,15 +280,15 @@ const PatientAppointments = () => {
                           <span
                             className={`inline-block px-4 py-2 rounded-full text-xs font-bold shadow-sm
                             ${appt.status === "Confirmed"
-                              ? "bg-green-100 text-green-700 border border-green-300"
-                              : appt.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-700 border border-yellow-300"
-                              : appt.status === "Rescheduling"
-                              ? "bg-blue-100 text-blue-700 border border-blue-300"
-                              : appt.status === "Cancelled"
-                              ? "bg-red-100 text-red-700 border border-red-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300"
-                            }`}
+                                ? "bg-green-100 text-green-700 border border-green-300"
+                                : appt.status === "Pending"
+                                  ? "bg-yellow-100 text-yellow-700 border border-yellow-300"
+                                  : appt.status === "Rescheduling"
+                                    ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                    : appt.status === "Cancelled"
+                                      ? "bg-red-100 text-red-700 border border-red-300"
+                                      : "bg-gray-100 text-gray-700 border border-gray-300"
+                              }`}
                           >
                             {appt.status || "Pending"}
                           </span>
@@ -308,8 +307,8 @@ const PatientAppointments = () => {
           onClick={() => setShowForm(true)}
           disabled={!isConnected}
           className={`w-full md:w-auto px-8 py-4 font-bold rounded-xl shadow-lg transition-all duration-200 transform flex items-center justify-center gap-3 text-lg
-            ${isConnected 
-              ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 hover:shadow-xl hover:scale-105' 
+            ${isConnected
+              ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 hover:shadow-xl hover:scale-105'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
         >
@@ -497,9 +496,12 @@ const PatientAppointments = () => {
                     onChange={handleChange}
                     className="p-4 border-2 border-gray-200 rounded-xl w-full focus:border-violet-500 focus:ring-2 focus:ring-violet-200 focus:outline-none transition-all md:col-span-3"
                   >
-                    <option value="">Priority Category *</option>
-                    <option value="Priority 1">Priority 1</option>
-                    <option value="Priority 2">Priority 2</option>
+                    <option value="">Select Priority Category *</option>
+                    <option value="Priority (Pregnant)">Priority (Pregnant)</option>
+                    <option value="Priority (Senior)">Priority (Senior)</option>
+                    <option value="Priority (PWD)">Priority (PWD)</option>
+                    <option value="Priority (Infant)">Priority (Infant)</option>
+                    <option value="Regular">Regular</option>
                   </select>
                   <input
                     type="number"
