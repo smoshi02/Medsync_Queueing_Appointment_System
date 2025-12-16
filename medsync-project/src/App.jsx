@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
+
 import Layout from "./components/Layout";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+
 
 import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
@@ -13,21 +15,27 @@ import MedicalRecords from "./pages/MedicalRecords";
 import UserManagement from "./pages/UserManagement";
 import Appointments from "./pages/Appointments";
 
+
 import PatientQueue from "./pages/PatientQueue";
 import PatientAppointments from "./pages/PatientAppointments";
+
 
 import Login from "./pages/Login";
 import Signup from "./pages/SignUp";
 import LandingPage from "./pages/LandingPage";
 
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 
+
 const isLoggedIn = () => !!localStorage.getItem("token");
+
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
+
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -36,11 +44,13 @@ const App = () => {
     navigate("/", { replace: true });
   };
 
+
   // Sidebar items
   const patientSidebarItems = [
     { name: "Queue", path: "/patient/queue" },
     { name: "Appointments", path: "/patient/appointments" },
   ];
+
 
   const protectedSidebarItems = [
     { name: "Home", path: "/home" },
@@ -51,6 +61,7 @@ const App = () => {
     { name: "User Management", path: "/user-management" },
   ];
 
+
   return (
     <Routes>
       {/* Landing page */}
@@ -59,9 +70,11 @@ const App = () => {
         element={isLoggedIn() ? <Navigate to="/queue" replace /> : <LandingPage />}
       />
 
+
       {/* Auth routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+
 
       {/* PUBLIC PATIENT ROUTES */}
       <Route
@@ -81,6 +94,7 @@ const App = () => {
         }
       />
 
+
       {/* PROTECTED STAFF/ADMIN ROUTES */}
       <Route
         path="/*"
@@ -98,61 +112,69 @@ const App = () => {
                   onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
                 />
                 <main className="flex-1 overflow-auto">
-                  <Routes>
-                    {/* Home page */}
-                    <Route path="/home" element={<HomePage />} />
+                  <div className="min-h-full flex flex-col">
+                    <div className="flex-1">
+                      <Routes>
+                        {/* Home page */}
+                        <Route path="/home" element={<HomePage />} />
 
-                    {/* SUPER_ADMIN only */}
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <RoleProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
-                          <Dashboard />
-                        </RoleProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/user-management"
-                      element={
-                        <RoleProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
-                          <UserManagement />
-                        </RoleProtectedRoute>
-                      }
-                    />
 
-                    {/* STAFF / DOCTOR / SUPER_ADMIN */}
-                    <Route
-                      path="/queue"
-                      element={
-                        <RoleProtectedRoute allowedRoles={["SUPER_ADMIN", "DOCTOR", "STAFF"]}>
-                          <Queue />
-                        </RoleProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/appointments"
-                      element={
-                        <RoleProtectedRoute allowedRoles={["SUPER_ADMIN", "DOCTOR", "STAFF"]}>
-                          <Appointments />
-                        </RoleProtectedRoute>
-                      }
-                    />
+                        {/* SUPER_ADMIN only */}
+                        <Route
+                          path="/dashboard"
+                          element={
+                            <RoleProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+                              <Dashboard />
+                            </RoleProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/user-management"
+                          element={
+                            <RoleProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+                              <UserManagement />
+                            </RoleProtectedRoute>
+                          }
+                        />
 
-                    {/* Protected medical records */}
-                    <Route
-                      path="/medical-records"
-                      element={
-                        <RoleProtectedRoute allowedRoles={["SUPER_ADMIN", "DOCTOR", "STAFF"]}>
-                          <MedicalRecords />
-                        </RoleProtectedRoute>
-                      }
-                    />
 
-                    {/* Fallback */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
+                        {/* STAFF / DOCTOR / SUPER_ADMIN */}
+                        <Route
+                          path="/queue"
+                          element={
+                            <RoleProtectedRoute allowedRoles={["SUPER_ADMIN", "DOCTOR", "STAFF"]}>
+                              <Queue />
+                            </RoleProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/appointments"
+                          element={
+                            <RoleProtectedRoute allowedRoles={["SUPER_ADMIN", "DOCTOR", "STAFF"]}>
+                              <Appointments />
+                            </RoleProtectedRoute>
+                          }
+                        />
+
+
+                        {/* Protected medical records */}
+                        <Route
+                          path="/medical-records"
+                          element={
+                            <RoleProtectedRoute allowedRoles={["SUPER_ADMIN", "DOCTOR", "STAFF"]}>
+                              <MedicalRecords />
+                            </RoleProtectedRoute>
+                          }
+                        />
+
+
+                        {/* Fallback */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </Routes>
+                    </div>
+                    <Footer />
+                  </div>
                 </main>
-                <Footer />
               </div>
             </div>
           </ProtectedRoute>
@@ -161,5 +183,6 @@ const App = () => {
     </Routes>
   );
 };
+
 
 export default App;

@@ -103,13 +103,13 @@ function Queue() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    
+      <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 mb-2">
+          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent mb-2">
             Patient Queue Management
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-500 text-base">
             Monitor and manage active queues - {userRole} Access
           </p>
         </div>
@@ -134,7 +134,7 @@ function Queue() {
             ))
           )}
         </div>
-      </div>
+    
 
       {showModal && (
         <QueueModal
@@ -162,7 +162,7 @@ function Queue() {
 
 function ServiceCard({ card, onClick }) {
   return (
-    <div onClick={onClick} className="relative p-6 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden group">
+    <div onClick={onClick} className="relative p-6 bg-gradient-to-br from-[#503878] to-[#D946EF] text-white rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden group">
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">

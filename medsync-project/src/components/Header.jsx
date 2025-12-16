@@ -6,17 +6,21 @@ import { fetchWithAuth } from "../js/fetchHelper";
 import { makePhotoUrl } from "../js/makePhotoUrl";
 import logo from "../assets/medsync-logo.png";
 
+
 function Header({ isSidebarOpen, onSidebarToggle }) {
   const { logout } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [user, setUser] = useState(null);
   const modalRef = useRef();
 
+
   const isLoggedIn = !!localStorage.getItem("token"); // Check if user is logged in
+
 
   // Load current user only if logged in
   useEffect(() => {
     if (!isLoggedIn) return;
+
 
     const loadUser = async () => {
       try {
@@ -32,6 +36,7 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
     loadUser();
   }, [isLoggedIn]);
 
+
   // Close modal if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -43,6 +48,7 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
   const profileContent = user?.profilePhoto
     ? (
       <img
@@ -53,17 +59,22 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
     )
     : ((user?.firstName?.charAt(0) || "") + (user?.lastName?.charAt(0) || ""));
 
+
   return (
-    <header className="bg-gradient-to-r from-violet-600 via-purple-600 to-violet-800 shadow-lg z-50">
-      <div className="flex items-center justify-between px-6 py-4">
-        <button
-          onClick={onSidebarToggle}
-          className="text-white hover:bg-violet-700 p-2 rounded-lg transition-all duration-300 transform hover:scale-110"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+   <header className="bg-white border-b border-gray-200 shadow-sm z-50">
+  <div className="flex items-center justify-between px-6 py-3">
+    {/* Sidebar Toggle */}
+    <button
+      onClick={onSidebarToggle}
+      className="text-[#4F3A73] hover:bg-gray-100 p-2 rounded-lg transition"
+    >
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+
+
+
 
         {/* Logo / Brand */}
         {!isSidebarOpen && (
@@ -72,9 +83,14 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
             className="flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
             <img src={logo} alt="MedSync Logo" className="h-10 object-contain" />
-            <span className="text-white font-bold text-xl tracking-wide">MedSync</span>
+            <span className="text-xl font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-[#7C3AED] to-[#D946EF]">
+  MedSync
+</span>
+
+
           </Link>
         )}
+
 
         {/* Profile button - only show if logged in */}
         {isLoggedIn && (
@@ -86,6 +102,7 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
           </button>
         )}
       </div>
+
 
       {/* Profile modal */}
       {modalOpen && user && (
@@ -101,6 +118,7 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
               X
             </button>
 
+
             <Settings user={user} setUser={setUser} logout={logout} />
           </div>
         </div>
@@ -109,4 +127,7 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
   );
 }
 
+
 export default Header;
+
+

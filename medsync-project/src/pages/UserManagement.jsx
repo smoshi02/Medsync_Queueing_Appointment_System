@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchWithAuth } from "../js/fetchHelper";
 import { useStompWebSocket } from "../js/useStompWebSocket";
 
+
 // Validation messages
 const validationMessages = {
   firstName: "First name is required",
@@ -19,6 +20,7 @@ const validationMessages = {
   emergencyContactNumber: "Emergency contact number is required",
 };
 
+
 function UserManagement() {
   const [users, setUsers] = useState([]);
   const [filterRole, setFilterRole] = useState("all");
@@ -27,6 +29,7 @@ function UserManagement() {
   const [showAddUser, setShowAddUser] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
 
   // Load users
   const loadUsers = async () => {
@@ -49,22 +52,25 @@ function UserManagement() {
     }
   };
 
+
   useEffect(() => {
     loadUsers();
   }, []);
 
-  useStompWebSocket(["/topic/users"], (msg) => {
-    if (msg.type === "users-update") {
-      const updatedUsers = msg.data.map((u) => ({
-        ...u,
-        id: u.id || u.staffId || u.doctorId,
-        name: data.name,
-        email: u.email || "",
-        status: u.status || "active",
-      }));
-      setUsers(updatedUsers);
-    }
-  });
+
+ useStompWebSocket(["/topic/users"], (msg) => {
+  if (msg.type === "user-login" || msg.type === "user-logout") {
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === msg.userId && u.role === msg.role
+          ? { ...u, status: msg.type === "user-login" ? "active" : "inactive" }
+          : u
+      )
+    );
+  }
+});
+
+
 
   const toggleStatus = async (user) => {
     const newStatus = user.status === "active" ? "inactive" : "active";
@@ -78,6 +84,7 @@ function UserManagement() {
     }
   };
 
+
   const deleteUser = async (user) => {
     try {
       await fetchWithAuth(`/api/users/${user.role}/${user.id}`, { method: "DELETE" });
@@ -86,6 +93,7 @@ function UserManagement() {
       setError(err.message);
     }
   };
+
 
   const fetchFullUser = async (user, setFn) => {
     try {
@@ -98,6 +106,7 @@ function UserManagement() {
     }
   };
 
+
   const updateUser = async (updatedUser) => {
     try {
       const saved = await fetchWithAuth(
@@ -109,6 +118,7 @@ function UserManagement() {
         }
       );
 
+
       const tableUser = {
         ...saved,
         id: saved.id || saved.staffId || saved.doctorId,
@@ -118,13 +128,16 @@ function UserManagement() {
         email: saved.email || "N/A",
       };
 
+
       setUsers((prev) => prev.map((u) => (u.id === tableUser.id ? tableUser : u)));
     } catch (err) {
       setError(err.message || "Failed to update user");
     }
   };
 
+
   const filteredUsers = filterRole === "all" ? users : users.filter((u) => u.role === filterRole);
+
 
   if (loading)
     return (
@@ -136,6 +149,7 @@ function UserManagement() {
       </div>
     );
 
+
   if (error)
     return (
       <div className="p-6">
@@ -145,13 +159,15 @@ function UserManagement() {
       </div>
     );
 
+
   return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 to-violet-50 min-h-screen">
+    <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">User Management</h1>
+        <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent mb-2">User Management</h1>
         <p className="text-gray-600">Manage doctors, staff, and system users</p>
       </div>
+
 
       {/* Filters & Actions */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -161,7 +177,7 @@ function UserManagement() {
               key={role}
               onClick={() => setFilterRole(role)}
               className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${filterRole === role
-                  ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md"
+                  ? "bg-[#503878] text-white shadow-md"
                   : "text-gray-600 hover:bg-gray-100"
                 }`}
             >
@@ -170,9 +186,10 @@ function UserManagement() {
           ))}
         </div>
 
+
         <button
           onClick={() => setShowAddUser(true)}
-          className="ml-auto bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center gap-2"
+          className="ml-auto bg-[#503878] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center gap-2"
         >
           <svg
             className="w-5 h-5"
@@ -186,6 +203,7 @@ function UserManagement() {
           Add New User
         </button>
       </div>
+
 
       {/* Users Table */}
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
@@ -307,6 +325,7 @@ function UserManagement() {
         </div>
       </div>
 
+
       {/* Modals */}
       {selectedUser && <UserModal user={selectedUser} onClose={() => setSelectedUser(null)} />}
       {editingUser && (
@@ -329,10 +348,12 @@ function UserManagement() {
   );
 }
 
+
 /* USER MODAL */
 function UserModal({ user, onClose }) {
   const fullName = `${user.firstName || ""} ${user.middleName || ""} ${user.lastName || ""
     }`.trim();
+
 
   const cleaned = { ...user };
   delete cleaned.password;
@@ -340,6 +361,7 @@ function UserModal({ user, onClose }) {
   delete cleaned.doctorId;
   delete cleaned.status;
   delete cleaned.notificationsEnabled;
+
 
   const skipFields = [
     "firstName",
@@ -358,11 +380,12 @@ function UserModal({ user, onClose }) {
     "emailNotificationsEnabled",
   ];
 
-  return (
+
+    return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-8 text-white">
+        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] p-8 text-white">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl font-bold border-2 border-white/30">
               {fullName.charAt(0)}
@@ -373,6 +396,7 @@ function UserModal({ user, onClose }) {
             </div>
           </div>
         </div>
+
 
         {/* Content */}
         <div className="p-8 overflow-y-auto space-y-6">
@@ -405,6 +429,7 @@ function UserModal({ user, onClose }) {
             </div>
           </div>
 
+
           {/* Contact Info */}
           <div className="bg-gradient-to-br from-gray-50 to-violet-50 p-6 rounded-2xl border border-gray-200">
             <h3 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
@@ -429,6 +454,7 @@ function UserModal({ user, onClose }) {
             </div>
           </div>
 
+
           {/* Other Details */}
           {Object.entries(cleaned).filter(([key]) => !skipFields.includes(key)).length > 0 && (
             <div className="bg-gradient-to-br from-gray-50 to-violet-50 p-6 rounded-2xl border border-gray-200">
@@ -451,11 +477,12 @@ function UserModal({ user, onClose }) {
           )}
         </div>
 
+
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
+            className="w-full bg-gradient-to-r from-[#503878] to-[#D946EF] text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
           >
             Close
           </button>
@@ -465,10 +492,12 @@ function UserModal({ user, onClose }) {
   );
 }
 
+
 /* EDIT USER MODAL */
 function EditUserModal({ user, onSave, onCancel }) {
   const [form, setForm] = useState({ ...user });
   const [errors, setErrors] = useState({});
+
 
   const excludedFields = [
     "dateHired",
@@ -484,8 +513,10 @@ function EditUserModal({ user, onSave, onCancel }) {
     "employmentStatus",
     "medicalRecords",
     "profilePath",
-    "availability"
+    "availability",
+    "specialization"
   ];
+
 
   const requiredFields = [
     "firstName",
@@ -501,12 +532,14 @@ function EditUserModal({ user, onSave, onCancel }) {
     "emergencyContactNumber",
   ];
 
+
   const fieldGroups = {
     personal: ["firstName", "middleName", "lastName", "username", "email"],
     address: ["addressStreet", "addressBarangay", "addressMunicipality", "addressProvince"],
     contact: ["phoneNumber", "emergencyContactNumber"],
     other: [],
   };
+
 
   Object.keys(form).forEach((key) => {
     if (
@@ -519,10 +552,12 @@ function EditUserModal({ user, onSave, onCancel }) {
     }
   });
 
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: false });
   };
+
 
   const validate = () => {
     const newErrors = {};
@@ -535,15 +570,18 @@ function EditUserModal({ user, onSave, onCancel }) {
     return Object.keys(newErrors).length === 0;
   };
 
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
     onSave(form);
   };
 
+
   const getInputClass = (key) =>
     `w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 ${errors[key] ? "border-red-500" : "border-gray-200"
     }`;
+
 
   const renderField = (key) => {
     const type =
@@ -552,6 +590,7 @@ function EditUserModal({ user, onSave, onCancel }) {
         : key === "email"
           ? "email"
           : "text";
+
 
     return (
       <div key={key}>
@@ -571,13 +610,17 @@ function EditUserModal({ user, onSave, onCancel }) {
     );
   };
 
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white">
-          <h2 className="text-3xl font-bold">Edit {user.role}</h2>
-          <p className="text-violet-200 mt-1">Update user information</p>
+        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] p-6 text-white">
+        <h2 className="text-3xl font-bold">Edit {user.role}</h2>
+        <p className="text-violet-200 mt-1">Update user information</p>
         </div>
+
+
+
 
         <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-8">
           <section>
@@ -587,6 +630,7 @@ function EditUserModal({ user, onSave, onCancel }) {
             </div>
           </section>
 
+
           <section>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Address</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -594,21 +638,13 @@ function EditUserModal({ user, onSave, onCancel }) {
             </div>
           </section>
 
+
           <section>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {fieldGroups.contact.map((key) => renderField(key))}
             </div>
           </section>
-
-          {fieldGroups.other.length > 0 && (
-            <section>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Other Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {fieldGroups.other.map((key) => renderField(key))}
-              </div>
-            </section>
-          )}
 
           <div className="flex justify-end gap-3 mt-4">
             <button
@@ -620,7 +656,7 @@ function EditUserModal({ user, onSave, onCancel }) {
             </button>
             <button
               type="submit"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold hover:shadow-lg transition-all duration-200"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#503878] to-[#D946EF] text-white font-semibold hover:shadow-lg transition-all duration-200"
             >
               Save Changes
             </button>
@@ -630,6 +666,8 @@ function EditUserModal({ user, onSave, onCancel }) {
     </div>
   );
 }
+
+
 
 
 /* ADD USER MODAL */
@@ -649,6 +687,7 @@ function AddUserModal({ onClose, addUser }) {
   });
   const [errors, setErrors] = useState({});
 
+
   const validate = () => {
     const newErrors = {};
     Object.keys(form).forEach((key) => {
@@ -661,14 +700,17 @@ function AddUserModal({ onClose, addUser }) {
     return Object.keys(newErrors).length === 0;
   };
 
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: false });
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+
 
     try {
       const saved = await fetchWithAuth(`/api/admin/add/${role}`, {
@@ -677,9 +719,11 @@ function AddUserModal({ onClose, addUser }) {
         body: JSON.stringify({ ...form, role }),
       });
 
+
       alert(
         `User created successfully!\nUsername: ${saved.username}\nPassword has been sent to the user's email.`
       );
+
 
       const tableUser = {
         ...saved,
@@ -689,6 +733,7 @@ function AddUserModal({ onClose, addUser }) {
         status: saved.status || saved.employmentStatus || "active",
       };
 
+
       addUser(tableUser);
       onClose();
     } catch (err) {
@@ -696,8 +741,10 @@ function AddUserModal({ onClose, addUser }) {
     }
   };
 
+
   const getInputClass = (key) =>
     `w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 ${errors[key] ? "border-red-500" : "border-gray-200"}`;
+
 
   const renderField = (key, type = "text") => (
     <div key={key}>
@@ -716,76 +763,80 @@ function AddUserModal({ onClose, addUser }) {
     </div>
   );
 
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white">
-          <h2 className="text-3xl font-bold">Add New User</h2>
-          <p className="text-violet-200 mt-1">Create a new doctor or staff account</p>
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] p-6 text-white">
+        <h2 className="text-3xl font-bold">Add New User</h2>
+        <p className="text-violet-200 mt-1">Create a new doctor or staff account</p>
+      </div>
+
+
+      <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
+        {/* Role */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Role <span className="text-red-500">*</span>
+          </label>
+          <select
+            className={getInputClass("role")}
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          >
+            <option value="">Select role</option>
+            <option value="doctor">Doctor</option>
+            <option value="staff">Staff</option>
+          </select>
+          {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
-          {/* Role */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Role <span className="text-red-500">*</span>
-            </label>
-            <select
-              className={getInputClass("role")}
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <option value="">Select role</option>
-              <option value="doctor">Doctor</option>
-              <option value="staff">Staff</option>
-            </select>
-            {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
-          </div>
 
-          {/* Personal Information */}
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Personal Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {["firstName", "middleName", "lastName", "email"].map((key) =>
-              renderField(key, key === "email" ? "email" : "text")
-            )}
-          </div>
+        {/* Personal Information */}
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Personal Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {["firstName", "middleName", "lastName", "email"].map((key) =>
+            renderField(key, key === "email" ? "email" : "text")
+          )}
+        </div>
 
-          {/* Address */}
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Address</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {["addressStreet", "addressBarangay", "addressMunicipality", "addressProvince"].map((key) =>
-              renderField(key)
-            )}
-          </div>
 
-          {/* Contact */}
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Contact</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {["phoneNumber", "emergencyContactNumber"].map((key) => renderField(key))}
-          </div>
+        {/* Address */}
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Address</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {["addressStreet", "addressBarangay", "addressMunicipality", "addressProvince"].map((key) =>
+            renderField(key)
+          )}
+        </div>
 
-          {/* Footer */}
-          <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold hover:shadow-lg transition-all duration-200"
-            >
-              Add User
-            </button>
-          </div>
-        </form>
-      </div>
+
+        {/* Contact */}
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Contact</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {["phoneNumber", "emergencyContactNumber"].map((key) => renderField(key))}
+        </div>
+
+
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-3 rounded-xl bg-white border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#503878] to-[#D946EF] text-white font-semibold hover:shadow-lg transition-all duration-200"
+          >
+            Add User
+          </button>
+        </div>
+      </form>
     </div>
-  );
-}
-
+  </div>
+);}
 
 
 export default UserManagement;

@@ -1,9 +1,3 @@
-// ========================================
-// PatientQueue.jsx - PUBLIC Display
-// NO action buttons in queue table - View only
-// Path: src/components/PatientQueue.jsx
-// ========================================
-
 import { useState, useEffect } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
@@ -160,18 +154,18 @@ const PatientQueue = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+   
+      <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 mb-2">
+            <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent mb-2">
               Patient Queue Display
             </h1>
-            <p className="text-gray-600">Real-time queue monitoring</p>
+            <p className="text-gray-500 text-base">Real-time queue monitoring</p>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md border border-violet-100">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md border border-purple-100">
               <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
               <span className="text-sm font-medium text-gray-700">
                 {isConnected ? 'Live' : 'Connecting...'}
@@ -180,7 +174,7 @@ const PatientQueue = () => {
 
             <button
               onClick={() => setShowRegistrationForm(true)}
-              className="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-[#503878] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -193,7 +187,7 @@ const PatientQueue = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {loadingCards ? (
             <div className="col-span-full flex justify-center py-20">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-violet-500 border-t-transparent"></div>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#503878] border-t-transparent"></div>
             </div>
           ) : cards.length === 0 ? (
             <div className="col-span-full text-center py-20">
@@ -206,7 +200,7 @@ const PatientQueue = () => {
             ))
           )}
         </div>
-      </div>
+     
 
       {showModal && (
         <QueueModal
@@ -237,8 +231,8 @@ const PatientQueue = () => {
 
 function ServiceCard({ card, onClick }) {
   return (
-    <div onClick={onClick} className="relative p-6 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden group">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+    <div onClick={onClick} className="relative p-6 bg-gradient-to-br from-[#503878] to-[#D946EF] text-white rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden group">
+      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-xl">{card.serviceName}</h2>
@@ -246,11 +240,11 @@ function ServiceCard({ card, onClick }) {
         </div>
         <div className="space-y-3">
           <div className="flex items-center justify-between bg-white bg-opacity-10 rounded-lg p-3">
-            <span className="text-violet-100 text-sm font-medium">Active</span>
+            <span className="text-purple-100 text-sm font-medium">Active</span>
             <span className="text-2xl font-bold">{card.activePatients}</span>
           </div>
           <div className="flex items-center justify-between bg-white bg-opacity-10 rounded-lg p-3">
-            <span className="text-violet-100 text-sm font-medium">Served</span>
+            <span className="text-purple-100 text-sm font-medium">Served</span>
             <span className="text-2xl font-bold">{card.totalServed}</span>
           </div>
         </div>
@@ -266,11 +260,11 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-6">
+        <div className="bg-[#503878] text-white p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold mb-1">{selectedService}</h2>
-              <p className="text-violet-100 text-sm">3:1 Priority Queue System</p>
+              <p className="text-purple-100 text-sm">3:1 Priority Queue System</p>
             </div>
             <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,7 +284,7 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {loadingTable ? (
             <div className="flex justify-center py-20">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-violet-500 border-t-transparent"></div>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#503878] border-t-transparent"></div>
             </div>
           ) : organizedQueue.length === 0 ? (
             <div className="text-center py-20">
@@ -298,15 +292,15 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
               <p className="text-gray-500 text-lg">No patients in queue</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px]">
+            <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+              <table className="w-full min-w-[800px]">
                 <thead>
-                  <tr className="bg-gradient-to-r from-violet-100 to-purple-100">
-                    <th className="p-3 text-left text-violet-900 font-semibold">Position</th>
-                    <th className="p-3 text-left text-violet-900 font-semibold">Patient Name</th>
-                    <th className="p-3 text-left text-violet-900 font-semibold">Age</th>
-                    <th className="p-3 text-left text-violet-900 font-semibold">Category</th>
-                    <th className="p-3 text-left text-violet-900 font-semibold">Status</th>
+                  <tr className="bg-gradient-to-r from-[#503878]/20 to-purple-100">
+                    <th className="p-3 text-left text-[#503878] font-semibold">Position</th>
+                    <th className="p-3 text-left text-[#503878] font-semibold">Patient Name</th>
+                    <th className="p-3 text-left text-[#503878] font-semibold">Age</th>
+                    <th className="p-3 text-left text-[#503878] font-semibold">Category</th>
+                    <th className="p-3 text-left text-[#503878] font-semibold">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -318,11 +312,11 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
 
                     return (
                       <tr key={row.queueId} className={`border-b transition-all ${
-                        isCurrentlyServing ? "bg-yellow-50 border-l-4 border-l-yellow-500" : "hover:bg-violet-50"
+                        isCurrentlyServing ? "bg-yellow-50 border-l-4 border-l-yellow-500" : "hover:bg-purple-50"
                       }`}>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            <span className={`font-bold text-lg ${isCurrentlyServing ? "text-yellow-700" : "text-violet-700"}`}>
+                            <span className={`font-bold text-lg ${isCurrentlyServing ? "text-yellow-700" : "text-[#503878]"}`}>
                               {isCurrentlyServing ? "→" : row.queuePosition}
                             </span>
                             {isPriority && !isCurrentlyServing && (
@@ -366,10 +360,10 @@ function PatientDetailModal({ queue, onClose, calculateAge }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-6 flex items-center justify-between">
+        <div className="bg-[#503878] text-white p-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">Patient Details</h2>
-            <p className="text-violet-100 text-sm">Queue #{queue.queueId}</p>
+            <p className="text-purple-100 text-sm">Queue #{queue.queueId}</p>
           </div>
           <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -380,7 +374,7 @@ function PatientDetailModal({ queue, onClose, calculateAge }) {
 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)] space-y-6">
           <div>
-            <h3 className="text-lg font-bold text-violet-700 mb-3">Personal</h3>
+            <h3 className="text-lg font-bold text-[#503878] mb-3">Personal</h3>
             <div className="grid grid-cols-2 gap-4">
               <InfoField label="Name" value={`${patient.firstName} ${patient.middleName || ''} ${patient.lastName}`.trim()} className="col-span-2" />
               <InfoField label="Age" value={`${calculateAge(patient.dateOfBirth)} years`} />
@@ -389,7 +383,7 @@ function PatientDetailModal({ queue, onClose, calculateAge }) {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-violet-700 mb-3">Queue Status</h3>
+            <h3 className="text-lg font-bold text-[#503878] mb-3">Queue Status</h3>
             <div className="grid grid-cols-2 gap-4">
               <InfoField label="Service" value={queue.service?.serviceName} />
               <InfoField label="Status" value={queue.status} />
@@ -431,8 +425,7 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setLoading(true);
     setError("");
 
@@ -449,10 +442,10 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-8">
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-6 flex items-center justify-between rounded-t-2xl">
+        <div className="bg-[#503878] text-white p-6 flex items-center justify-between rounded-t-2xl">
           <div>
             <h2 className="text-2xl font-bold mb-1">Register Patient</h2>
-            <p className="text-violet-100 text-sm">Add to queue</p>
+            <p className="text-purple-100 text-sm">Add to queue</p>
           </div>
           <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -461,7 +454,7 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
           {error && (
             <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded">
               <p className="text-red-700 font-medium">{error}</p>
@@ -469,14 +462,14 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
           )}
 
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-violet-700 mb-3">Personal Information</h3>
+            <h3 className="text-lg font-bold text-[#503878] mb-3">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <input type="text" name="middleName" value={formData.middleName} onChange={handleChange} placeholder="Middle Name" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last Name *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <input type="text" name="suffix" value={formData.suffix} onChange={handleChange} placeholder="Suffix" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <select name="gender" value={formData.gender} onChange={handleChange} required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500">
+              <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <input type="text" name="middleName" value={formData.middleName} onChange={handleChange} placeholder="Middle Name" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last Name *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <input type="text" name="suffix" value={formData.suffix} onChange={handleChange} placeholder="Suffix" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <select name="gender" value={formData.gender} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none">
                 <option value="">Gender *</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
@@ -485,35 +478,35 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
           </div>
 
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-violet-700 mb-3">Contact</h3>
+            <h3 className="text-lg font-bold text-[#503878] mb-3">Contact</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange} placeholder="Contact Number *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <input type="tel" name="emergencyContactNumber" value={formData.emergencyContactNumber} onChange={handleChange} placeholder="Emergency Contact *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500 md:col-span-2" />
+              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange} placeholder="Contact Number *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <input type="tel" name="emergencyContactNumber" value={formData.emergencyContactNumber} onChange={handleChange} placeholder="Emergency Contact *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none md:col-span-2" />
             </div>
           </div>
 
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-violet-700 mb-3">Address</h3>
+            <h3 className="text-lg font-bold text-[#503878] mb-3">Address</h3>
             <div className="grid grid-cols-1 gap-4">
-              <input type="text" name="addressStreet" value={formData.addressStreet} onChange={handleChange} placeholder="Street *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
+              <input type="text" name="addressStreet" value={formData.addressStreet} onChange={handleChange} placeholder="Street *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
               <div className="grid grid-cols-3 gap-4">
-                <input type="text" name="addressBarangay" value={formData.addressBarangay} onChange={handleChange} placeholder="Barangay *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-                <input type="text" name="addressMunicipality" value={formData.addressMunicipality} onChange={handleChange} placeholder="Municipality *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-                <input type="text" name="addressProvince" value={formData.addressProvince} onChange={handleChange} placeholder="Province *" required className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
+                <input type="text" name="addressBarangay" value={formData.addressBarangay} onChange={handleChange} placeholder="Barangay *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+                <input type="text" name="addressMunicipality" value={formData.addressMunicipality} onChange={handleChange} placeholder="Municipality *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+                <input type="text" name="addressProvince" value={formData.addressProvince} onChange={handleChange} placeholder="Province *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
               </div>
             </div>
           </div>
 
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-violet-700 mb-3">Medical</h3>
+            <h3 className="text-lg font-bold text-[#503878] mb-3">Medical</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select name="category" value={formData.category} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500">
+              <select name="category" value={formData.category} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none">
                 {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
-              <input type="number" name="height" value={formData.height} onChange={handleChange} placeholder="Height (cm)" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <input type="number" name="weight" value={formData.weight} onChange={handleChange} placeholder="Weight (kg)" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500" />
-              <select name="bloodType" value={formData.bloodType} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500">
+              <input type="number" name="height" value={formData.height} onChange={handleChange} placeholder="Height (cm)" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <input type="number" name="weight" value={formData.weight} onChange={handleChange} placeholder="Weight (kg)" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <select name="bloodType" value={formData.bloodType} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none">
                 <option value="">Blood Type</option>
                 {bloodTypes.map(type => <option key={type} value={type}>{type}</option>)}
               </select>
@@ -521,8 +514,8 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
           </div>
 
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-violet-700 mb-3">Service</h3>
-            <select name="serviceRequired" value={formData.serviceRequired} onChange={handleChange} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500">
+            <h3 className="text-lg font-bold text-[#503878] mb-3">Service</h3>
+            <select name="serviceRequired" value={formData.serviceRequired} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none">
               <option value="">Select Service *</option>
               {services.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -532,11 +525,11 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
             <button type="button" onClick={onClose} className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="flex-1 px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 px-6 py-3 bg-[#503878] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50">
               {loading ? "Registering..." : "Register"}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

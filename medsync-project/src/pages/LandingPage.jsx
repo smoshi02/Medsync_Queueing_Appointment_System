@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Calendar,
-    Play,
     Lightbulb,
     Smartphone,
     Shield,
@@ -10,7 +10,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import medsyncBg from "../assets/medsync-bg.jpg";
-import logo from "../assets/medsync-logo.png"; 
+import logo from "../assets/medsync-logo.png";
 import dentalImg from "../assets/dental.jpeg";
 import famplanImg from "../assets/famplan.jpeg";
 import labImg from "../assets/lab.jpg";
@@ -19,8 +19,11 @@ import obImg from "../assets/ob.jpg";
 import pharmaImg from "../assets/pharma.jpg";
 import tbdotsImg from "../assets/tbdots.jpg";
 
+
 export default function LandingPage() {
+    const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
+
 
     const services = [
         { name: "Medical Consultations", color: "bg-[#790081]", img: medconsImg },
@@ -32,9 +35,11 @@ export default function LandingPage() {
         { name: "TB DOTs Services", color: "bg-[#790081]", img: tbdotsImg },
     ];
 
+
     const nextSlide = () => {
         setCurrentSlide((prev) => (prev + 1) % Math.ceil(services.length / 2));
     };
+
 
     const prevSlide = () => {
         setCurrentSlide(
@@ -44,15 +49,17 @@ export default function LandingPage() {
         );
     };
 
+
     useEffect(() => {
         const interval = setInterval(nextSlide, 5000);
         return () => clearInterval(interval);
     }, []);
 
+
     return (
         <div className="min-h-screen bg-white">
             {/* Navigation */}
-            <nav className="bg-[#B52DB5] shadow-md px-6 py-4 fixed top-0 left-0 w-full z-50">
+            <nav className="bg-[#503878] shadow-md px-6 py-4 fixed top-0 left-0 w-full z-50">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg overflow-hidden">
@@ -61,17 +68,25 @@ export default function LandingPage() {
                         <span className="text-2xl font-bold text-white tracking-wide">MedSync</span>
                     </div>
 
+
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#about" className="text-white hover:text-purple-100 transition-colors">About</a>
                         <a href="#services" className="text-white hover:text-purple-100 transition-colors">Services</a>
                         <a href="#contact" className="text-white hover:text-purple-100 transition-colors">Contact</a>
                     </div>
 
+
                     <div className="flex items-center gap-4">
-                        <button className="bg-white text-[#B52DB5] px-6 py-2 rounded-lg hover:bg-purple-50 transition-colors font-semibold">Start Now</button>
+                        <button
+                            onClick={() => navigate("/patient/queue")}
+                            className="bg-[#A03FEE] text-white px-6 py-2 rounded-lg hover:bg-[#7E27C4] transition-colors font-semibold"
+                        >
+                            Start Now
+                        </button>
                     </div>
                 </div>
             </nav>
+
 
             {/* Hero Section */}
             <section className="bg-gradient-to-br from-purple-50 via-white to-purple-50 px-6 py-24 mt-20">
@@ -87,7 +102,10 @@ export default function LandingPage() {
                                 medical scheduling system.
                             </p>
                             <div className="flex gap-4 pt-4">
-                                <button className="bg-[#B52DB5] text-white px-8 py-4 rounded-lg flex items-center gap-2 hover:bg-[#790081] transition-all shadow-lg hover:shadow-xl font-semibold">
+                                <button
+                                    onClick={() => navigate("/patient/queue")}
+                                    className=" bg-gradient-to-r from-[#5E4882] to-[#C442E5] text-white px-8 py-4 rounded-lg flex items-center gap-2 hover:bg-[#790081] transition-all shadow-lg hover:shadow-xl font-semibold"
+                                >
                                     <Calendar size={20} /> Get Started
                                 </button>
                             </div>
@@ -102,6 +120,7 @@ export default function LandingPage() {
                 </div>
             </section>
 
+
             {/* About Section */}
             <section id="about" className="px-6 py-20 bg-white">
                 <div className="max-w-7xl mx-auto">
@@ -113,6 +132,7 @@ export default function LandingPage() {
                             more efficient for both patients and providers.
                         </p>
                     </div>
+
 
                     <div className="grid md:grid-cols-2 gap-16 items-center">
                         <div className="space-y-8">
@@ -129,6 +149,7 @@ export default function LandingPage() {
                                 </div>
                             </div>
 
+
                             <div className="flex gap-6">
                                 <div className="bg-green-500 text-white w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
                                     <Smartphone size={28} />
@@ -141,6 +162,7 @@ export default function LandingPage() {
                                     </p>
                                 </div>
                             </div>
+
 
                             <div className="flex gap-6">
                                 <div className="bg-[#B52DB5] text-white w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -156,6 +178,7 @@ export default function LandingPage() {
                             </div>
                         </div>
 
+
                         <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-3xl h-96 flex items-center justify-center shadow-xl overflow-hidden relative">
                             <img
                                 src={medsyncBg}
@@ -168,6 +191,7 @@ export default function LandingPage() {
                 </div>
             </section>
 
+
             {/* Services Section */}
             <section id="services" className="px-6 py-20 bg-gradient-to-b from-gray-50 to-white">
                 <div className="max-w-7xl mx-auto">
@@ -178,6 +202,7 @@ export default function LandingPage() {
                             your medical journey from booking to treatment.
                         </p>
                     </div>
+
 
                     {/* Appointment Booking & Efficient Queuing Cards */}
                     <div className="grid md:grid-cols-2 gap-8 mb-16">
@@ -206,14 +231,18 @@ export default function LandingPage() {
                                     <span>Instant confirmation</span>
                                 </div>
                             </div>
-                            <button className="w-full bg-[#B52DB5] text-white py-4 rounded-xl hover:bg-[#790081] transition-all font-semibold shadow-lg hover:shadow-xl">
+                            <button
+                                onClick={() => navigate("/patient/appointments")}
+                                className="w-full bg-gradient-to-r from-[#5E4882] to-[#C442E5] text-white py-4 rounded-xl hover:bg-[#790081] transition-all font-semibold shadow-lg hover:shadow-xl"
+                            >
                                 Start Booking
                             </button>
                         </div>
 
+
                         {/* Efficient Queuing Card */}
-                        <div className="bg-white rounded-3xl shadow-xl p-10 border-t-4 border-green-500 hover:shadow-2xl transition-shadow">
-                            <div className="bg-green-500 text-white w-16 h-16 rounded-xl flex items-center justify-center mb-6 shadow-lg">
+                        <div className="bg-white rounded-3xl shadow-xl p-10 border-t-4 border-[#B52DB5] hover:shadow-2xl transition-shadow">
+                            <div className="bg-[#B52DB5] text-white w-16 h-16 rounded-xl flex items-center justify-center mb-6 shadow-lg">
                                 <Smartphone size={32} />
                             </div>
                             <h3 className="text-2xl font-bold mb-4">Efficient Queuing</h3>
@@ -235,11 +264,15 @@ export default function LandingPage() {
                                     <span>Faster processing time</span>
                                 </div>
                             </div>
-                            <button className="w-full bg-green-500 text-white py-4 rounded-xl hover:bg-green-600 transition-all font-semibold shadow-lg hover:shadow-xl">
+                            <button
+                                onClick={() => navigate("/patient/queue")}
+                                className="w-full bg-gradient-to-r from-[#5E4882] to-[#C442E5] text-white py-4 rounded-xl hover:bg-green-600 transition-all font-semibold shadow-lg hover:shadow-xl"
+                            >
                                 Join Queue
                             </button>
                         </div>
                     </div>
+
 
                     {/* Service Cards Carousel */}
                     <div className="relative mt-16">
@@ -262,18 +295,13 @@ export default function LandingPage() {
                                                         key={index}
                                                         className="relative rounded-2xl overflow-hidden h-72 shadow-lg hover:shadow-xl transition-shadow"
                                                     >
-                                                        {/* Image */}
                                                         <img
                                                             src={service.img}
                                                             alt={service.name}
                                                             className="absolute inset-0 w-full h-full object-cover"
                                                         />
-                                                        {/* Overlay */}
                                                         <div className="absolute inset-0 bg-black/25"></div>
-                                                        {/* Text Bar */}
-                                                        <div
-                                                            className={`absolute bottom-0 left-0 right-0 ${service.color} text-white p-6`}
-                                                        >
+                                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-[#5E4882] to-[#C442E5] text-white p-6">
                                                             <h3 className="text-2xl font-bold">{service.name}</h3>
                                                         </div>
                                                     </div>
@@ -284,7 +312,7 @@ export default function LandingPage() {
                             </div>
                         </div>
 
-                        {/* Navigation Buttons */}
+
                         <button
                             onClick={prevSlide}
                             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 bg-white rounded-full p-4 shadow-xl hover:bg-gray-50 transition-all"
@@ -298,7 +326,7 @@ export default function LandingPage() {
                             <ChevronRight size={28} className="text-[#B52DB5]" />
                         </button>
 
-                        {/* Dots Indicator */}
+
                         <div className="flex justify-center gap-3 mt-10">
                             {Array.from({ length: Math.ceil(services.length / 2) }).map(
                                 (_, index) => (
@@ -316,8 +344,9 @@ export default function LandingPage() {
                 </div>
             </section>
 
+
             {/* CTA Section */}
-            <section className="bg-gradient-to-r from-[#B52DB5] to-[#790081] px-6 py-24">
+            <section className="bg-[#503878] px-6 py-24">
                 <div className="max-w-4xl mx-auto text-center">
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
                         Ready to Transform Your Healthcare Experience?
@@ -329,8 +358,9 @@ export default function LandingPage() {
                 </div>
             </section>
 
+
             {/* Footer */}
-            <footer className="bg-[#704B73] text-white px-8 py-16">
+            <footer className="bg-gradient-to-b from-[#B242D3] to-[#58397F] text-white px-8 py-16">
                 <div className="max-w-7xl mx-auto">
                     <div className="grid md:grid-cols-4 gap-12 mb-12">
                         <div>
@@ -346,7 +376,7 @@ export default function LandingPage() {
                             </p>
                         </div>
 
-                        {/* Services, Company, Support columns */}
+
                         <div>
                             <h4 className="font-bold text-lg mb-4">Services</h4>
                             <ul className="space-y-3 text-purple-200">
@@ -357,50 +387,35 @@ export default function LandingPage() {
                             </ul>
                         </div>
 
+
                         <div>
                             <h4 className="font-bold text-lg mb-4">Company</h4>
                             <ul className="space-y-3 text-purple-200">
                                 <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
                                 <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
                                 <li><a href="#" className="hover:text-white transition-colors">Press</a></li>
-                                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
                             </ul>
                         </div>
 
 
                         <div>
-                            <h4 className="font-bold text-lg mb-4">Support</h4>
-                            <ul className="space-y-3 text-purple-200">
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Help Center
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Privacy Policy
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        Terms of Service
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white transition-colors">
-                                        HIPAA Compliance
-                                    </a>
-                                </li>
-                            </ul>
+                            <h4 className="font-bold text-lg mb-4">Contact</h4>
+                            <p className="text-purple-200">123 MedSync Street, City, Country</p>
+                            <p className="text-purple-200">Email: support@medsync.com</p>
+                            <p className="text-purple-200">Phone: +123 456 7890</p>
                         </div>
                     </div>
 
 
-                    <div className="border-t border-purple-600 pt-8 text-center text-purple-200">
-                        <p>© 2024 MedSync. All rights reserved.</p>
-                    </div>
+                    <p className="text-center text-purple-200">© 2025 MedSync. All rights reserved.</p>
                 </div>
             </footer>
         </div>
     );
 }
+
+
+
+
+
