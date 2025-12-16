@@ -290,4 +290,67 @@ public class AppointmentApprovalController {
             e.printStackTrace();
         }
     }
+
+    // ADD THIS METHOD TO YOUR AppointmentApprovalController.java
+// Place it after the rescheduleAppointment method
+
+    // ============================================
+// NO DOCTOR AVAILABLE (Staff Action)
+// ============================================
+    @PostMapping("/{id}/no-doctor-available")
+    @Transactional
+    public ResponseEntity<Map<String, String>> markNoDoctorAvailable(@PathVariable Long id) {
+        try {
+            Appointment appointment = appointmentRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+            // Update status to Rescheduling
+            appointment.setStatus("Rescheduling");
+            appointmentRepository.save(appointment);
+
+            // Get patient details
+            Patient patient = appointment.getPatient();
+            String patientName = String.format("%s %s",
+                    patient.getFirstName(),
+                    patient.getLastName()
+            );
+
+            // Format date and time
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
+            String formattedDate = appointment.getDate() != null
+                    ? appointment.getDate().format(dateFormatter)
+                    : "Not specified";
+            String formattedTime = appointment.getTime() != null
+                    ? appointment.getTime().toString()
+                    : "Not specified";
+
+            // Send no doctor available email
+            emailService.sendNoDoctorAvailableEmail(
+                    patient.getEmail(),
+                    patientName,
+                    formattedDate,
+                    formattedTime,
+                    appointment.getAppointmentId()
+            );
+
+            // Broadcast update via WebSocket
+            broadcastAppointmentUpdate();
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Patient notified about doctor unavailability");
+            response.put("status", "success");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("Error marking no doctor available: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Failed to notify patient: " + e.getMessage());
+            error.put("status", "error");
+
+            return ResponseEntity.status(500).body(error);
+        }
+    }
 }

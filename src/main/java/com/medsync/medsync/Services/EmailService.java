@@ -217,4 +217,53 @@ public class EmailService {
             // Don't throw - we don't want email failure to break the medical record update
         }
     }
+
+    /**
+     * NEW METHOD: Send email when no doctor is available for appointment
+     */
+    public void sendNoDoctorAvailableEmail(
+            String toEmail,
+            String patientName,
+            String appointmentDate,
+            String appointmentTime,
+            Long appointmentId
+    ) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("medsyncsg@gmail.com");
+            message.setTo(toEmail);
+            message.setSubject("MedSync - Doctor Unavailable for Your Appointment");
+
+            String emailBody = String.format(
+                    "Dear %s,\n\n" +
+                            "We regret to inform you that no doctor is available on your chosen appointment date.\n\n" +
+                            "Appointment Details:\n" +
+                            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                            "📅 Date: %s\n" +
+                            "🕐 Time: %s\n" +
+                            "🆔 Appointment ID: #%s\n" +
+                            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n" +
+                            "⚠️ What happens next?\n" +
+                            "Your appointment has been marked for rescheduling. We will contact you shortly to arrange a new date when our doctors are available.\n\n" +
+                            "If you would like to reschedule immediately, please contact us at:\n" +
+                            "📞 Phone: +63-XXX-XXX-XXXX\n" +
+                            "📧 Email: medsyncsg@gmail.com\n\n" +
+                            "We apologize for any inconvenience and appreciate your understanding.\n\n" +
+                            "Best regards,\n" +
+                            "MedSync Team",
+                    patientName,
+                    appointmentDate,
+                    appointmentTime,
+                    appointmentId
+            );
+
+            message.setText(emailBody);
+            mailSender.send(message);
+
+            System.out.println("✅ No doctor available email sent to " + toEmail);
+        } catch (Exception e) {
+            System.err.println("❌ Failed to send no doctor available email: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }
