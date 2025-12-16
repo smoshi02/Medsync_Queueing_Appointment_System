@@ -71,7 +71,18 @@ function Appointments() {
       setLoading(false);
     }
   };
-
+  const handleNoDoctorAvailable = async (id) => {
+  if (!window.confirm("Notify patient that no doctor is available on their chosen date?")) return;
+  try {
+    setProcessingId(id);
+    const res = await fetchWithAuth(`/api/appointments/${id}/no-doctor-available`, { method: "POST" });
+    alert(res.status === "success" ? "✅ Patient notified about doctor unavailability!" : "⚠️ " + res.message);
+  } catch (err) {
+    alert("❌ Failed to send notification: " + err.message);
+  } finally {
+    setProcessingId(null);
+  }
+};
   useEffect(() => { loadAppointments(); }, []);
 
   useStompWebSocket(["/topic/private/appointments"], (msg) => {
@@ -238,6 +249,7 @@ function Appointments() {
           handleApproveAppointment={handleApproveAppointment}
           handleCancelAppointment={handleCancelAppointment}
           handleRescheduleClick={handleRescheduleClick}
+          handleNoDoctorAvailable={handleNoDoctorAvailable}
           setSelectedAppointment={setSelectedAppointment}
         />
       </div>
@@ -278,7 +290,7 @@ function StatCard({ title, count, icon, isActive, onClick }) {
   );
 }
 
-function AppointmentsTable({ filteredAppointments, processingId, handleApproveAppointment, handleCancelAppointment, handleRescheduleClick, setSelectedAppointment }) {
+function AppointmentsTable({ filteredAppointments, processingId, handleApproveAppointment, handleCancelAppointment, handleRescheduleClick, handleNoDoctorAvailable, setSelectedAppointment }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       {filteredAppointments.length === 0 ? (
@@ -291,15 +303,15 @@ function AppointmentsTable({ filteredAppointments, processingId, handleApproveAp
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="p-5 text-left text-gray-700 font-semibold text-sm">Patient</th>
-                <th className="p-5 text-left text-gray-700 font-semibold text-sm">Age</th>
-                <th className="p-5 text-left text-gray-700 font-semibold text-sm">Priority</th>
-                <th className="p-5 text-left text-gray-700 font-semibold text-sm">Contact</th>
-                <th className="p-5 text-left text-gray-700 font-semibold text-sm">Date</th>
-                <th className="p-5 text-left text-gray-700 font-semibold text-sm">Time</th>
-                <th className="p-5 text-center text-gray-700 font-semibold text-sm">Status</th>
-                <th className="p-5 text-center text-gray-700 font-semibold text-sm">Actions</th>
+              <tr className="bg-gradient-to-r from-purple-50 to-pink-50 border-b-2 border-purple-200">
+                <th className="p-5 text-left text-purple-900 font-semibold text-sm">👤 Patient</th>
+                <th className="p-5 text-left text-blue-900 font-semibold text-sm">🎂 Age</th>
+                <th className="p-5 text-left text-red-900 font-semibold text-sm">⭐ Priority</th>
+                <th className="p-5 text-left text-green-900 font-semibold text-sm">📞 Contact</th>
+                <th className="p-5 text-left text-indigo-900 font-semibold text-sm">📅 Date</th>
+                <th className="p-5 text-left text-amber-900 font-semibold text-sm">🕐 Time</th>
+                <th className="p-5 text-center text-cyan-900 font-semibold text-sm">📊 Status</th>
+                <th className="p-5 text-center text-gray-900 font-semibold text-sm">⚙️ Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -312,10 +324,10 @@ function AppointmentsTable({ filteredAppointments, processingId, handleApproveAp
                 const isProcessing = processingId === a.appointmentId;
                 
                 return (
-                  <tr key={a.appointmentId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="p-5">
+                  <tr key={a.appointmentId} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-purple-50/30 hover:to-pink-50/30 transition-all">
+                    <td className="p-5 bg-purple-50/20">
                       <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#503878] to-[#D946EF] flex items-center justify-center text-white font-semibold shadow-sm">
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold shadow-sm">
                           {name.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -324,42 +336,66 @@ function AppointmentsTable({ filteredAppointments, processingId, handleApproveAp
                         </div>
                       </div>
                     </td>
-                    <td className="p-5"><span className="text-gray-700">{age} years</span></td>
-                    <td className="p-5">{getPriorityBadge(a.priorityCategory)}</td>
-                    <td className="p-5"><div className="text-sm text-gray-700">{a.contactNumber || "—"}</div></td>
-                    <td className="p-5">
-                      <div className="flex items-center gap-2 text-gray-800">
+                    <td className="p-5 bg-blue-50/20">
+                      <span className="text-blue-800 font-medium">{age} years</span>
+                    </td>
+                    <td className="p-5 bg-red-50/20">{getPriorityBadge(a.priorityCategory)}</td>
+                    <td className="p-5 bg-green-50/20">
+                      <div className="text-sm text-green-800 font-medium">{a.contactNumber || "—"}</div>
+                    </td>
+                    <td className="p-5 bg-indigo-50/20">
+                      <div className="flex items-center gap-2 text-indigo-800 font-medium">
                         <span>📅</span>
                         <span>{a.date ? new Date(a.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "No Date"}</span>
                       </div>
                     </td>
-                    <td className="p-5">
-                      <div className="flex items-center gap-2 text-gray-700"><span>🕐</span><span>{formatTime(a.time)}</span></div>
+                    <td className="p-5 bg-amber-50/20">
+                      <div className="flex items-center gap-2 text-amber-800 font-medium">
+                        <span>🕐</span>
+                        <span>{formatTime(a.time)}</span>
+                      </div>
                     </td>
-                    <td className="p-5 text-center">
+                    <td className="p-5 text-center bg-cyan-50/20">
                       <span className={`inline-block px-4 py-1.5 rounded-full text-xs font-semibold ${
-                        a.status === "Confirmed" ? "bg-green-50 text-green-700 border border-green-200" : 
-                        a.status === "Pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : 
-                        a.status === "Rescheduling" ? "bg-blue-50 text-blue-700 border border-blue-200" : 
-                        a.status === "Cancelled" ? "bg-red-50 text-red-700 border border-red-200" : "bg-gray-50 text-gray-700 border border-gray-200"
+                        a.status === "Confirmed" ? "bg-green-100 text-green-800 border border-green-300" : 
+                        a.status === "Pending" ? "bg-yellow-100 text-yellow-800 border border-yellow-300" : 
+                        a.status === "Rescheduling" ? "bg-blue-100 text-blue-800 border border-blue-300" : 
+                        a.status === "Cancelled" ? "bg-red-100 text-red-800 border border-red-300" : "bg-gray-100 text-gray-800 border border-gray-300"
                       }`}>{a.status}</span>
                     </td>
-                    <td className="p-5">
-                      <div className="flex gap-2 justify-center">
+                    <td className="p-5 bg-gray-50/20">
+                      <div className="flex gap-2 justify-center flex-wrap">
                         {isPending && (
                           <button onClick={() => handleApproveAppointment(a.appointmentId)} disabled={isProcessing} 
-                            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50" title="Approve">✓</button>
+                            className="px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50" 
+                            title="Approve">
+                            ✅ Approve
+                          </button>
                         )}
                         {(isPending || isConfirmed || isRescheduling) && (
                           <>
+                            <button onClick={() => handleNoDoctorAvailable(a.appointmentId)} disabled={isProcessing}
+                              className="px-3 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50" 
+                              title="No Doctor Available">
+                              🚫 No Doctor
+                            </button>
                             <button onClick={() => handleRescheduleClick(a)} disabled={isProcessing}
-                              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50" title="Reschedule">🔄</button>
+                              className="px-3 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50" 
+                              title="Reschedule">
+                              🔄 Reschedule
+                            </button>
                             <button onClick={() => handleCancelAppointment(a.appointmentId)} disabled={isProcessing}
-                              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50" title="Cancel">✕</button>
+                              className="px-3 py-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50" 
+                              title="Cancel">
+                              ❌ Cancel
+                            </button>
                           </>
                         )}
                         <button onClick={() => setSelectedAppointment(a)} 
-                          className="px-4 py-2 bg-gradient-to-r from-[#503878] to-[#D946EF] text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all" title="View">👁</button>
+                          className="px-3 py-2 bg-gradient-to-r from-[#503878] to-[#D946EF] text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all" 
+                          title="View Details">
+                          👁️ View
+                        </button>
                       </div>
                     </td>
                   </tr>

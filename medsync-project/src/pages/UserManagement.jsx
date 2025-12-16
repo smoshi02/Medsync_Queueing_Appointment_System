@@ -349,11 +349,20 @@ function UserManagement() {
 }
 
 
+/* InfoField Component */
+function InfoField({ label, value }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-sm font-medium text-gray-900">{value || "—"}</p>
+    </div>
+  );
+}
+
 /* USER MODAL */
 function UserModal({ user, onClose }) {
   const fullName = `${user.firstName || ""} ${user.middleName || ""} ${user.lastName || ""
     }`.trim();
-
 
   const cleaned = { ...user };
   delete cleaned.password;
@@ -361,7 +370,6 @@ function UserModal({ user, onClose }) {
   delete cleaned.doctorId;
   delete cleaned.status;
   delete cleaned.notificationsEnabled;
-
 
   const skipFields = [
     "firstName",
@@ -380,109 +388,102 @@ function UserModal({ user, onClose }) {
     "emailNotificationsEnabled",
   ];
 
-
-    return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] p-8 text-white">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl font-bold border-2 border-white/30">
-              {fullName.charAt(0)}
+        <div className="bg-[#503878] text-white p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl font-bold">
+                {fullName.charAt(0)}
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">{fullName}</h2>
+                <p className="text-violet-100 text-sm">@{user.username}</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-3xl font-bold">{fullName}</h2>
-              <p className="text-violet-200">@{user.username}</p>
-            </div>
+            <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
           </div>
         </div>
-
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto space-y-6">
-          {/* Address */}
-          <div className="bg-gradient-to-br from-gray-50 to-violet-50 p-6 rounded-2xl border border-gray-200">
-            <h3 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Address
-            </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500 font-medium">Street</p>
-                <p className="text-gray-900">{user.addressStreet || "N/A"}</p>
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Address */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-green-900">Address</h3>
               </div>
-              <div>
-                <p className="text-gray-500 font-medium">Barangay</p>
-                <p className="text-gray-900">{user.addressBarangay || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 font-medium">Municipality</p>
-                <p className="text-gray-900">{user.addressMunicipality || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 font-medium">Province</p>
-                <p className="text-gray-900">{user.addressProvince || "N/A"}</p>
+              <div className="space-y-3">
+                <InfoField label="Street" value={user.addressStreet} />
+                <div className="grid grid-cols-2 gap-3">
+                  <InfoField label="Barangay" value={user.addressBarangay} />
+                  <InfoField label="Municipality" value={user.addressMunicipality} />
+                </div>
+                <InfoField label="Province" value={user.addressProvince} />
               </div>
             </div>
+
+            {/* Contact Info */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border border-blue-100">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-blue-900">Contact Information</h3>
+              </div>
+              <div className="space-y-3">
+                <InfoField label="Email" value={user.email} />
+                <InfoField label="Phone" value={user.phoneNumber || user.contactNumber} />
+                <InfoField label="Emergency Contact" value={user.emergencyContactNumber} />
+              </div>
+            </div>
+
+            {/* Other Details */}
+            {Object.entries(cleaned).filter(([key]) => !skipFields.includes(key)).length > 0 && (
+              <div className="lg:col-span-2 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-5 border border-violet-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-violet-500 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-violet-900">Other Details</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(cleaned).map(([key, value]) => {
+                    if (skipFields.includes(key)) return null;
+                    const label = key
+                      .replace(/([A-Z])/g, " $1")
+                      .replace(/^./, (s) => s.toUpperCase());
+                    return (
+                      <InfoField key={key} label={label} value={value} />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
-
-
-          {/* Contact Info */}
-          <div className="bg-gradient-to-br from-gray-50 to-violet-50 p-6 rounded-2xl border border-gray-200">
-            <h3 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Contact Information
-            </h3>
-            <div className="space-y-3 text-sm">
-              <div>
-                <p className="text-gray-500 font-medium">Email</p>
-                <p className="text-gray-900">{user.email}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 font-medium">Phone</p>
-                <p className="text-gray-900">{user.phoneNumber || user.contactNumber || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 font-medium">Emergency Contact</p>
-                <p className="text-gray-900">{user.emergencyContactNumber || "N/A"}</p>
-              </div>
-            </div>
-          </div>
-
-
-          {/* Other Details */}
-          {Object.entries(cleaned).filter(([key]) => !skipFields.includes(key)).length > 0 && (
-            <div className="bg-gradient-to-br from-gray-50 to-violet-50 p-6 rounded-2xl border border-gray-200">
-              <h3 className="font-bold text-lg text-gray-900 mb-4">Other Details</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {Object.entries(cleaned).map(([key, value]) => {
-                  if (skipFields.includes(key)) return null;
-                  const label = key
-                    .replace(/([A-Z])/g, " $1")
-                    .replace(/^./, (s) => s.toUpperCase());
-                  return (
-                    <div key={key}>
-                      <p className="text-gray-500 font-medium">{label}</p>
-                      <p className="text-gray-900">{value || "N/A"}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
-
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
+        <div className="bg-gray-50 px-6 py-4 border-t flex justify-end">
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-[#503878] to-[#D946EF] text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
+            className="px-6 py-2.5 bg-[#503878] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
           >
             Close
           </button>
@@ -618,10 +619,7 @@ function EditUserModal({ user, onSave, onCancel }) {
         <h2 className="text-3xl font-bold">Edit {user.role}</h2>
         <p className="text-violet-200 mt-1">Update user information</p>
         </div>
-
-
-
-
+        
         <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-8">
           <section>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Personal Information</h3>

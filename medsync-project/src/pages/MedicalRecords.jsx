@@ -193,7 +193,7 @@ function MedicalRecords() {
                       <td className="p-5">
                         <button
                           onClick={() => setSelectedRecord(record)}
-                          className="px-5 py-2.5 bg-gradient-to-r from-[#503878] to-[#D946EF] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium shadow-sm"
+                          className="px-5 py-2.5 bg-[#503878] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium shadow-sm"
                         >
                           View/Edit
                         </button>
@@ -263,276 +263,269 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] text-white p-6 flex justify-between items-center sticky top-0 z-10 rounded-t-2xl">
-          <div>
-            <h2 className="text-3xl font-semibold mb-1">Medical Record #{record.recordId}</h2>
-            <p className="text-white/90 text-sm">Patient: {record.patientName}</p>
-          </div>
-          <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-lg transition-all">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+ return (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[#503878] text-white p-6 flex justify-between items-center flex-shrink-0 rounded-t-2xl">
+        <div>
+          <h2 className="text-3xl font-semibold mb-1">Medical Record #{record.recordId}</h2>
+          <p className="text-white/90 text-sm">Patient: {record.patientName}</p>
+        </div>
+      </div>
+
+      <div className="p-10 space-y-8 overflow-y-auto flex-1">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <span className={`px-6 py-3 rounded-full text-base font-semibold border ${
+            record.status === "Completed" 
+              ? "bg-green-50 text-green-700 border-green-200" 
+              : "bg-yellow-50 text-yellow-700 border-yellow-200"
+          }`}>
+            {record.status}
+          </span>
+          
+          {canEdit && !isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:opacity-90 font-semibold shadow-sm transition-all"
+            >
+              Add Doctor Assessment
+            </button>
+          )}
+          
+          {isDoctor && record.status === "Completed" && (
+            <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-2.5">
+              <p className="text-green-700 font-semibold text-sm">✓ Assessment Complete</p>
+            </div>
+          )}
+          
+          {!isDoctor && (
+            <div className="bg-gray-100 border border-gray-300 rounded-lg px-5 py-2.5">
+              <p className="text-gray-600 font-semibold text-sm">View Only ({normalizedRole})</p>
+            </div>
+          )}
         </div>
 
-        <div className="p-10 space-y-8">
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <span className={`px-6 py-3 rounded-full text-base font-semibold border ${
-              record.status === "Completed" 
-                ? "bg-green-50 text-green-700 border-green-200" 
-                : "bg-yellow-50 text-yellow-700 border-yellow-200"
-            }`}>
-              {record.status}
-            </span>
-            
-            {canEdit && !isEditing && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:opacity-90 font-semibold shadow-sm transition-all"
-              >
-                Add Doctor Assessment
-              </button>
-            )}
-            
-            {isDoctor && record.status === "Completed" && (
-              <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-2.5">
-                <p className="text-green-700 font-semibold text-sm">✓ Assessment Complete</p>
+        <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
+          <h3 className="text-2xl font-semibold text-gray-900 mb-8">Patient Information</h3>
+          
+          <div className="space-y-8">
+            <div className="bg-white rounded-xl p-8 border border-gray-200">
+              <h4 className="text-lg font-semibold text-gray-900 mb-6">Personal Information</h4>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Full Name</p>
+                  <p className="text-gray-900 font-medium">{record.patientName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Contact Number</p>
+                  <p className="text-gray-900 font-medium">{record.contactNumber || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Email</p>
+                  <p className="text-gray-900 font-medium">{record.email || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Date of Birth</p>
+                  <p className="text-gray-900 font-medium">
+                    {record.dateOfBirth 
+                      ? new Date(record.dateOfBirth).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Blood Type</p>
+                  <p className="text-gray-900 font-medium">{record.bloodType || "—"}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-8 border border-gray-200">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Chief Complaint / Health Concern</h4>
+              <p className="text-gray-800 leading-relaxed">
+                {record.chiefComplaint || "Not specified"}
+              </p>
+            </div>
+
+            {record.vitals && (
+              <div className="bg-white rounded-xl p-8 border border-gray-200">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Vital Signs</h4>
+                <p className="text-gray-700 whitespace-pre-wrap">{record.vitals}</p>
               </div>
             )}
-            
-            {!isDoctor && (
-              <div className="bg-gray-100 border border-gray-300 rounded-lg px-5 py-2.5">
-                <p className="text-gray-600 font-semibold text-sm">View Only ({normalizedRole})</p>
+
+            {record.additionalNotes && (
+              <div className="bg-white rounded-xl p-8 border border-gray-200">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Additional Patient Information</h4>
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">{record.additionalNotes}</pre>
+                </div>
               </div>
             )}
           </div>
+        </div>
 
-          <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-8">Patient Information</h3>
-            
-            <div className="space-y-8">
-              <div className="bg-white rounded-xl p-8 border border-gray-200">
-                <h4 className="text-lg font-semibold text-gray-900 mb-6">Personal Information</h4>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Full Name</p>
-                    <p className="text-gray-900 font-medium">{record.patientName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Contact Number</p>
-                    <p className="text-gray-900 font-medium">{record.contactNumber || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Email</p>
-                    <p className="text-gray-900 font-medium">{record.email || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Date of Birth</p>
-                    <p className="text-gray-900 font-medium">
-                      {record.dateOfBirth 
-                        ? new Date(record.dateOfBirth).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })
-                        : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Blood Type</p>
-                    <p className="text-gray-900 font-medium">{record.bloodType || "—"}</p>
-                  </div>
-                </div>
-              </div>
+        {!isEditing ? (
+          <div className="bg-blue-50 rounded-xl p-8 border border-blue-200">
+            <h3 className="text-2xl font-semibold text-gray-900 mb-8">Doctor's Clinical Assessment</h3>
 
+            <div className="space-y-6">
               <div className="bg-white rounded-xl p-8 border border-gray-200">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Chief Complaint / Health Concern</h4>
-                <p className="text-gray-800 leading-relaxed">
-                  {record.chiefComplaint || "Not specified"}
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Diagnosis</h4>
+                <p className="text-gray-800">
+                  {record.diagnosis || <span className="text-yellow-600 italic">Pending doctor review</span>}
                 </p>
               </div>
 
-              {record.vitals && (
-                <div className="bg-white rounded-xl p-8 border border-gray-200">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Vital Signs</h4>
-                  <p className="text-gray-700 whitespace-pre-wrap">{record.vitals}</p>
-                </div>
-              )}
+              <div className="bg-white rounded-xl p-8 border border-gray-200">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Prescription</h4>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {record.prescription || <span className="text-gray-400 italic">No prescription yet</span>}
+                </p>
+              </div>
 
-              {record.additionalNotes && (
-                <div className="bg-white rounded-xl p-8 border border-gray-200">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Additional Patient Information</h4>
-                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">{record.additionalNotes}</pre>
-                  </div>
+              <div className="bg-white rounded-xl p-8 border border-gray-200">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Doctor's Notes</h4>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {record.doctorNotes || <span className="text-gray-400 italic">No additional notes</span>}
+                </p>
+              </div>
+
+              {record.followUpRequired && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8">
+                  <h4 className="text-lg font-semibold text-yellow-900 mb-3">Follow-up Required</h4>
+                  <p className="text-yellow-800 font-medium">
+                    Scheduled for: {record.followUpDate 
+                      ? new Date(record.followUpDate).toLocaleDateString('en-US', { 
+                          weekday: 'long', 
+                          month: 'long', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })
+                      : "To be scheduled"}
+                  </p>
                 </div>
               )}
             </div>
           </div>
+        ) : (
+          <div className="bg-green-50 rounded-xl p-8 border border-green-200">
+            <h3 className="text-2xl font-semibold text-gray-900 mb-8">Complete Doctor Assessment</h3>
 
-          {!isEditing ? (
-            <div className="bg-blue-50 rounded-xl p-8 border border-blue-200">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-8">Doctor's Clinical Assessment</h3>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Diagnosis *</label>
+                <textarea
+                  value={doctorNotes.diagnosis}
+                  onChange={(e) => setDoctorNotes(prev => ({ ...prev, diagnosis: e.target.value }))}
+                  rows="4"
+                  className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none"
+                  placeholder="Enter complete diagnosis..."
+                />
+              </div>
 
-              <div className="space-y-6">
-                <div className="bg-white rounded-xl p-8 border border-gray-200">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Diagnosis</h4>
-                  <p className="text-gray-800">
-                    {record.diagnosis || <span className="text-yellow-600 italic">Pending doctor review</span>}
-                  </p>
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Prescription</label>
+                <textarea
+                  value={doctorNotes.prescription}
+                  onChange={(e) => setDoctorNotes(prev => ({ ...prev, prescription: e.target.value }))}
+                  rows="4"
+                  className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none"
+                  placeholder="Medications, dosages, instructions..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Additional Doctor Notes</label>
+                <textarea
+                  value={doctorNotes.doctorNotes}
+                  onChange={(e) => setDoctorNotes(prev => ({ ...prev, doctorNotes: e.target.value }))}
+                  rows="4"
+                  className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none"
+                  placeholder="Additional observations, recommendations, warnings..."
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={doctorNotes.followUpRequired}
+                      onChange={(e) => setDoctorNotes(prev => ({ ...prev, followUpRequired: e.target.checked }))}
+                      className="w-5 h-5 rounded border-2 border-blue-400"
+                    />
+                    <span className="font-semibold text-blue-900">Follow-up Required</span>
+                  </label>
                 </div>
-
-                <div className="bg-white rounded-xl p-8 border border-gray-200">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Prescription</h4>
-                  <p className="text-gray-700 whitespace-pre-wrap">
-                    {record.prescription || <span className="text-gray-400 italic">No prescription yet</span>}
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-xl p-8 border border-gray-200">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Doctor's Notes</h4>
-                  <p className="text-gray-700 whitespace-pre-wrap">
-                    {record.doctorNotes || <span className="text-gray-400 italic">No additional notes</span>}
-                  </p>
-                </div>
-
-                {record.followUpRequired && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8">
-                    <h4 className="text-lg font-semibold text-yellow-900 mb-3">Follow-up Required</h4>
-                    <p className="text-yellow-800 font-medium">
-                      Scheduled for: {record.followUpDate 
-                        ? new Date(record.followUpDate).toLocaleDateString('en-US', { 
-                            weekday: 'long', 
-                            month: 'long', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })
-                        : "To be scheduled"}
-                    </p>
+                {doctorNotes.followUpRequired && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">Follow-up Date</label>
+                    <input
+                      type="date"
+                      value={doctorNotes.followUpDate}
+                      onChange={(e) => setDoctorNotes(prev => ({ ...prev, followUpDate: e.target.value }))}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="p-3 border-2 border-blue-300 rounded-lg focus:border-blue-500"
+                    />
                   </div>
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="bg-green-50 rounded-xl p-8 border border-green-200">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-8">Complete Doctor Assessment</h3>
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-3">Diagnosis *</label>
-                  <textarea
-                    value={doctorNotes.diagnosis}
-                    onChange={(e) => setDoctorNotes(prev => ({ ...prev, diagnosis: e.target.value }))}
-                    rows="4"
-                    className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none"
-                    placeholder="Enter complete diagnosis..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-3">Prescription</label>
-                  <textarea
-                    value={doctorNotes.prescription}
-                    onChange={(e) => setDoctorNotes(prev => ({ ...prev, prescription: e.target.value }))}
-                    rows="4"
-                    className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none"
-                    placeholder="Medications, dosages, instructions..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-3">Additional Doctor Notes</label>
-                  <textarea
-                    value={doctorNotes.doctorNotes}
-                    onChange={(e) => setDoctorNotes(prev => ({ ...prev, doctorNotes: e.target.value }))}
-                    rows="4"
-                    className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none"
-                    placeholder="Additional observations, recommendations, warnings..."
-                  />
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={doctorNotes.followUpRequired}
-                        onChange={(e) => setDoctorNotes(prev => ({ ...prev, followUpRequired: e.target.checked }))}
-                        className="w-5 h-5 rounded border-2 border-blue-400"
-                      />
-                      <span className="font-semibold text-blue-900">Follow-up Required</span>
-                    </label>
-                  </div>
-                  {doctorNotes.followUpRequired && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">Follow-up Date</label>
-                      <input
-                        type="date"
-                        value={doctorNotes.followUpDate}
-                        onChange={(e) => setDoctorNotes(prev => ({ ...prev, followUpDate: e.target.value }))}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="p-3 border-2 border-blue-300 rounded-lg focus:border-blue-500"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex-1 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:opacity-90 font-semibold shadow-sm transition-all disabled:bg-gray-300 disabled:opacity-50"
-                  >
-                    {saving ? "Saving..." : "Save Assessment & Mark Complete"}
-                  </button>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    disabled={saving}
-                    className="px-8 py-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
-            <h4 className="text-lg font-semibold text-gray-900 mb-6">Record Information</h4>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm text-gray-600 mb-2">Created Date</p>
-                <p className="font-medium text-gray-900">
-                  {new Date(record.recordCreatedDate).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-2">Status</p>
-                <p className="font-medium text-gray-900">{record.status}</p>
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:opacity-90 font-semibold shadow-sm transition-all disabled:bg-gray-300 disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Save Assessment & Mark Complete"}
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  disabled={saving}
+                  className="px-8 py-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="bg-gray-50 px-10 py-6 border-t border-gray-200 flex justify-end sticky bottom-0 rounded-b-2xl">
-          <button
-            onClick={onClose}
-            className="px-8 py-3 bg-gradient-to-r from-[#503878] to-[#D946EF] text-white rounded-lg hover:opacity-90 font-semibold shadow-sm transition-all"
-          >
-            Close Record
-          </button>
+        <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
+          <h4 className="text-lg font-semibold text-gray-900 mb-6">Record Information</h4>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Created Date</p>
+              <p className="font-medium text-gray-900">
+                {new Date(record.recordCreatedDate).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Status</p>
+              <p className="font-medium text-gray-900">{record.status}</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
 
+      <div className="bg-gray-50 px-10 py-6 border-t border-gray-200 flex justify-end flex-shrink-0 rounded-b-2xl">
+        <button
+          onClick={onClose}
+          className="px-8 py-3 bg-[#503878] text-white rounded-lg hover:opacity-90 font-semibold shadow-sm transition-all"
+        >
+          Close Record
+        </button>
+      </div>
+    </div>
+  </div>
+);}
 export default MedicalRecords;

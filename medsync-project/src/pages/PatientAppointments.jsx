@@ -158,7 +158,7 @@ const PatientAppointments = () => {
             disabled={!isConnected}
             className={`px-6 py-3 rounded-2xl font-semibold text-base transition-all flex items-center gap-3 mx-auto shadow-xl ${
               isConnected
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-2xl transform hover:scale-105'
+                ? 'bg-[#4F46E5] text-white hover:shadow-2xl transform hover:scale-105'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
@@ -204,7 +204,7 @@ const PatientAppointments = () => {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[85vh] flex flex-col animate-in fade-in zoom-in duration-200">
             {!submitSuccess ? (
               <>
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4 flex items-center justify-between rounded-t-3xl flex-shrink-0">
+                <div className="bg-[#4F46E5] text-white px-6 py-4 flex items-center justify-between rounded-t-3xl flex-shrink-0">
                   <div>
                     <h3 className="text-xl font-bold">Book Appointment</h3>
                     <p className="text-indigo-100 text-sm mt-1">Step {activeStep} of 4</p>
@@ -385,8 +385,8 @@ const PatientAppointments = () => {
                   </button>
                   {activeStep < 4 ? (
                     <button
-                      onClick={handleNext}
-                      className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2 text-sm"
+                      onClick={handleNext}  
+                      className="px-5 py-2.5 bg-[#4F46E5] text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2 text-sm"
                     >
                       Next
                       <ChevronRight className="w-4 h-4" />
