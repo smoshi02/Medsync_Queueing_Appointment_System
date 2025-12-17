@@ -136,7 +136,7 @@ function Settings({ user, setUser, logout }) {
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="space-y-6">
           {/* Profile Card */}
-          <div className="bg-[#5996EC] rounded-xl border border-blue-200 shadow-sm p-6">
+          <div className="bg-[#ffffff] rounded-xl border border-blue-200 shadow-sm p-6">
             <div className="flex items-start gap-6">
               <div className="relative group">
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center ring-4 ring-blue-100">

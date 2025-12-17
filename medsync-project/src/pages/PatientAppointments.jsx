@@ -185,32 +185,101 @@ const PatientAppointments = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    let allValid = true;
+ const handleSubmit = async () => {
+  let allValid = true;
 
-    for (let step = 1; step <= 4; step++) {
-      if (!validateStep(step)) {
-        setActiveStep(step);
-        allValid = false;
-        break;
-      }
+  for (let step = 1; step <= 4; step++) {
+    if (!validateStep(step)) {
+      setActiveStep(step);
+      allValid = false;
+      break;
     }
+  }
 
-    if (!allValid) return;
+  if (!allValid) return;
 
-    setSubmitSuccess(true);
+  // ✅ ADD THIS - Actually submit to backend
+  try {
+    console.log("📤 Submitting appointment data...");
+    
+    const response = await fetch("http://localhost:6969/api/patient/appointments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        // Map form fields to your backend DTO
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        suffix: formData.suffix,
+        gender: formData.gender,
+        dateOfBirth: formData.dateOfBirth,
+        civilStatus: formData.civilStatus,
+        contactNumber: formData.contactNumber,
+        email: formData.email,
+        emergencyContactNumber: formData.emergencyContactNumber,
+        addressStreet: formData.addressStreet,
+        addressBarangay: formData.addressBarangay,
+        addressMunicipality: formData.addressMunicipality,
+        addressProvince: formData.addressProvince,
+        priorityCategory: formData.priorityCategory,
+        height: formData.height,
+        weight: formData.weight,
+        bloodType: formData.bloodType,
+        medicalHistory: formData.medicalHistory,
+        healthConcern: formData.healthConcern,
+        date: formData.appointmentDate, // ✅ Maps to appointment date
+        time: formData.appointmentTime, // ✅ Maps to appointment time
+      }),
+    });
 
-    setTimeout(() => {
-      setShowForm(false);
-      setActiveStep(1);
-      setSubmitSuccess(false);
-      setFormData({
-        /* reset same as before */
-      });
-      setErrors({});
-      setTouched({});
-    }, 2000);
-  };
+    const result = await response.json();
+    console.log("✅ Response:", result);
+
+    if (response.ok) {
+      setSubmitSuccess(true);
+
+      setTimeout(() => {
+        setShowForm(false);
+        setActiveStep(1);
+        setSubmitSuccess(false);
+        // Reset form
+        setFormData({
+          firstName: "",
+          middleName: "",
+          lastName: "",
+          suffix: "",
+          gender: "",
+          dateOfBirth: "",
+          civilStatus: "",
+          contactNumber: "",
+          email: "",
+          emergencyContactNumber: "",
+          addressStreet: "",
+          addressBarangay: "",
+          addressMunicipality: "",
+          addressProvince: "",
+          priorityCategory: "",
+          height: "",
+          weight: "",
+          bloodType: "",
+          medicalHistory: "",
+          healthConcern: "",
+          appointmentDate: "",
+          appointmentTime: "",
+        });
+        setErrors({});
+        setTouched({});
+      }, 2000);
+    } else {
+      alert("❌ Failed to submit: " + (result.error || "Unknown error"));
+    }
+  } catch (error) {
+    console.error("❌ Submit error:", error);
+    alert("❌ Failed to submit appointment: " + error.message);
+  }
+};
 
   return (
     <div className="h-full relative overflow-hidden">

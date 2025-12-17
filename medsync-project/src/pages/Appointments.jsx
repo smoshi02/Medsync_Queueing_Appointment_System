@@ -120,37 +120,78 @@ function Appointments() {
     loadAppointments();
   }, []);
 
-  useStompWebSocket(["/topic/private/appointments"], (msg) => {
-    if (msg.type === "appointments-update" && Array.isArray(msg.data)) {
-      const mapped = msg.data.map((appt) => ({
-        ...appt,
-        firstName: appt.firstName || "",
-        middleName: appt.middleName || "",
-        lastName: appt.lastName || "",
-        suffix: appt.suffix || "",
-        gender: appt.gender || "",
-        dateOfBirth: appt.dateOfBirth || "",
-        civilStatus: appt.civilStatus || "",
-        contactNumber: appt.contactNumber || "",
-        email: appt.email || "",
-        emergencyContactNumber: appt.emergencyContactNumber || "",
-        addressStreet: appt.addressStreet || "",
-        addressBarangay: appt.addressBarangay || "",
-        addressMunicipality: appt.addressMunicipality || "",
-        addressProvince: appt.addressProvince || "",
-        priorityCategory: appt.priorityCategory || "",
-        height: appt.height || "",
-        weight: appt.weight || "",
-        bloodType: appt.bloodType || "",
-        medicalHistory: appt.medicalHistory || "",
-        healthConcern: appt.healthConcern || "",
-        date: appt.date || "",
-        time: appt.time || "",
-      }));
-      setAppointments(mapped);
+   useStompWebSocket(["/topic/private/appointments", "/topic/public/appointments"], (msg) => {
+    console.log("📨 WebSocket message received:", msg);
+    
+    if (msg && typeof msg === 'object') {
+      // Handle appointments-update message
+      if (msg.type === "appointments-update" && Array.isArray(msg.data)) {
+        const mapped = msg.data.map((appt) => ({
+          ...appt,
+          firstName: appt.firstName || "",
+          middleName: appt.middleName || "",
+          lastName: appt.lastName || "",
+          suffix: appt.suffix || "",
+          gender: appt.gender || "",
+          dateOfBirth: appt.dateOfBirth || "",
+          civilStatus: appt.civilStatus || "",
+          contactNumber: appt.contactNumber || "",
+          email: appt.email || "",
+          emergencyContactNumber: appt.emergencyContactNumber || "",
+          addressStreet: appt.addressStreet || "",
+          addressBarangay: appt.addressBarangay || "",
+          addressMunicipality: appt.addressMunicipality || "",
+          addressProvince: appt.addressProvince || "",
+          priorityCategory: appt.priorityCategory || "",
+          height: appt.height || "",
+          weight: appt.weight || "",
+          bloodType: appt.bloodType || "",
+          medicalHistory: appt.medicalHistory || "",
+          healthConcern: appt.healthConcern || "",
+          date: appt.date || "",
+          time: appt.time || "",
+        }));
+        setAppointments(mapped);
+        console.log("✅ Updated appointments from WebSocket:", mapped.length);
+      }
+      // Handle direct array data
+      else if (Array.isArray(msg.data)) {
+        const mapped = msg.data.map((appt) => ({
+          ...appt,
+          firstName: appt.firstName || "",
+          middleName: appt.middleName || "",
+          lastName: appt.lastName || "",
+          suffix: appt.suffix || "",
+          gender: appt.gender || "",
+          dateOfBirth: appt.dateOfBirth || "",
+          civilStatus: appt.civilStatus || "",
+          contactNumber: appt.contactNumber || "",
+          email: appt.email || "",
+          emergencyContactNumber: appt.emergencyContactNumber || "",
+          addressStreet: appt.addressStreet || "",
+          addressBarangay: appt.addressBarangay || "",
+          addressMunicipality: appt.addressMunicipality || "",
+          addressProvince: appt.addressProvince || "",
+          priorityCategory: appt.priorityCategory || "",
+          height: appt.height || "",
+          weight: appt.weight || "",
+          bloodType: appt.bloodType || "",
+          medicalHistory: appt.medicalHistory || "",
+          healthConcern: appt.healthConcern || "",
+          date: appt.date || "",
+          time: appt.time || "",
+        }));
+        setAppointments(mapped);
+        console.log("✅ Updated appointments from direct array:", mapped.length);
+      }
+      // Fallback: reload data
+      else {
+        console.log("🔄 Unknown message format, reloading...");
+        loadAppointments();
+      }
     }
   });
-
+  
   const handleApproveAppointment = async (id) => {
   if (!window.confirm("Approve this appointment and send confirmation email?")) return;
   try {
@@ -158,11 +199,14 @@ function Appointments() {
     const res = await fetchWithAuth(`/api/appointments/${id}/approve`, {
       method: "POST",
     });
-    alert(
-      res.status === "success"
-        ? "✅ Appointment approved successfully! Dashboard will update automatically."
-        : "⚠️ " + res.message
-    );
+    
+    if (res.status === "success") {
+      alert("✅ Appointment approved successfully!");
+    
+      await loadAppointments();
+    } else {
+      alert("⚠️ " + res.message);
+    }
   } catch (err) {
     alert("❌ Failed to approve: " + err.message);
   } finally {
@@ -179,6 +223,7 @@ function Appointments() {
     });
     alert(
       res.status === "success"
+      
         ? "✅ Appointment cancelled successfully! Dashboard will update automatically."
         : "⚠️ " + res.message
     );
@@ -212,6 +257,7 @@ function Appointments() {
       if (res.status === "success") {
         alert(
           "✅ Appointment rescheduled! Patient will be notified via email."
+          
         );
         setShowRescheduleModal(false);
         setSelectedAppointment(null);
@@ -626,7 +672,7 @@ function AppointmentsTable({
                         </button>
 
                         {/* Approve (Pending only) */}
-                        {isPending && (
+                        {(isPending || isRescheduling) && (
                           <button
                             onClick={() => handleApproveAppointment(a.appointmentId)}
                             disabled={isProcessing}
