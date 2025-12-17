@@ -451,14 +451,14 @@ function QueueTable({ data, canUseNext, calculateAge, onViewDetails }) {
     <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <table className="w-full min-w-[800px]">
         <thead>
-          <tr className="bg-gradient-to-r from-violet-100 to-purple-100">
-            <th className="p-3 text-left text-violet-900 font-semibold text-sm">Position</th>
-            <th className="p-3 text-left text-violet-900 font-semibold text-sm">Patient Name</th>
-            <th className="p-3 text-left text-violet-900 font-semibold text-sm">Age</th>
-            <th className="p-3 text-left text-violet-900 font-semibold text-sm">Contact</th>
-            <th className="p-3 text-left text-violet-900 font-semibold text-sm">Category</th>
-            <th className="p-3 text-left text-violet-900 font-semibold text-sm">Status</th>
-            <th className="p-3 text-center text-violet-900 font-semibold text-sm">Action</th>
+          <tr className="bg-gradient-to-r from-[#5996EC]/20 to-[#4785DB]/20">
+            <th className="p-3 text-left text-black font-semibold text-sm">Position</th>
+            <th className="p-3 text-left text-black font-semibold text-sm">Patient Name</th>
+            <th className="p-3 text-left text-black font-semibold text-sm">Age</th>
+            <th className="p-3 text-left text-black font-semibold text-sm">Contact</th>
+            <th className="p-3 text-left text-black font-semibold text-sm">Category</th>
+            <th className="p-3 text-left text-black font-semibold text-sm">Status</th>
+            <th className="p-3 text-center text-black font-semibold text-sm">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -474,7 +474,7 @@ function QueueTable({ data, canUseNext, calculateAge, onViewDetails }) {
               }`}>
                 <td className="p-3">
                   <div className="flex items-center gap-2">
-                    <span className={`font-bold text-lg ${isCurrentlyServing ? "text-yellow-700" : "text-violet-700"}`}>
+                    <span className={`font-bold text-lg ${isCurrentlyServing ? "text-yellow-700" : "text-blue-700"}`}>
                       {isCurrentlyServing ? "→" : row.queuePosition}
                     </span>
                     {isPriority && !isCurrentlyServing && (

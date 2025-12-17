@@ -7,6 +7,8 @@ import { makePhotoUrl } from "../js/makePhotoUrl";
 import logo from "../assets/medsync-logo.png";
 
 
+
+
 function Header({ isSidebarOpen, onSidebarToggle }) {
   const { logout } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
@@ -14,12 +16,18 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
   const modalRef = useRef();
 
 
+
+
   const isLoggedIn = !!localStorage.getItem("token"); // Check if user is logged in
+
+
 
 
   // Load current user only if logged in
   useEffect(() => {
     if (!isLoggedIn) return;
+
+
 
 
     const loadUser = async () => {
@@ -37,6 +45,8 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
   }, [isLoggedIn]);
 
 
+
+
   // Close modal if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -49,6 +59,8 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
   }, []);
 
 
+
+
   const profileContent = user?.profilePhoto
     ? (
       <img
@@ -58,6 +70,8 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
       />
     )
     : ((user?.firstName?.charAt(0) || "") + (user?.lastName?.charAt(0) || ""));
+
+
 
 
   return (
@@ -76,6 +90,10 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
 
 
 
+
+
+
+
         {/* Logo / Brand */}
         {!isSidebarOpen && (
           <Link
@@ -83,26 +101,22 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
             className="flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
             <img src={logo} alt="MedSync Logo" className="h-10 object-contain" />
-            <span className="text-xl font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-[#7C3AED] to-[#D946EF]">
+            <span className="text-xl font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-[#4785DB] to-[#deef46]">
   MedSync
 </span>
-
-
           </Link>
         )}
-
 
         {/* Profile button - only show if logged in */}
         {isLoggedIn && (
           <button
             onClick={() => setModalOpen(true)}
-            className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-lg hover:scale-110 transition-all duration-300 overflow-hidden"
+            className="w-10 h-10 bg-gradient-to-br from-[#4785DB] to-[#deef46] rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-lg hover:scale-110 transition-all duration-300 overflow-hidden"
           >
             {profileContent}
           </button>
         )}
       </div>
-
 
       {/* Profile modal */}
       {modalOpen && user && (
@@ -117,8 +131,6 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
             >
               X
             </button>
-
-
             <Settings user={user} setUser={setUser} logout={logout} />
           </div>
         </div>
@@ -127,7 +139,4 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
   );
 }
 
-
 export default Header;
-
-

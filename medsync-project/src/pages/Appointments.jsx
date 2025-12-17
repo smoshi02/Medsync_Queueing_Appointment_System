@@ -470,7 +470,7 @@ function AppointmentsTable({
   setSelectedAppointment,
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
       {filteredAppointments.length === 0 ? (
         <div className="text-center py-24">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
@@ -486,9 +486,9 @@ function AppointmentsTable({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-auto flex-1">
           <table className="w-full">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="p-5 text-left text-gray-700 font-semibold text-sm uppercase tracking-wide">
                   Patient
@@ -811,25 +811,21 @@ function AppointmentDetailModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-[1400px] max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-[1400px] max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] text-white p-6 flex justify-between items-center sticky top-0 z-10 rounded-t-2xl">
+        {/* Fixed Header */}
+        <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white p-6 flex justify-between items-center flex-shrink-0">
           <div>
             <h2 className="text-3xl font-semibold mb-1">Patient Details</h2>
             <p className="text-white/90 text-sm">
               ID: #{appointment.appointmentId}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="hover:bg-white/20 p-2 rounded-lg transition-all text-xl"
-          >
-            ✕
-          </button>
         </div>
 
-        <div className="p-10 space-y-8">
+        {/* Scrollable Content */}
+        <div className="p-10 space-y-8 overflow-y-auto flex-1">
           <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
             <h3 className="text-xl font-semibold mb-6 flex items-center gap-2 text-gray-900">
               <span>👤</span> Personal Information
@@ -946,7 +942,8 @@ function AppointmentDetailModal({
           </div>
         </div>
 
-        <div className="bg-gray-50 px-10 py-6 flex gap-3 justify-end sticky bottom-0 border-t border-gray-200 rounded-b-2xl">
+        {/* Fixed Footer */}
+        <div className="bg-gray-50 px-10 py-6 flex gap-3 justify-end flex-shrink-0 border-t border-gray-200">
           {isPending && (
             <button
               onClick={() => {
@@ -983,7 +980,7 @@ function AppointmentDetailModal({
           )}
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-gradient-to-r from-[#503878] to-[#D946EF] text-white rounded-lg font-semibold shadow-sm transition-all"
+            className="px-6 py-3 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-lg font-semibold shadow-sm transition-all"
           >
             Close
           </button>
@@ -997,10 +994,11 @@ function InfoField({ label, value }) {
   return (
     <div>
       <p className="text-sm text-gray-600 mb-2">{label}</p>
-      <p className="font-medium text-gray-900">{value}</p>
+      <p className="text-gray-900 font-medium">{value || "—"}</p>
     </div>
   );
 }
+
 
 function RescheduleModal({
   appointment,
@@ -1009,6 +1007,7 @@ function RescheduleModal({
   onSubmit,
   onClose,
   isProcessing,
+  formatTime,
 }) {
   const name = [
     appointment.firstName,
@@ -1018,23 +1017,37 @@ function RescheduleModal({
     .filter(Boolean)
     .join(" ");
 
+  // Default formatTime function if not provided
+  const defaultFormatTime = (time) => {
+    if (!time) return "—";
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
+  };
+
+  const formatTimeFunc = formatTime || defaultFormatTime;
+
   return (
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] text-white p-6 rounded-t-2xl">
+        {/* Fixed Header */}
+        <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white p-6 flex-shrink-0">
           <h2 className="text-3xl font-semibold mb-2">
             Reschedule Appointment
           </h2>
           <p className="text-white/90">Patient: {name}</p>
         </div>
 
-        <div className="p-10 space-y-8">
+        {/* Scrollable Content */}
+        <div className="p-10 space-y-8 overflow-y-auto flex-1">
           <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-6">
             <p className="text-sm font-semibold text-[#503878] mb-2">
               Current Appointment
@@ -1049,7 +1062,7 @@ function RescheduleModal({
                     year: "numeric",
                   })
                 : "No Date"}
-              {appointment.time && ` • 🕐 ${formatTime(appointment.time)}`}
+              {appointment.time && ` • 🕐 ${formatTimeFunc(appointment.time)}`}
             </p>
           </div>
 
@@ -1099,7 +1112,8 @@ function RescheduleModal({
           </div>
         </div>
 
-        <div className="bg-gray-50 px-10 py-6 flex gap-3 justify-end border-t border-gray-200 rounded-b-2xl">
+        {/* Fixed Footer */}
+        <div className="bg-gray-50 px-10 py-6 flex gap-3 justify-end border-t border-gray-200 flex-shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-all"
@@ -1109,7 +1123,7 @@ function RescheduleModal({
           <button
             onClick={onSubmit}
             disabled={isProcessing}
-            className="px-8 py-3 bg-gradient-to-r from-[#503878] to-[#D946EF] text-white rounded-lg font-semibold shadow-sm transition-all disabled:opacity-50"
+            className="px-8 py-3 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-lg font-semibold shadow-sm transition-all disabled:opacity-50"
           >
             {isProcessing ? "Processing..." : "✓ Confirm Reschedule"}
           </button>

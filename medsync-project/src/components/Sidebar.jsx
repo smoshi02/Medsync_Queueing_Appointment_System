@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/medsync-logo.png";
 
+
 /* =======================
    SVG Icon Components
 ======================= */
@@ -12,12 +13,14 @@ const HomeIcon = () => (
   </svg>
 );
 
+
 const QueueIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
+
 
 const MedicalRecordsIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,12 +29,14 @@ const MedicalRecordsIcon = () => (
   </svg>
 );
 
+
 const UsersIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
       d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
   </svg>
 );
+
 
 const CalendarIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,6 +45,7 @@ const CalendarIcon = () => (
   </svg>
 );
 
+
 /* =======================
         Sidebar
 ======================= */
@@ -47,12 +53,15 @@ function Sidebar({ isOpen, customItems }) {
   const location = useLocation();
   const [activeItem, setActiveItem] = useState(location.pathname);
 
+
   useEffect(() => {
     setActiveItem(location.pathname);
   }, [location.pathname]);
 
+
   const roleRaw = localStorage.getItem("role") || "ROLE_PATIENT";
   const role = roleRaw.replace(/^ROLE_+/, "").toUpperCase();
+
 
   const menuConfig = {
     SUPER_ADMIN: [
@@ -78,31 +87,42 @@ function Sidebar({ isOpen, customItems }) {
     ],
   };
 
+
   const menuItems =
     (customItems && Array.isArray(customItems) ? customItems : menuConfig[role]) || [];
+
 
   return (
     <div
       className={`h-screen bg-white border-r border-gray-200 transition-all duration-300
-      ${isOpen ? "w-64" : "w-0"} overflow-hidden flex flex-col`}
+      ${isOpen ? "w-64" : "w-20"} flex flex-col`}
     >
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <img 
-            src={logo} 
-            alt="MedSync Logo" 
+      <div className={`p-6 border-b border-gray-200 ${isOpen ? "" : "flex justify-center"}`}>
+        {isOpen ? (
+          <div className="flex items-center gap-3">
+            <img
+              src={logo}
+              alt="MedSync Logo"
+              className="w-10 h-10 object-contain"
+            />
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">MedSync</h2>
+              <p className="text-xs text-gray-500">Healthcare Platform</p>
+            </div>
+          </div>
+        ) : (
+          <img
+            src={logo}
+            alt="MedSync Logo"
             className="w-10 h-10 object-contain"
           />
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">MedSync</h2>
-            <p className="text-xs text-gray-500">Healthcare Platform</p>
-          </div>
-        </div>
+        )}
       </div>
 
+
       {/* Menu */}
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+      <nav className={`flex-1 px-3 py-6 space-y-2 ${isOpen ? "overflow-y-auto" : "overflow-hidden"}`}>
         {menuItems.map((item, index) => {
           const isActive = activeItem === item.path;
           return (
@@ -110,25 +130,36 @@ function Sidebar({ isOpen, customItems }) {
               key={index}
               to={item.path}
               onClick={() => setActiveItem(item.path)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all group
-                ${isActive 
-                  ? "bg-[#5996EC] text-white shadow-sm" 
-                  : "text-gray-700 hover:bg-gray-100"}`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all group relative
+                ${isActive
+                  ? "bg-[#5996EC] text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-100"}
+                ${!isOpen ? "justify-center" : ""}`}
+              title={!isOpen ? item.label : ""}
             >
               <div className={`transition-transform group-hover:scale-110 ${isActive ? "text-white" : "text-gray-500"}`}>
                 {item.icon}
               </div>
-              <span className="text-sm font-medium">
-                {item.label}
-              </span>
+              {isOpen && (
+                <span className="text-sm font-medium whitespace-nowrap">
+                  {item.label}
+                </span>
+              )}
+             
+              {/* Tooltip for collapsed state */}
+              {!isOpen && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                  {item.label}
+                </div>
+              )}
             </Link>
           );
         })}
       </nav>
-
-      
     </div>
   );
 }
 
+
 export default Sidebar;
+

@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, Lock, LogOut, Camera, Save, X } from "lucide-react";
+import { User, Mail, Phone, Lock, LogOut, Camera, Save, X, Edit2 } from "lucide-react";
 
 function Settings({ user, setUser, logout }) {
-  const [loading, setLoading] = useState(!user);
   const [saving, setSaving] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
-  const [error, setError] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
     oldPassword: "",
@@ -39,9 +37,7 @@ function Settings({ user, setUser, logout }) {
     setUser((prev) => ({ ...prev, newPhotoFile: file }));
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setPhotoPreview(reader.result);
-    };
+    reader.onloadend = () => setPhotoPreview(reader.result);
     reader.readAsDataURL(file);
   };
 
@@ -107,10 +103,7 @@ function Settings({ user, setUser, logout }) {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
-      }
+      if (!res.ok) throw new Error(await res.text());
 
       alert("Password changed successfully!");
       setShowPasswordModal(false);
@@ -120,100 +113,65 @@ function Settings({ user, setUser, logout }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-violet-50 to-purple-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-violet-700 text-lg font-semibold">Loading settings...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-violet-50 to-purple-50">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <p className="text-red-600 font-semibold">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 p-6 overflow-hidden">
-      <div className="h-full max-w-7xl mx-auto flex flex-col">
-        {/* Header */}
-        <div className="mb-4 flex-shrink-0">
-          <h1 className="text-3xl font-bold text-gray-800">Account Settings</h1>
-          <p className="text-gray-600 text-sm">Manage your profile and account preferences</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100">
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-blue-100 shadow-sm">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
+            <p className="text-sm text-blue-600 mt-1">Manage your account</p>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 flex-1 overflow-hidden flex flex-col">
-          {/* Profile Section */}
-          <div className="flex items-center gap-6 pb-4 mb-4 border-b border-gray-200 flex-shrink-0">
-            {/* Profile Photo */}
-            <div className="relative flex-shrink-0">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-violet-100 shadow-xl">
-                {photoPreview ? (
-                  <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  `${user?.firstName?.charAt(0) || ""}${user?.lastName?.charAt(0) || ""}`
-                )}
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="space-y-6">
+          {/* Profile Card */}
+          <div className="bg-[#5996EC] rounded-xl border border-blue-200 shadow-sm p-6">
+            <div className="flex items-start gap-6">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center ring-4 ring-blue-100">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-semibold text-white">
+                      {user?.firstName?.charAt(0) || ""}{user?.lastName?.charAt(0) || ""}
+                    </span>
+                  )}
+                </div>
+                <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full cursor-pointer transition-all">
+                  <Camera size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                </label>
               </div>
-              <label className="absolute bottom-0 right-0 bg-violet-600 text-white p-2 rounded-full cursor-pointer hover:bg-violet-700 transition-colors shadow-lg">
-                <Camera size={16} />
-                <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-              </label>
-            </div>
-
-            {/* Profile Info */}
-            <div className="flex-grow">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {user?.firstName} {user?.lastName}
-              </h2>
-              <p className="text-gray-600 text-sm">{user?.email}</p>
-              <div className="inline-block bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-semibold mt-1">
-                {user?.role || "User"}
+              
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {user?.firstName} {user?.lastName}
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">{user?.email}</p>
+                <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-medium rounded-full">
+                  {user?.role || "User"}
+                </div>
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowPasswordModal(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 font-semibold shadow-md text-sm"
-              >
-                <Lock size={16} />
-                Change Password
-              </button>
-              <button
-                type="button"
-                onClick={logout}
-                className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-300 font-semibold shadow-md text-sm"
-              >
-                <LogOut size={16} />
-                Logout
-              </button>
             </div>
           </div>
 
-          {/* Form Fields */}
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              {/* Personal Information */}
-              <div className="col-span-2">
-                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <User size={20} className="text-violet-600" />
-                  Personal Information
-                </h3>
-              </div>
-
+          {/* Profile Information */}
+          <div className="bg-white rounded-xl border border-blue-200 shadow-sm p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Profile Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   First Name
                 </label>
                 <input
@@ -221,13 +179,12 @@ function Settings({ user, setUser, logout }) {
                   name="firstName"
                   value={user?.firstName || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
-                  placeholder="Enter first name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Middle Name
                 </label>
                 <input
@@ -235,13 +192,12 @@ function Settings({ user, setUser, logout }) {
                   name="middleName"
                   value={user?.middleName || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
-                  placeholder="Enter middle name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 />
               </div>
 
-              <div className="col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name
                 </label>
                 <input
@@ -249,22 +205,18 @@ function Settings({ user, setUser, logout }) {
                   name="lastName"
                   value={user?.lastName || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
-                  placeholder="Enter last name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 />
               </div>
+            </div>
+          </div>
 
-              {/* Contact Information */}
-              <div className="col-span-2 pt-4 border-t border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <Phone size={20} className="text-violet-600" />
-                  Contact Information
-                </h3>
-              </div>
-
+          {/* Contact Information */}
+          <div className="bg-white rounded-xl border border-blue-200 shadow-sm p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                  <Mail size={14} className="text-violet-600" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
                 </label>
                 <input
@@ -272,14 +224,12 @@ function Settings({ user, setUser, logout }) {
                   name="email"
                   value={user?.email || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
-                  placeholder="Enter email address"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 />
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                  <Phone size={14} className="text-violet-600" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Contact Number
                 </label>
                 <input
@@ -287,44 +237,60 @@ function Settings({ user, setUser, logout }) {
                   name="contactNumber"
                   value={user?.contactNumber || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
-                  placeholder="Enter contact number"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 />
               </div>
             </div>
+          </div>
 
-            {/* Save Button */}
-            <div className="mt-4 pt-4 border-t border-gray-200 flex-shrink-0">
+          {/* Security */}
+          <div className="bg-white rounded-xl border border-blue-200 shadow-sm p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Security</h3>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Password</p>
+                <p className="text-sm text-gray-500 mt-1">••••••••</p>
+              </div>
               <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-violet-700 hover:to-purple-700 transition-all duration-300 font-bold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setShowPasswordModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
               >
-                {saving ? (
-                  <>
-                    <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving Changes...
-                  </>
-                ) : (
-                  <>
-                    <Save size={18} />
-                    Save Changes
-                  </>
-                )}
+                <Lock size={16} />
+                Change Password
               </button>
             </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+            >
+              {saving ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Saving...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Save size={16} />
+                  Save Changes
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Password Change Modal */}
+      {/* Password Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <Lock size={24} className="text-violet-600" />
+          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Lock size={20} className="text-blue-600" />
                 Change Password
               </h2>
               <button
@@ -334,69 +300,64 @@ function Settings({ user, setUser, logout }) {
                 }}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Current Password
                 </label>
                 <input
                   type="password"
                   value={passwordData.oldPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, oldPassword: e.target.value }))}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors"
-                  placeholder="Enter current password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   New Password
                 </label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors"
-                  placeholder="Enter new password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm New Password
                 </label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors"
-                  placeholder="Confirm new password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                 />
               </div>
+            </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPasswordModal(false);
-                    setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
-                  }}
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePasswordSubmit}
-                  className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-violet-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-md"
-                >
-                  Update Password
-                </button>
-              </div>
+            <div className="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePasswordSubmit}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md"
+              >
+                Update Password
+              </button>
             </div>
           </div>
         </div>

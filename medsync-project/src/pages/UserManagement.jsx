@@ -399,9 +399,9 @@ function UserModal({ user, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-[#503878] text-white p-6">
+        <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white p-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl font-bold">
@@ -409,19 +409,14 @@ function UserModal({ user, onClose }) {
               </div>
               <div>
                 <h2 className="text-2xl font-bold">{fullName}</h2>
-                <p className="text-violet-100 text-sm">@{user.username}</p>
+                <p className="text-blue-100 text-sm">@{user.username}</p>
               </div>
             </div>
-            <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Address */}
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
@@ -489,10 +484,10 @@ function UserModal({ user, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t flex justify-end">
+        <div className="bg-gray-50 px-6 py-4 border-t flex justify-end flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-[#503878] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
+            className="px-6 py-2.5 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
           >
             Close
           </button>
@@ -501,7 +496,6 @@ function UserModal({ user, onClose }) {
     </div>
   );
 }
-
 
 /* EDIT USER MODAL */
 function EditUserModal({ user, onSave, onCancel }) {
@@ -624,7 +618,7 @@ function EditUserModal({ user, onSave, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] p-6 text-white">
+        <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] p-6 text-white">
         <h2 className="text-3xl font-bold">Edit {user.role}</h2>
         <p className="text-violet-200 mt-1">Update user information</p>
         </div>
@@ -663,7 +657,7 @@ function EditUserModal({ user, onSave, onCancel }) {
             </button>
             <button
               type="submit"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#503878] to-[#D946EF] text-white font-semibold hover:shadow-lg transition-all duration-200"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white font-semibold hover:shadow-lg transition-all duration-200"
             >
               Save Changes
             </button>
