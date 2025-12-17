@@ -79,6 +79,9 @@ public class AppointmentApprovalController {
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
+            // ADDED: Send specific notification for dashboard
+            broadcastDashboardUpdate("appointment-approved", id);
+
             Map<String, String> response = new HashMap<>();
             response.put("message", "Appointment approved and email sent successfully");
             response.put("status", "success");
@@ -171,6 +174,9 @@ public class AppointmentApprovalController {
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
+            // ADDED: Send specific notification for dashboard
+            broadcastDashboardUpdate("appointment-cancelled", id);
+
             Map<String, String> response = new HashMap<>();
             response.put("message", "Appointment cancelled successfully");
             response.put("status", "success");
@@ -211,6 +217,8 @@ public class AppointmentApprovalController {
             appointment.setStatus("Completed");
             appointmentRepository.save(appointment);
 
+            System.out.println("✅ Appointment " + id + " marked as COMPLETED");
+
             // Optional: Send completion email
             Patient patient = appointment.getPatient();
             String patientName = String.format("%s %s",
@@ -227,6 +235,9 @@ public class AppointmentApprovalController {
 
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
+
+            // ADDED: Send specific notification for dashboard with completed status
+            broadcastDashboardUpdate("appointment-completed", id);
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Appointment marked as completed successfully");
@@ -308,6 +319,9 @@ public class AppointmentApprovalController {
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
+            // ADDED: Send specific notification for dashboard
+            broadcastDashboardUpdate("appointments-update", id);
+
             Map<String, String> response = new HashMap<>();
             response.put("message", "Appointment rescheduled successfully. Waiting for approval.");
             response.put("status", "success");
@@ -327,34 +341,8 @@ public class AppointmentApprovalController {
     }
 
     // ============================================
-    // Helper: Broadcast WebSocket Update (FIXED)
+    // NO DOCTOR AVAILABLE (Staff Action)
     // ============================================
-    private void broadcastAppointmentUpdate() {
-        try {
-            List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
-
-            // Create payload map
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("type", "appointments-update");
-            payload.put("data", updatedList);
-
-            // Send to both topics with headers (not payload as headers)
-            messagingTemplate.convertAndSend("/topic/private/appointments", (Object) payload);
-            messagingTemplate.convertAndSend("/topic/public/appointments", (Object) payload);
-
-            System.out.println("✅ WebSocket broadcast successful");
-        } catch (Exception e) {
-            System.err.println("❌ Error broadcasting update: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    // ADD THIS METHOD TO YOUR AppointmentApprovalController.java
-// Place it after the rescheduleAppointment method
-
-    // ============================================
-// NO DOCTOR AVAILABLE (Staff Action)
-// ============================================
     @PostMapping("/{id}/no-doctor-available")
     @Transactional
     public ResponseEntity<Map<String, String>> markNoDoctorAvailable(@PathVariable Long id) {
@@ -394,6 +382,9 @@ public class AppointmentApprovalController {
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
+            // ADDED: Send specific notification for dashboard
+            broadcastDashboardUpdate("appointments-update", id);
+
             Map<String, String> response = new HashMap<>();
             response.put("message", "Patient notified about doctor unavailability");
             response.put("status", "success");
@@ -409,6 +400,51 @@ public class AppointmentApprovalController {
             error.put("status", "error");
 
             return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    // ============================================
+    // Helper: Broadcast WebSocket Update
+    // ============================================
+    private void broadcastAppointmentUpdate() {
+        try {
+            List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
+
+            // Create payload map
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "appointments-update");
+            payload.put("data", updatedList);
+            payload.put("timestamp", LocalDateTime.now().toString());
+
+            // Send to both topics
+            messagingTemplate.convertAndSend("/topic/private/appointments", (Object) payload);
+            messagingTemplate.convertAndSend("/topic/public/appointments", (Object) payload);
+
+            System.out.println("✅ WebSocket broadcast successful to appointments topics");
+        } catch (Exception e) {
+            System.err.println("❌ Error broadcasting appointment update: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // ============================================
+    // NEW: Helper to Broadcast Dashboard Updates
+    // ============================================
+    private void broadcastDashboardUpdate(String eventType, Long appointmentId) {
+        try {
+            // Send to dashboard stats topic
+            Map<String, Object> statsPayload = new HashMap<>();
+            statsPayload.put("type", eventType);
+            statsPayload.put("appointmentId", appointmentId);
+            statsPayload.put("timestamp", LocalDateTime.now().toString());
+
+            // Cast to Object to avoid ambiguous method call
+            messagingTemplate.convertAndSend("/topic/stats", (Object) statsPayload);
+
+            System.out.println("✅ Dashboard update broadcast successful: " + eventType);
+        } catch (Exception e) {
+            System.err.println("❌ Error broadcasting dashboard update: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
