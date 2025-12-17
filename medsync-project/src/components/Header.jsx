@@ -83,7 +83,7 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
             className="flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
             <img src={logo} alt="MedSync Logo" className="h-10 object-contain" />
-            <span className="text-xl font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-[#7C3AED] to-[#D946EF]">
+            <span className="text-xl font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-[#4785DB] to-[#deef46]">
   MedSync
 </span>
 
@@ -96,7 +96,7 @@ function Header({ isSidebarOpen, onSidebarToggle }) {
         {isLoggedIn && (
           <button
             onClick={() => setModalOpen(true)}
-            className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-lg hover:scale-110 transition-all duration-300 overflow-hidden"
+            className="w-10 h-10 bg-gradient-to-br from-[#4785DB] to-[#deef46] rounded-full flex items-center justify-center text-white font-bold border-2 border-white shadow-lg hover:scale-110 transition-all duration-300 overflow-hidden"
           >
             {profileContent}
           </button>

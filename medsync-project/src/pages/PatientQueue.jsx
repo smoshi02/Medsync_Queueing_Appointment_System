@@ -15,10 +15,11 @@ const PatientQueue = () => {
   const [error, setError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
 
+
   const fetchPublic = async (url, options = {}) => {
     const config = {
       method: options.method || "GET",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...options.headers
       },
@@ -28,9 +29,28 @@ const PatientQueue = () => {
     if (options.body) {
       config.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
     }
-    
+
     const res = await fetch(`http://localhost:6969${url}`, config);
-    if (!res.ok) throw new Error(`Failed: ${res.status}`);
+
+    if (!res.ok) {
+      let errorMessage = `Request failed with status ${res.status}`;
+
+      try {
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
+        } else {
+          const errorText = await res.text();
+          if (errorText) errorMessage = errorText;
+        }
+      } catch (e) {
+        console.error("Error parsing error response:", e);
+      }
+
+      throw new Error(errorMessage);
+    }
+
     if (res.status === 204) return null;
     return res.json();
   };
@@ -114,7 +134,7 @@ const PatientQueue = () => {
 
   const organizeQueue = (data) => {
     const priorityCategories = ["Priority", "Senior Citizen", "PWD", "Pregnant", "Infant"];
-    
+
     const priorityQueue = data.filter(row => {
       const category = row.category || row.priorityCategory || "Regular";
       return priorityCategories.some(p => category.toLowerCase().includes(p.toLowerCase()));
@@ -154,53 +174,53 @@ const PatientQueue = () => {
   }
 
   return (
-   
-      <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
-        <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">
-              Patient Queue Display
-            </h1>
-            <p className="text-gray-500 text-base">Real-time queue monitoring</p>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md border border-purple-100">
-              <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-              <span className="text-sm font-medium text-gray-700">
-                {isConnected ? 'Live' : 'Connecting...'}
-              </span>
-            </div>
-
-            <button
-              onClick={() => setShowRegistrationForm(true)}
-              className="px-6 py-3 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Register Patient
-            </button>
-          </div>
+    <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
+      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">
+            Patient Queue Display
+          </h1>
+          <p className="text-gray-500 text-base">Real-time queue monitoring</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {loadingCards ? (
-            <div className="col-span-full flex justify-center py-20">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#503878] border-t-transparent"></div>
-            </div>
-          ) : cards.length === 0 ? (
-            <div className="col-span-full text-center py-20">
-              <div className="text-6xl mb-4">🏥</div>
-              <p className="text-gray-500 text-lg">No services available</p>
-            </div>
-          ) : (
-            cards.map((card) => (
-              <ServiceCard key={card.serviceName} card={card} onClick={() => loadServiceTable(card.serviceName)} />
-            ))
-          )}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md border border-purple-100">
+            <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+            <span className="text-sm font-medium text-gray-700">
+              {isConnected ? 'Live' : 'Connecting...'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => setShowRegistrationForm(true)}
+            className="px-6 py-3 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Register Patient
+          </button>
         </div>
-     
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {loadingCards ? (
+          <div className="col-span-full flex justify-center py-20">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#503878] border-t-transparent"></div>
+          </div>
+        ) : cards.length === 0 ? (
+          <div className="col-span-full text-center py-20">
+            <div className="text-6xl mb-4">🏥</div>
+            <p className="text-gray-500 text-lg">No services available</p>
+          </div>
+        ) : (
+          cards.map((card) => (
+            <ServiceCard key={card.serviceName} card={card} onClick={() => loadServiceTable(card.serviceName)} />
+          ))
+        )}
+      </div>
+
 
       {showModal && (
         <QueueModal
@@ -268,7 +288,7 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
             </div>
             <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -295,28 +315,27 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
             <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
               <table className="w-full min-w-[800px]">
                 <thead>
-                  <tr className="bg-gradient-to-r from-[#503878]/20 to-purple-100">
-                    <th className="p-3 text-left text-[#503878] font-semibold">Position</th>
-                    <th className="p-3 text-left text-[#503878] font-semibold">Patient Name</th>
-                    <th className="p-3 text-left text-[#503878] font-semibold">Age</th>
-                    <th className="p-3 text-left text-[#503878] font-semibold">Category</th>
-                    <th className="p-3 text-left text-[#503878] font-semibold">Status</th>
+                  <tr className="bg-gradient-to-r from-[#4785DB]/20 to-blue-100">
+                    <th className="p-3 text-left text-[#173866] font-semibold">Position</th>
+                    <th className="p-3 text-left text-[#173866] font-semibold">Patient Name</th>
+                    <th className="p-3 text-left text-[#173866] font-semibold">Age</th>
+                    <th className="p-3 text-left text-[#173866] font-semibold">Category</th>
+                    <th className="p-3 text-left text-[#173866] font-semibold">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {organizedQueue.map((row) => {
                     const isCurrentlyServing = row.status === "In Progress" || row.status === "IN_PROGRESS";
-                    const isPriority = ["Priority", "Senior Citizen", "PWD", "Pregnant", "Infant"].some(p => 
+                    const isPriority = ["Priority", "Senior Citizen", "PWD", "Pregnant", "Infant"].some(p =>
                       (row.category || row.priorityCategory || "").toLowerCase().includes(p.toLowerCase())
                     );
 
                     return (
-                      <tr key={row.queueId} className={`border-b transition-all ${
-                        isCurrentlyServing ? "bg-yellow-50 border-l-4 border-l-yellow-500" : "hover:bg-purple-50"
-                      }`}>
+                      <tr key={row.queueId} className={`border-b transition-all ${isCurrentlyServing ? "bg-yellow-50 border-l-4 border-l-yellow-500" : "hover:bg-purple-50"
+                        }`}>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            <span className={`font-bold text-lg ${isCurrentlyServing ? "text-yellow-700" : "text-[#503878]"}`}>
+                            <span className={`font-bold text-lg ${isCurrentlyServing ? "text-yellow-700" : "text-[#173866]"}`}>
                               {isCurrentlyServing ? "→" : row.queuePosition}
                             </span>
                             {isPriority && !isCurrentlyServing && (
@@ -327,17 +346,15 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
                         <td className="p-3 font-medium text-gray-800">{row.patientName}</td>
                         <td className="p-3 text-gray-700">{calculateAge(row.dateOfBirth)} yrs</td>
                         <td className="p-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            isPriority ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${isPriority ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
+                            }`}>
                             {row.category || row.priorityCategory || "Regular"}
                           </span>
                         </td>
                         <td className="p-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            isCurrentlyServing ? "bg-yellow-100 text-yellow-700 animate-pulse" :
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${isCurrentlyServing ? "bg-yellow-100 text-yellow-700 animate-pulse" :
                             "bg-blue-100 text-blue-700"
-                          }`}>
+                            }`}>
                             {isCurrentlyServing ? "🔔 In Progress" : row.status}
                           </span>
                         </td>
@@ -356,7 +373,7 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
 
 function PatientDetailModal({ queue, onClose, calculateAge }) {
   const patient = queue.patient;
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -367,7 +384,7 @@ function PatientDetailModal({ queue, onClose, calculateAge }) {
           </div>
           <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -408,29 +425,106 @@ function InfoField({ label, value, className = "" }) {
 
 function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
   const [formData, setFormData] = useState({
-    firstName: "", middleName: "", lastName: "", suffix: "",
-    dateOfBirth: "", gender: "", email: "", contactNumber: "", emergencyContactNumber: "",
-    addressStreet: "", addressBarangay: "", addressMunicipality: "", addressProvince: "",
-    category: "Regular", height: "", weight: "", bloodType: "", serviceRequired: ""
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    suffix: "",
+    dateOfBirth: "",
+    gender: "",
+    email: "",
+    contactNumber: "",
+    emergencyContactNumber: "",
+    addressStreet: "",
+    addressBarangay: "",
+    addressMunicipality: "",
+    addressProvince: "",
+    category: "Regular",
+    height: "",
+    weight: "",
+    bloodType: "",
+    serviceRequired: ""
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
-  const services = ["Medical Consultation", "Dental Services", "Immunization", "Laboratory Service", "Adolescent Health Clinic", "Pharmacy Services", "Family Planning Service", "TB DOTs Service", "Obstetrics Services", "Medical Certification"];
+  const services = [
+    "Medical Consultation",
+    "Dental Services",
+    "Immunization",
+    "Laboratory Service",
+    "Adolescent Health Clinic",
+    "Pharmacy Services",
+    "Family Planning Service",
+    "TB DOTs Service",
+    "Obstetrics Services",
+    "Medical Certification"
+  ];
+
   const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   const categories = ["Regular", "Priority", "Senior Citizen", "PWD", "Pregnant", "Infant"];
 
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Personal Info
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.contactNumber.trim()) newErrors.contactNumber = "Contact number is required";
+    if (!formData.emergencyContactNumber.trim()) newErrors.emergencyContactNumber = "Emergency contact is required";
+
+    // Address
+    if (!formData.addressStreet.trim()) newErrors.addressStreet = "Street is required";
+    if (!formData.addressBarangay.trim()) newErrors.addressBarangay = "Barangay is required";
+    if (!formData.addressMunicipality.trim()) newErrors.addressMunicipality = "Municipality is required";
+    if (!formData.addressProvince.trim()) newErrors.addressProvince = "Province is required";
+
+    // Service
+    if (!formData.serviceRequired) newErrors.serviceRequired = "Service is required";
+
+    // Medical fields
+    if (!formData.category) newErrors.category = "Category is required";
+    if (!formData.height) newErrors.height = "Height is required";
+    if (!formData.weight) newErrors.weight = "Weight is required";
+    if (!formData.bloodType) newErrors.bloodType = "Blood type is required";
+
+    setFieldErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+
     setLoading(true);
     setError("");
 
+    const payload = {
+      ...formData,
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: formData.email.trim(),
+    };
+
     try {
-      await fetchPublic("/api/patient-queue", { method: "POST", body: formData });
+      await fetchPublic("/api/patient-queue", {
+        method: "POST",
+        body: payload,
+      });
+
       onSuccess();
     } catch (err) {
       setError(err.message || "Failed to register");
@@ -449,7 +543,7 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
           </div>
           <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -461,70 +555,149 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
             </div>
           )}
 
+          {/* Personal Info */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-[#503878] mb-3">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <input type="text" name="middleName" value={formData.middleName} onChange={handleChange} placeholder="Middle Name" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last Name *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <div className="flex flex-col">
+                <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name *"
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.firstName ? "border-red-500" : ""}`} />
+                {fieldErrors.firstName && <p className="text-red-500 text-xs mt-1">{fieldErrors.firstName}</p>}
+              </div>
+
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  name="middleName"
+                  value={formData.middleName}
+                  onChange={handleChange}
+                  placeholder="Middle Name *"
+                  className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none"
+                />
+              </div>
+
+
+              <div className="flex flex-col">
+                <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last Name *"
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.lastName ? "border-red-500" : ""}`} />
+                {fieldErrors.lastName && <p className="text-red-500 text-xs mt-1">{fieldErrors.lastName}</p>}
+              </div>
+
               <input type="text" name="suffix" value={formData.suffix} onChange={handleChange} placeholder="Suffix" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <select name="gender" value={formData.gender} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none">
-                <option value="">Gender *</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
-          </div>
 
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-[#503878] mb-3">Contact</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange} placeholder="Contact Number *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <input type="tel" name="emergencyContactNumber" value={formData.emergencyContactNumber} onChange={handleChange} placeholder="Emergency Contact *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none md:col-span-2" />
-            </div>
-          </div>
+              <div className="flex flex-col">
+                <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none ${fieldErrors.dateOfBirth ? "border-red-500" : ""}`} />
+                {fieldErrors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{fieldErrors.dateOfBirth}</p>}
+              </div>
 
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-[#503878] mb-3">Address</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <input type="text" name="addressStreet" value={formData.addressStreet} onChange={handleChange} placeholder="Street *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <div className="grid grid-cols-3 gap-4">
-                <input type="text" name="addressBarangay" value={formData.addressBarangay} onChange={handleChange} placeholder="Barangay *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-                <input type="text" name="addressMunicipality" value={formData.addressMunicipality} onChange={handleChange} placeholder="Municipality *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-                <input type="text" name="addressProvince" value={formData.addressProvince} onChange={handleChange} placeholder="Province *" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
+              <div className="flex flex-col">
+                <select name="gender" value={formData.gender} onChange={handleChange} className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none ${fieldErrors.gender ? "border-red-500" : ""}`}>
+                  <option value="">Gender *</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+                {fieldErrors.gender && <p className="text-red-500 text-xs mt-1">{fieldErrors.gender}</p>}
               </div>
             </div>
           </div>
 
+          {/* Contact */}
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-[#503878] mb-3">Medical</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select name="category" value={formData.category} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none">
-                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              </select>
-              <input type="number" name="height" value={formData.height} onChange={handleChange} placeholder="Height (cm)" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <input type="number" name="weight" value={formData.weight} onChange={handleChange} placeholder="Weight (kg)" className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none" />
-              <select name="bloodType" value={formData.bloodType} onChange={handleChange} className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none">
-                <option value="">Blood Type</option>
-                {bloodTypes.map(type => <option key={type} value={type}>{type}</option>)}
-              </select>
+            <h3 className="text-lg font-bold text-[#5996EC8] mb-3">Contact</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address *"
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.email ? "border-red-500" : ""}`} />
+                {fieldErrors.email && <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>}
+              </div>
+
+              <div className="flex flex-col">
+                <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange} placeholder="Contact Number *"
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.contactNumber ? "border-red-500" : ""}`} />
+                {fieldErrors.contactNumber && <p className="text-red-500 text-xs mt-1">{fieldErrors.contactNumber}</p>}
+              </div>
+
+              <div className="flex flex-col">
+                <input type="tel" name="emergencyContactNumber" value={formData.emergencyContactNumber} onChange={handleChange} placeholder="Emergency Contact *"
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.emergencyContactNumber ? "border-red-500" : ""}`} />
+                {fieldErrors.emergencyContactNumber && <p className="text-red-500 text-xs mt-1">{fieldErrors.emergencyContactNumber}</p>}
+              </div>
             </div>
           </div>
 
+          {/* Address */}
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-[#503878] mb-3">Service</h3>
-            <select name="serviceRequired" value={formData.serviceRequired} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none">
-              <option value="">Select Service *</option>
-              {services.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <h3 className="text-lg font-bold text-[#5996EC] mb-3">Address</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex flex-col">
+                <input type="text" name="addressStreet" value={formData.addressStreet} onChange={handleChange} placeholder="Street *"
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.addressStreet ? "border-red-500" : ""}`} />
+                {fieldErrors.addressStreet && <p className="text-red-500 text-xs mt-1">{fieldErrors.addressStreet}</p>}
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col">
+                  <input type="text" name="addressBarangay" value={formData.addressBarangay} onChange={handleChange} placeholder="Barangay *"
+                    className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.addressBarangay ? "border-red-500" : ""}`} />
+                  {fieldErrors.addressBarangay && <p className="text-red-500 text-xs mt-1">{fieldErrors.addressBarangay}</p>}
+                </div>
+                <div className="flex flex-col">
+                  <input type="text" name="addressMunicipality" value={formData.addressMunicipality} onChange={handleChange} placeholder="Municipality *"
+                    className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.addressMunicipality ? "border-red-500" : ""}`} />
+                  {fieldErrors.addressMunicipality && <p className="text-red-500 text-xs mt-1">{fieldErrors.addressMunicipality}</p>}
+                </div>
+                <div className="flex flex-col">
+                  <input type="text" name="addressProvince" value={formData.addressProvince} onChange={handleChange} placeholder="Province *"
+                    className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5996EC] focus:outline-none ${fieldErrors.addressProvince ? "border-red-500" : ""}`} />
+                  {fieldErrors.addressProvince && <p className="text-red-500 text-xs mt-1">{fieldErrors.addressProvince}</p>}
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* Medical */}
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-[#5996EC] mb-3">Medical</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="flex flex-col">
+                <select name="category" value={formData.category} onChange={handleChange} className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none ${fieldErrors.category ? "border-red-500" : ""}`}>
+                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+                {fieldErrors.category && <p className="text-red-500 text-xs mt-1">{fieldErrors.category}</p>}
+              </div>
+              <div className="flex flex-col">
+                <input type="number" name="height" value={formData.height} onChange={handleChange} placeholder="Height (cm)" className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none ${fieldErrors.height ? "border-red-500" : ""}`} />
+                {fieldErrors.height && <p className="text-red-500 text-xs mt-1">{fieldErrors.height}</p>}
+              </div>
+              <div className="flex flex-col">
+                <input type="number" name="weight" value={formData.weight} onChange={handleChange} placeholder="Weight (kg)" className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none ${fieldErrors.weight ? "border-red-500" : ""}`} />
+                {fieldErrors.weight && <p className="text-red-500 text-xs mt-1">{fieldErrors.weight}</p>}
+              </div>
+              <div className="flex flex-col">
+                <select name="bloodType" value={formData.bloodType} onChange={handleChange} className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none ${fieldErrors.bloodType ? "border-red-500" : ""}`}>
+                  <option value="">Blood Type</option>
+                  {bloodTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                </select>
+                {fieldErrors.bloodType && <p className="text-red-500 text-xs mt-1">{fieldErrors.bloodType}</p>}
+              </div>
+            </div>
+          </div>
+
+          {/* Service */}
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-[#5996EC] mb-3">Service</h3>
+            <div className="flex flex-col">
+              <select name="serviceRequired" value={formData.serviceRequired} onChange={handleChange} className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#503878] focus:outline-none ${fieldErrors.serviceRequired ? "border-red-500" : ""}`}>
+                <option value="">Select Service *</option>
+                {services.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              {fieldErrors.serviceRequired && <p className="text-red-500 text-xs mt-1">{fieldErrors.serviceRequired}</p>}
+            </div>
+          </div>
+
+          {/* Buttons */}
           <div className="flex gap-4 pt-4 border-t">
-            <button type="button" onClick={onClose} className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">
-              Cancel
-            </button>
+            <button type="button" onClick={onClose} className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">Cancel</button>
             <button onClick={handleSubmit} disabled={loading} className="flex-1 px-6 py-3 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50">
               {loading ? "Registering..." : "Register"}
             </button>

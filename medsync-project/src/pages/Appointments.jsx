@@ -811,10 +811,10 @@ function AppointmentDetailModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-[1400px] max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] text-white p-6 flex justify-between items-center sticky top-0 z-10 rounded-t-2xl">
+    className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-[1400px] max-h-[90vh] flex flex-col"
+    onClick={(e) => e.stopPropagation()}
+  >
+        <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] text-white p-6 flex justify-between items-center sticky top-0 z-50 rounded-t-2xl">
           <div>
             <h2 className="text-3xl font-semibold mb-1">Patient Details</h2>
             <p className="text-white/90 text-sm">
@@ -829,7 +829,7 @@ function AppointmentDetailModal({
           </button>
         </div>
 
-        <div className="p-10 space-y-8">
+        <div className="p-10 space-y-8 overflow-y-auto flex-1">
           <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
             <h3 className="text-xl font-semibold mb-6 flex items-center gap-2 text-gray-900">
               <span>👤</span> Personal Information

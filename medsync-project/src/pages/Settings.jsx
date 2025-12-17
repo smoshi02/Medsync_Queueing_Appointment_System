@@ -143,7 +143,7 @@ function Settings({ user, setUser, logout }) {
 
   return (
     <div className="h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 p-6 overflow-hidden">
-      <div className="h-full max-w-7xl mx-auto flex flex-col">
+      <div className="h-full max-w-full mx-auto flex flex-col">
         {/* Header */}
         <div className="mb-4 flex-shrink-0">
           <h1 className="text-3xl font-bold text-gray-800">Account Settings</h1>
@@ -156,14 +156,14 @@ function Settings({ user, setUser, logout }) {
           <div className="flex items-center gap-6 pb-4 mb-4 border-b border-gray-200 flex-shrink-0">
             {/* Profile Photo */}
             <div className="relative flex-shrink-0">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-violet-100 shadow-xl">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-[#4785DB] to-[#deef46] flex items-center justify-center text-white text-3xl font-bold border-4 border-violet-100 shadow-xl">
                 {photoPreview ? (
                   <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   `${user?.firstName?.charAt(0) || ""}${user?.lastName?.charAt(0) || ""}`
                 )}
               </div>
-              <label className="absolute bottom-0 right-0 bg-violet-600 text-white p-2 rounded-full cursor-pointer hover:bg-violet-700 transition-colors shadow-lg">
+              <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors shadow-lg">
                 <Camera size={16} />
                 <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
               </label>
@@ -175,7 +175,7 @@ function Settings({ user, setUser, logout }) {
                 {user?.firstName} {user?.lastName}
               </h2>
               <p className="text-gray-600 text-sm">{user?.email}</p>
-              <div className="inline-block bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-semibold mt-1">
+              <div className="inline-block bg-violet-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold mt-1">
                 {user?.role || "User"}
               </div>
             </div>
@@ -207,7 +207,7 @@ function Settings({ user, setUser, logout }) {
               {/* Personal Information */}
               <div className="col-span-2">
                 <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <User size={20} className="text-violet-600" />
+                  <User size={20} className="text-blue-600" />
                   Personal Information
                 </h3>
               </div>
@@ -221,7 +221,7 @@ function Settings({ user, setUser, logout }) {
                   name="firstName"
                   value={user?.firstName || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   placeholder="Enter first name"
                 />
               </div>
@@ -235,7 +235,7 @@ function Settings({ user, setUser, logout }) {
                   name="middleName"
                   value={user?.middleName || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   placeholder="Enter middle name"
                 />
               </div>
@@ -249,7 +249,7 @@ function Settings({ user, setUser, logout }) {
                   name="lastName"
                   value={user?.lastName || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   placeholder="Enter last name"
                 />
               </div>
@@ -257,14 +257,14 @@ function Settings({ user, setUser, logout }) {
               {/* Contact Information */}
               <div className="col-span-2 pt-4 border-t border-gray-200">
                 <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <Phone size={20} className="text-violet-600" />
+                  <Phone size={20} className="text-blue-600" />
                   Contact Information
                 </h3>
               </div>
 
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                  <Mail size={14} className="text-violet-600" />
+                  <Mail size={14} className="text-blue-600" />
                   Email Address
                 </label>
                 <input
@@ -272,14 +272,14 @@ function Settings({ user, setUser, logout }) {
                   name="email"
                   value={user?.email || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   placeholder="Enter email address"
                 />
               </div>
 
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-1">
-                  <Phone size={14} className="text-violet-600" />
+                  <Phone size={14} className="text-blue-600" />
                   Contact Number
                 </label>
                 <input
@@ -287,7 +287,7 @@ function Settings({ user, setUser, logout }) {
                   name="contactNumber"
                   value={user?.contactNumber || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-violet-500 transition-colors text-sm"
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   placeholder="Enter contact number"
                 />
               </div>
@@ -299,7 +299,7 @@ function Settings({ user, setUser, logout }) {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-violet-700 hover:to-purple-700 transition-all duration-300 font-bold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-violet-700 hover:to-purple-700 transition-all duration-300 font-bold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <>
