@@ -78,7 +78,7 @@ function MedicalRecords() {
     <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
       <div className="w-full mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">
             Medical Records
           </h1>
           <p className="text-gray-500 text-base">Complete patient information and medical assessments</p>
@@ -155,7 +155,7 @@ function MedicalRecords() {
                     <tr key={record.recordId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="p-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#503878] to-[#D946EF] flex items-center justify-center text-white font-semibold shadow-sm">
+                          <div className="w-11 h-11 rounded-full bg-[#5996EC] flex items-center justify-center text-white font-semibold shadow-sm">
                             {record.patientName?.charAt(0).toUpperCase()}
                           </div>
                           <span className="font-medium text-gray-900">{record.patientName}</span>
@@ -193,7 +193,7 @@ function MedicalRecords() {
                       <td className="p-5">
                         <button
                           onClick={() => setSelectedRecord(record)}
-                          className="px-5 py-2.5 bg-[#503878] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium shadow-sm"
+                          className="px-5 py-2.5 bg-[#5996EC] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium shadow-sm"
                         >
                           View/Edit
                         </button>
@@ -266,7 +266,7 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
  return (
   <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
-      <div className="bg-[#503878] text-white p-6 flex justify-between items-center flex-shrink-0 rounded-t-2xl">
+      <div className="bg-[#5996EC] text-white p-6 flex justify-between items-center flex-shrink-0 rounded-t-2xl">
         <div>
           <h2 className="text-3xl font-semibold mb-1">Medical Record #{record.recordId}</h2>
           <p className="text-white/90 text-sm">Patient: {record.patientName}</p>
@@ -520,7 +520,7 @@ function RecordDetailModal({ record, onClose, userRole, onUpdate }) {
       <div className="bg-gray-50 px-10 py-6 border-t border-gray-200 flex justify-end flex-shrink-0 rounded-b-2xl">
         <button
           onClick={onClose}
-          className="px-8 py-3 bg-[#503878] text-white rounded-lg hover:opacity-90 font-semibold shadow-sm transition-all"
+          className="px-8 py-3 bg-[#5996EC] text-white rounded-lg hover:opacity-90 font-semibold shadow-sm transition-all"
         >
           Close Record
         </button>

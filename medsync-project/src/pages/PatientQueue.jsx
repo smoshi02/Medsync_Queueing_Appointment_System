@@ -158,7 +158,7 @@ const PatientQueue = () => {
       <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">
               Patient Queue Display
             </h1>
             <p className="text-gray-500 text-base">Real-time queue monitoring</p>
@@ -174,7 +174,7 @@ const PatientQueue = () => {
 
             <button
               onClick={() => setShowRegistrationForm(true)}
-              className="px-6 py-3 bg-[#503878] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -231,7 +231,7 @@ const PatientQueue = () => {
 
 function ServiceCard({ card, onClick }) {
   return (
-    <div onClick={onClick} className="relative p-6 bg-gradient-to-br from-[#503878] to-[#D946EF] text-white rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden group">
+    <div onClick={onClick} className="relative p-6 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden group">
       <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
@@ -260,7 +260,7 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, onViewD
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden">
-        <div className="bg-[#503878] text-white p-6">
+        <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold mb-1">{selectedService}</h2>
@@ -442,7 +442,7 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-8">
-        <div className="bg-[#503878] text-white p-6 flex items-center justify-between rounded-t-2xl">
+        <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white p-6 flex items-center justify-between rounded-t-2xl">
           <div>
             <h2 className="text-2xl font-bold mb-1">Register Patient</h2>
             <p className="text-purple-100 text-sm">Add to queue</p>
@@ -525,7 +525,7 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
             <button type="button" onClick={onClose} className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">
               Cancel
             </button>
-            <button onClick={handleSubmit} disabled={loading} className="flex-1 px-6 py-3 bg-[#503878] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={loading} className="flex-1 px-6 py-3 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50">
               {loading ? "Registering..." : "Register"}
             </button>
           </div>

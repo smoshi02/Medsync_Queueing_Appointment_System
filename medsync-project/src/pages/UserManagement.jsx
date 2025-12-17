@@ -164,7 +164,7 @@ function UserManagement() {
     <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent mb-2">User Management</h1>
+        <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">User Management</h1>
         <p className="text-gray-600">Manage doctors, staff, and system users</p>
       </div>
 
@@ -177,7 +177,7 @@ function UserManagement() {
               key={role}
               onClick={() => setFilterRole(role)}
               className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${filterRole === role
-                  ? "bg-[#503878] text-white shadow-md"
+                  ? "bg-[#177EF3] text-white shadow-md"
                   : "text-gray-600 hover:bg-gray-100"
                 }`}
             >
@@ -189,7 +189,7 @@ function UserManagement() {
 
         <button
           onClick={() => setShowAddUser(true)}
-          className="ml-auto bg-[#503878] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center gap-2"
+          className="ml-auto bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center gap-2"
         >
           <svg
             className="w-5 h-5"
@@ -229,7 +229,7 @@ function UserManagement() {
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white font-semibold shadow-md">
+                      <div className="w-10 h-10 rounded-full bg-[#5996EC] flex items-center justify-center text-white font-semibold shadow-md">
                         {u.name?.charAt(0) || "?"}
                       </div>
                       <span className="font-medium text-gray-900">{u.name || "N/A"}</span>
@@ -765,7 +765,7 @@ function AddUserModal({ onClose, addUser }) {
   return (
   <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-      <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] p-6 text-white">
+      <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] p-6 text-white">
         <h2 className="text-3xl font-bold">Add New User</h2>
         <p className="text-violet-200 mt-1">Create a new doctor or staff account</p>
       </div>
@@ -826,7 +826,7 @@ function AddUserModal({ onClose, addUser }) {
           </button>
           <button
             type="submit"
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#503878] to-[#D946EF] text-white font-semibold hover:shadow-lg transition-all duration-200"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white font-semibold hover:shadow-lg transition-all duration-200"
           >
             Add User
           </button>

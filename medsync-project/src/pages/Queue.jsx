@@ -106,7 +106,7 @@ function Queue() {
     
       <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">
             Patient Queue Management
           </h1>
           <p className="text-gray-500 text-base">
@@ -162,7 +162,7 @@ function Queue() {
 
 function ServiceCard({ card, onClick }) {
   return (
-    <div onClick={onClick} className="relative p-6 bg-gradient-to-br from-[#503878] to-[#D946EF] text-white rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden group">
+    <div onClick={onClick} className="relative p-6 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden group">
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
@@ -349,7 +349,7 @@ function QueueModal({ selectedService, tableData, loadingTable, onClose, canUseN
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-6">
+        <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold mb-1">Queue: {selectedService}</h2>
@@ -504,7 +504,7 @@ function QueueTable({ data, canUseNext, calculateAge, onViewDetails }) {
                 <td className="p-3 text-center">
                   <button
                     onClick={() => onViewDetails(row.queueId)}
-                    className="px-4 py-1.5 bg-violet-500 text-white rounded-lg text-sm font-medium hover:bg-violet-600 transition-colors"
+                    className="px-4 py-1.5 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-lg text-sm font-medium hover: transition-colors"
                   >
                     View Details
                   </button>
@@ -518,13 +518,14 @@ function QueueTable({ data, canUseNext, calculateAge, onViewDetails }) {
   );
 }
 
+
 function PatientDetailModal({ queue, onClose, calculateAge }) {
   const patient = queue.patient;
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-6">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] to-purple-600 text-white p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl font-bold">
@@ -537,15 +538,11 @@ function PatientDetailModal({ queue, onClose, calculateAge }) {
                 <p className="text-violet-100 text-sm">Queue #{queue.queueNumber || queue.queueId}</p>
               </div>
             </div>
-            <button onClick={onClose} className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+
           </div>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Personal Information */}
             <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-5 border border-violet-100">
@@ -568,7 +565,7 @@ function PatientDetailModal({ queue, onClose, calculateAge }) {
               </div>
             </div>
 
-            {/* Contact Information - UPDATED WITH EMAIL */}
+            {/* Contact Information */}
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border border-blue-100">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -657,10 +654,10 @@ function PatientDetailModal({ queue, onClose, calculateAge }) {
           </div>
         </div>
 
-        <div className="bg-gray-50 px-6 py-4 border-t flex justify-end">
+        <div className="bg-gray-50 px-6 py-4 border-t flex justify-end flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
+            className="px-6 py-2.5 bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
           >
             Close
           </button>

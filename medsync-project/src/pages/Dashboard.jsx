@@ -12,6 +12,7 @@ import {
   Cell,
 } from "recharts";
 
+
 function Dashboard() {
   const [summary, setSummary] = useState({
     totalPatients: 0,
@@ -20,6 +21,7 @@ function Dashboard() {
     weeklyStats: [],
     activityLogs: [],
   });
+
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,18 +32,24 @@ function Dashboard() {
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [dataSourceFilter, setDataSourceFilter] = useState("all"); // "all", "queue", "appointment"
+  const [activityFilter, setActivityFilter] = useState("all"); // "all", "queue", "appointment" for activity logs
+
 
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
+
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
 
-  const loadStats = async (filter = "weekly", month = null, year = null) => {
+
+  const loadStats = async (filter = "weekly", month = null, year = null, source = "all") => {
     try {
       setLoading(true);
+
 
       let chartEndpoint = `/api/dashboard/served?filter=${filter}`;
       if (filter === "monthly" && month) {
@@ -49,6 +57,12 @@ function Dashboard() {
       } else if (filter === "yearly" && year) {
         chartEndpoint += `&year=${year}`;
       }
+     
+      // Add source filter to the endpoint
+      if (source !== "all") {
+        chartEndpoint += `&source=${source}`;
+      }
+
 
       const [stats, chartData, queueCards, appointments, medicalRecords] = await Promise.all([
         fetchWithAuth("/api/dashboard/stats"),
@@ -58,12 +72,15 @@ function Dashboard() {
         fetchWithAuth("/api/medical-records").catch(() => []),
       ]);
 
+
       const processedData = Array.isArray(chartData)
         ? chartData.map((w) => ({ label: w.weekLabel, count: w.totalServed ?? 0 }))
         : [];
 
+
       const activityLogs = [];
       let activeQueueCount = 0;
+
 
       // Calculate active queue from all services
       if (Array.isArray(queueCards)) {
@@ -72,15 +89,15 @@ function Dashboard() {
             const queueData = await fetchWithAuth(`/api/patient-queue/service/${encodeURIComponent(card.serviceName)}`);
             if (Array.isArray(queueData)) {
               queueData.forEach(queue => {
-                const patientName = queue.patientName || 
+                const patientName = queue.patientName ||
                   (queue.patient ? `${queue.patient.firstName || ''} ${queue.patient.lastName || ''}`.trim() : 'Unknown');
-                
+               
                 // Count as active if status is WAITING or IN_PROGRESS
                 const status = queue.status || 'Unknown';
                 if (status === 'WAITING' || status === 'IN_PROGRESS' || status === 'Waiting' || status === 'In Progress') {
                   activeQueueCount++;
                 }
-                
+               
                 activityLogs.push({
                   id: `queue-${queue.queueId}`,
                   patientName: patientName,
@@ -97,9 +114,10 @@ function Dashboard() {
         }
       }
 
+
       if (Array.isArray(appointments)) {
         appointments.forEach(appt => {
-          const patientName = appt.patientName || 
+          const patientName = appt.patientName ||
             `${appt.firstName || ''} ${appt.middleName || ''} ${appt.lastName || ''}`.trim() || 'Unknown';
           activityLogs.push({
             id: `appointment-${appt.appointmentId}`,
@@ -111,6 +129,7 @@ function Dashboard() {
           });
         });
       }
+
 
       if (Array.isArray(medicalRecords)) {
         medicalRecords.forEach(record => {
@@ -130,10 +149,12 @@ function Dashboard() {
         });
       }
 
+
       activityLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
+
       console.log("📊 Active Queue Count:", activeQueueCount);
-      
+     
       setSummary({
         totalPatients: stats.totalPatients ?? 0,
         activeQueue: activeQueueCount, // Use calculated active queue count
@@ -148,32 +169,34 @@ function Dashboard() {
     }
   };
 
+
   useEffect(() => {
     if (chartFilter === "monthly") {
-      loadStats(chartFilter, selectedMonth, selectedYear);
+      loadStats(chartFilter, selectedMonth, selectedYear, dataSourceFilter);
     } else if (chartFilter === "yearly") {
-      loadStats(chartFilter, null, selectedYear);
+      loadStats(chartFilter, null, selectedYear, dataSourceFilter);
     } else {
-      loadStats(chartFilter);
+      loadStats(chartFilter, null, null, dataSourceFilter);
     }
-  }, [chartFilter, selectedMonth, selectedYear]);
+  }, [chartFilter, selectedMonth, selectedYear, dataSourceFilter]);
+
 
   useStompWebSocket(["/topic/stats", "/topic/queue", "/topic/patient-queue", "/topic/private/appointments", "/topic/medical-records"], (msg) => {
     console.log("📡 Dashboard WebSocket message received:", msg);
-    
+   
     // Handle queue updates - reload everything to recalculate active queue
     if (msg.type === "queue-update" || msg.type === "queue-created" || msg.type === "queue-status-changed") {
       console.log("🔄 Queue update detected, reloading stats and recalculating active queue...");
       // Reload stats completely to recalculate active queue count
       if (chartFilter === "monthly") {
-        loadStats(chartFilter, selectedMonth, selectedYear);
+        loadStats(chartFilter, selectedMonth, selectedYear, dataSourceFilter);
       } else if (chartFilter === "yearly") {
-        loadStats(chartFilter, null, selectedYear);
+        loadStats(chartFilter, null, selectedYear, dataSourceFilter);
       } else {
-        loadStats(chartFilter);
+        loadStats(chartFilter, null, null, dataSourceFilter);
       }
     }
-    
+   
     // Handle stats updates
     if (msg.type === "stats-update") {
       setSummary((prev) => ({
@@ -182,18 +205,19 @@ function Dashboard() {
         completedServices: msg.data?.completedServices ?? prev.completedServices,
       }));
     }
-    
+   
     // Handle appointments or medical records updates
     if (msg.type === "appointments-update" || msg.type === "medical-records-update") {
       if (chartFilter === "monthly") {
-        loadStats(chartFilter, selectedMonth, selectedYear);
+        loadStats(chartFilter, selectedMonth, selectedYear, dataSourceFilter);
       } else if (chartFilter === "yearly") {
-        loadStats(chartFilter, null, selectedYear);
+        loadStats(chartFilter, null, selectedYear, dataSourceFilter);
       } else {
-        loadStats(chartFilter);
+        loadStats(chartFilter, null, null, dataSourceFilter);
       }
     }
   });
+
 
   const getBarColor = (value, maxValue) => {
     const ratio = value / maxValue;
@@ -202,9 +226,11 @@ function Dashboard() {
     return "#D946EF";
   };
 
+
   const maxCount = useMemo(() => {
     return Math.max(...summary.weeklyStats.map((d) => d.count), 1);
   }, [summary.weeklyStats]);
+
 
   const handleFilterChange = (filter) => {
     setChartFilter(filter);
@@ -212,29 +238,44 @@ function Dashboard() {
     setShowYearPicker(false);
   };
 
+
   const handleMonthSelect = (monthIndex) => {
     setSelectedMonth(monthIndex + 1);
     setShowMonthPicker(false);
   };
+
 
   const handleYearSelect = (year) => {
     setSelectedYear(year);
     setShowYearPicker(false);
   };
 
-  const totalPages = Math.ceil(summary.activityLogs.length / itemsPerPage);
-  const paginatedLogs = summary.activityLogs.slice(
+
+  // Filter activity logs based on selected filter
+  const filteredActivityLogs = summary.activityLogs.filter(log => {
+    if (activityFilter === "all") return true;
+    if (activityFilter === "queue") return log.source === "queue";
+    if (activityFilter === "appointment") return log.source === "appointment";
+    return true;
+  });
+
+
+  const totalPages = Math.ceil(filteredActivityLogs.length / itemsPerPage);
+  const paginatedLogs = filteredActivityLogs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
 
   const goToPage = (page) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [summary.activityLogs.length]);
+  }, [filteredActivityLogs.length]);
+
 
   if (loading)
     return (
@@ -246,6 +287,7 @@ function Dashboard() {
       </div>
     );
 
+
   if (error)
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
@@ -255,16 +297,18 @@ function Dashboard() {
       </div>
     );
 
+
   return (
     <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
       <div className="w-full mx-auto space-y-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">
             Dashboard
           </h1>
           <p className="text-gray-500 text-base">Real-time monitoring and analytics</p>
         </div>
+
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -273,13 +317,14 @@ function Dashboard() {
           <StatCard title="Completed Services" value={summary.completedServices} />
         </div>
 
+
         {/* Chart Section */}
         <div className="bg-white border border-gray-200 p-8 rounded-xl shadow-sm">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4">
-            <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#503878] to-[#D946EF] bg-clip-text text-transparent">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-4">
+            <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent">
               Patients Served
             </h2>
-            
+           
             {/* Filter Buttons */}
             <div className="flex flex-wrap gap-3">
               <button
@@ -296,13 +341,13 @@ function Dashboard() {
                 onClick={() => handleFilterChange("weekly")}
                 className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   chartFilter === "weekly"
-                    ? "bg-gradient-to-r from-[#503878] to-[#D946EF] text-white shadow-md"
+                    ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
                     : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
                 Weekly
               </button>
-              
+             
               {/* Monthly Dropdown */}
               <div className="relative">
                 <button
@@ -312,14 +357,14 @@ function Dashboard() {
                   }}
                   className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                     chartFilter === "monthly"
-                      ? "bg-gradient-to-r from-[#503878] to-[#D946EF] text-white shadow-md"
+                      ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
                       : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
                   }`}
                 >
                   {chartFilter === "monthly" ? months[selectedMonth - 1] : "Monthly"}
                   <span className="text-xs">▼</span>
                 </button>
-                
+               
                 {showMonthPicker && chartFilter === "monthly" && (
                   <div className="absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 grid grid-cols-3 gap-2 w-[420px] right-0">
                     {months.map((month, index) => (
@@ -328,7 +373,7 @@ function Dashboard() {
                         onClick={() => handleMonthSelect(index)}
                         className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                           selectedMonth === index + 1
-                            ? "bg-gradient-to-r from-[#503878] to-[#D946EF] text-white"
+                            ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white"
                             : "bg-gray-50 text-[#503878] hover:bg-gray-100"
                         }`}
                       >
@@ -339,6 +384,7 @@ function Dashboard() {
                 )}
               </div>
 
+
               {/* Yearly Dropdown */}
               <div className="relative">
                 <button
@@ -348,14 +394,14 @@ function Dashboard() {
                   }}
                   className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                     chartFilter === "yearly"
-                      ? "bg-gradient-to-r from-[#503878] to-[#D946EF] text-white shadow-md"
+                      ? "bbg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
                       : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
                   }`}
                 >
                   {chartFilter === "yearly" ? selectedYear : "Yearly"}
                   <span className="text-xs">▼</span>
                 </button>
-                
+               
                 {showYearPicker && chartFilter === "yearly" && (
                   <div className="absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-2 z-50 max-h-60 overflow-y-auto">
                     {yearOptions.map((year) => (
@@ -364,7 +410,7 @@ function Dashboard() {
                         onClick={() => handleYearSelect(year)}
                         className={`block w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${
                           selectedYear === year
-                            ? "bg-gradient-to-r from-[#503878] to-[#D946EF] text-white"
+                            ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white"
                             : "bg-gray-50 text-[#503878] hover:bg-gray-100"
                         }`}
                       >
@@ -377,29 +423,66 @@ function Dashboard() {
             </div>
           </div>
 
+
+          {/* Data Source Filter */}
+          <div className="flex flex-wrap gap-3 mb-8 pb-6 border-b border-gray-200">
+            <span className="text-sm font-medium text-gray-600 flex items-center">Filter by:</span>
+            <button
+              onClick={() => setDataSourceFilter("all")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                dataSourceFilter === "all"
+                  ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setDataSourceFilter("queue")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                dataSourceFilter === "queue"
+                  ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              Queue Only
+            </button>
+            <button
+              onClick={() => setDataSourceFilter("appointment")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                dataSourceFilter === "appointment"
+                  ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
+                  : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              Appointment Only
+            </button>
+          </div>
+
+
           {summary.weeklyStats.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-gray-500 text-lg">No data available for the selected period.</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={350}>
-              <BarChart 
-                data={summary.weeklyStats} 
+              <BarChart
+                data={summary.weeklyStats}
                 margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                <XAxis 
-                  dataKey="label" 
-                  stroke="#6b7280" 
+                <XAxis
+                  dataKey="label"
+                  stroke="#6b7280"
                   style={{ fontSize: '13px' }}
                   tickLine={false}
                   angle={chartFilter === "monthly" ? -45 : 0}
                   textAnchor={chartFilter === "monthly" ? "end" : "middle"}
                   height={chartFilter === "monthly" ? 80 : 60}
                 />
-                <YAxis 
-                  allowDecimals={false} 
-                  stroke="#6b7280" 
+                <YAxis
+                  allowDecimals={false}
+                  stroke="#6b7280"
                   style={{ fontSize: '13px' }}
                   tickLine={false}
                   axisLine={false}
@@ -417,8 +500,8 @@ function Dashboard() {
                   formatter={(value, name, props) => [`${value} Patients`, props.payload.label]}
                   labelStyle={{ fontWeight: "600", marginBottom: "4px" }}
                 />
-                <Bar 
-                  dataKey="count" 
+                <Bar
+                  dataKey="count"
                   radius={[8, 8, 0, 0]}
                   maxBarSize={chartFilter === "monthly" ? 50 : 90}
                   animationDuration={800}
@@ -432,13 +515,61 @@ function Dashboard() {
           )}
         </div>
 
+
         {/* Recent Activity Logs */}
         <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-gradient-to-r from-[#503878] to-[#D946EF] p-6">
-            <h2 className="text-2xl font-semibold text-white">Recent Activity</h2>
+          <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-2xl font-semibold text-white">Recent Activity</h2>
+             
+              {/* Activity Filter Buttons */}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    setActivityFilter("all");
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activityFilter === "all"
+                      ? "bg-white text-[#503878] shadow-md"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => {
+                    setActivityFilter("queue");
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                    activityFilter === "queue"
+                      ? "bg-white text-[#503878] shadow-md"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                >
+                  <span className="w-3 h-3 rounded-full bg-blue-400"></span>
+                  Queue
+                </button>
+                <button
+                  onClick={() => {
+                    setActivityFilter("appointment");
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                    activityFilter === "appointment"
+                      ? "bg-white text-[#503878] shadow-md"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                >
+                  <span className="w-3 h-3 rounded-full bg-purple-400"></span>
+                  Appointment
+                </button>
+              </div>
+            </div>
           </div>
-          
-          {summary.activityLogs.length === 0 ? (
+         
+          {filteredActivityLogs.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-gray-500 text-lg">No activity yet</p>
             </div>
@@ -448,6 +579,7 @@ function Dashboard() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="px-8 py-5 text-left text-sm font-semibold text-gray-700">Type</th>
                       <th className="px-8 py-5 text-left text-sm font-semibold text-gray-700">Patient Name</th>
                       <th className="px-8 py-5 text-left text-sm font-semibold text-gray-700">Service Type</th>
                       <th className="px-8 py-5 text-left text-sm font-semibold text-gray-700">Status</th>
@@ -470,8 +602,27 @@ function Dashboard() {
                         displayStatus = "Cancelled";
                       }
 
+
                       return (
                         <tr key={log.id || index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-2">
+                              <span className={`w-3 h-3 rounded-full ${
+                                log.source === "queue" ? "bg-blue-400" :
+                                log.source === "appointment" ? "bg-purple-400" :
+                                "bg-gray-400"
+                              }`}></span>
+                              <span className={`text-xs font-semibold uppercase tracking-wide ${
+                                log.source === "queue" ? "text-blue-700" :
+                                log.source === "appointment" ? "text-purple-700" :
+                                "text-gray-700"
+                              }`}>
+                                {log.source === "queue" ? "Queue" :
+                                 log.source === "appointment" ? "Appointment" :
+                                 "Other"}
+                              </span>
+                            </div>
+                          </td>
                           <td className="px-8 py-5 text-sm font-medium text-gray-900">
                             {log.patientName || "Unknown"}
                           </td>
@@ -500,6 +651,7 @@ function Dashboard() {
                 </table>
               </div>
 
+
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-5 bg-gray-50 border-t border-gray-200 gap-4">
@@ -518,7 +670,7 @@ function Dashboard() {
                     >
                       Previous
                     </button>
-                    
+                   
                     <div className="hidden sm:flex gap-2">
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let pageNum;
@@ -537,7 +689,7 @@ function Dashboard() {
                             onClick={() => goToPage(pageNum)}
                             className={`w-11 h-11 rounded-lg text-sm font-medium transition-all ${
                               currentPage === pageNum
-                                ? "bg-gradient-to-r from-[#503878] to-[#D946EF] text-white"
+                                ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] border border-gray-300 hover:bg-gray-50 text-white"
                                 : "bg-white text-[#503878] border border-gray-300 hover:bg-gray-50"
                             }`}
                           >
@@ -546,6 +698,7 @@ function Dashboard() {
                         );
                       })}
                     </div>
+
 
                     <button
                       onClick={() => goToPage(currentPage + 1)}
@@ -569,13 +722,16 @@ function Dashboard() {
   );
 }
 
+
 function StatCard({ title, value }) {
   return (
-    <div className="bg-gradient-to-br from-[#503878] to-[#D946EF] p-8 rounded-xl shadow-sm hover:shadow-md transition-all">
+    <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] p-8 rounded-xl shadow-sm hover:shadow-md transition-all">
       <h2 className="text-white text-sm font-semibold mb-4 opacity-90 uppercase tracking-wide">{title}</h2>
       <p className="text-5xl font-semibold text-white">{value.toLocaleString()}</p>
     </div>
   );
 }
 
+
 export default Dashboard;
+

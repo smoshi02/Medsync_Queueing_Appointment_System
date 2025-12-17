@@ -2,82 +2,107 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/medsync-logo.png";
 
+/* =======================
+   SVG Icon Components
+======================= */
+const HomeIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M3 12l2-2 7-7 7 7 2 2M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-6 0v-4a1 1 0 011-1h2a1 1 0 011 1v4m-6 0h6" />
+  </svg>
+);
 
+const QueueIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const MedicalRecordsIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const UsersIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+/* =======================
+        Sidebar
+======================= */
 function Sidebar({ isOpen, customItems }) {
   const location = useLocation();
   const [activeItem, setActiveItem] = useState(location.pathname);
-
 
   useEffect(() => {
     setActiveItem(location.pathname);
   }, [location.pathname]);
 
-
-  // Role-based menu (for protected users)
   const roleRaw = localStorage.getItem("role") || "ROLE_PATIENT";
   const role = roleRaw.replace(/^ROLE_+/, "").toUpperCase();
 
-
   const menuConfig = {
     SUPER_ADMIN: [
-      { icon: "🏠", label: "Dashboard", path: "/dashboard" },
-      { icon: "⏱️", label: "Queue", path: "/queue" },
-      { icon: "📋", label: "Medical Records", path: "/medical-records" },
-      { icon: "👥", label: "User Management", path: "/user-management" },
-      { icon: "📅", label: "Appointments", path: "/appointments" },
+      { icon: <HomeIcon />, label: "Dashboard", path: "/dashboard" },
+      { icon: <QueueIcon />, label: "Queue", path: "/queue" },
+      { icon: <MedicalRecordsIcon />, label: "Medical Records", path: "/medical-records" },
+      { icon: <UsersIcon />, label: "User Management", path: "/user-management" },
+      { icon: <CalendarIcon />, label: "Appointments", path: "/appointments" },
     ],
     DOCTOR: [
-      { icon: "⏱️", label: "Queue", path: "/queue" },
-      { icon: "📅", label: "Appointments", path: "/appointments" },
-      { icon: "📋", label: "Medical Records", path: "/medical-records" },
+      { icon: <QueueIcon />, label: "Queue", path: "/queue" },
+      { icon: <CalendarIcon />, label: "Appointments", path: "/appointments" },
+      { icon: <MedicalRecordsIcon />, label: "Medical Records", path: "/medical-records" },
     ],
     STAFF: [
-      { icon: "⏱️", label: "Queue", path: "/queue" },
-      { icon: "📅", label: "Appointments", path: "/appointments" },
-      { icon: "📋", label: "Medical Records", path: "/medical-records" },
+      { icon: <QueueIcon />, label: "Queue", path: "/queue" },
+      { icon: <CalendarIcon />, label: "Appointments", path: "/appointments" },
+      { icon: <MedicalRecordsIcon />, label: "Medical Records", path: "/medical-records" },
     ],
     PATIENT: [
-      { icon: "⏱️", label: "Queue", path: "/patient/queue" },
-      { icon: "📅", label: "Appointments", path: "/patient/appointments" },
+      { icon: <QueueIcon />, label: "Queue", path: "/patient/queue" },
+      { icon: <CalendarIcon />, label: "Appointments", path: "/patient/appointments" },
     ],
   };
 
-
-  // Use customItems if provided, otherwise fallback to role-based menu
-  const menuItems = (customItems && Array.isArray(customItems) ? customItems : menuConfig[role]) || [];
-
+  const menuItems =
+    (customItems && Array.isArray(customItems) ? customItems : menuConfig[role]) || [];
 
   return (
     <div
-      className={`h-screen bg-[#4F3A73] via-violet-600 to-purple-700 text-white transition-all duration-300 ease-in-out shadow-2xl ${
-        isOpen ? "w-72" : "w-0"
-      } overflow-hidden flex flex-col`}
+      className={`h-screen bg-white border-r border-gray-200 transition-all duration-300
+      ${isOpen ? "w-64" : "w-0"} overflow-hidden flex flex-col`}
     >
       {/* Logo */}
-      <div className="p-8 border-b border-white/15">
-        <div className="flex flex-col items-center space-y-3">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-            <div className="relative">
-              <img
-                src={logo}
-                alt="MedSync Logo"
-                className="w-24 h-24 object-contain drop-shadow-2xl"
-              />
-            </div>
-          </div>
-          <div className="text-center">
-            <h2 className="text-2xl font-bold tracking-tight">MedSync</h2>
-            <p className="text-white/70 text-xs mt-1 font-medium tracking-wide">
-              Healthcare Management
-            </p>
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center gap-3">
+          <img 
+            src={logo} 
+            alt="MedSync Logo" 
+            className="w-10 h-10 object-contain"
+          />
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">MedSync</h2>
+            <p className="text-xs text-gray-500">Healthcare Platform</p>
           </div>
         </div>
       </div>
 
-
-      {/* Menu Items */}
-      <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+      {/* Menu */}
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {menuItems.map((item, index) => {
           const isActive = activeItem === item.path;
           return (
@@ -85,42 +110,25 @@ function Sidebar({ isOpen, customItems }) {
               key={index}
               to={item.path}
               onClick={() => setActiveItem(item.path)}
-              className={`group relative flex items-center px-4 py-3.5 rounded-xl transition-all duration-200 ${
-              isActive
-            ? "bg-[#2F184B]"
-            : "hover:bg-white/10"
-            }`}
-
-
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all group
+                ${isActive 
+                  ? "bg-[#5996EC] text-white shadow-sm" 
+                  : "text-gray-700 hover:bg-gray-100"}`}
             >
-             
-              <div
-                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ${
-                  isActive
-                      ? "bg-white/20 shadow-md"
-                      : "bg-white/5 group-hover:bg-white/10"
-                }`}
-              >
-                <span className="text-xl">{item.icon}</span>
+              <div className={`transition-transform group-hover:scale-110 ${isActive ? "text-white" : "text-gray-500"}`}>
+                {item.icon}
               </div>
-              <span
-                className={`ml-4 font-medium transition-all duration-200 ${
-                  isActive ? "text-white" : "text-violet-100 group-hover:text-white"
-                }`}
-              >
+              <span className="text-sm font-medium">
                 {item.label}
               </span>
-
-
             </Link>
           );
         })}
       </nav>
+
+      
     </div>
   );
 }
 
-
 export default Sidebar;
-
-
