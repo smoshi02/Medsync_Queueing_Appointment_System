@@ -152,47 +152,42 @@ function Appointments() {
   });
 
   const handleApproveAppointment = async (id) => {
-    if (
-      !window.confirm("Approve this appointment and send confirmation email?")
-    )
-      return;
-    try {
-      setProcessingId(id);
-      const res = await fetchWithAuth(`/api/appointments/${id}/approve`, {
-        method: "POST",
-      });
-      alert(
-        res.status === "success"
-          ? "✅ Appointment approved successfully!"
-          : "⚠️ " + res.message
-      );
-    } catch (err) {
-      alert("❌ Failed to approve: " + err.message);
-    } finally {
-      setProcessingId(null);
-    }
-  };
+  if (!window.confirm("Approve this appointment and send confirmation email?")) return;
+  try {
+    setProcessingId(id);
+    const res = await fetchWithAuth(`/api/appointments/${id}/approve`, {
+      method: "POST",
+    });
+    alert(
+      res.status === "success"
+        ? "✅ Appointment approved successfully! Dashboard will update automatically."
+        : "⚠️ " + res.message
+    );
+  } catch (err) {
+    alert("❌ Failed to approve: " + err.message);
+  } finally {
+    setProcessingId(null);
+  }
+};
 
-  const handleCancelAppointment = async (id) => {
-    if (!window.confirm("Are you sure you want to cancel this appointment?"))
-      return;
-    try {
-      setProcessingId(id);
-      const res = await fetchWithAuth(`/api/appointments/${id}/cancel`, {
-        method: "POST",
-      });
-      alert(
-        res.status === "success"
-          ? "✅ Appointment cancelled successfully!"
-          : "⚠️ " + res.message
-      );
-    } catch (err) {
-      alert("❌ Failed to cancel: " + err.message);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
+ const handleCancelAppointment = async (id) => {
+  if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
+  try {
+    setProcessingId(id);
+    const res = await fetchWithAuth(`/api/appointments/${id}/cancel`, {
+      method: "POST",
+    });
+    alert(
+      res.status === "success"
+        ? "✅ Appointment cancelled successfully! Dashboard will update automatically."
+        : "⚠️ " + res.message
+    );
+  } catch (err) {
+    alert("❌ Failed to cancel: " + err.message);
+  } finally {
+    setProcessingId(null);
+  }
+};
   const handleRescheduleClick = (appt) => {
     setSelectedAppointment(appt);
     setRescheduleData({ date: appt.date || "", time: appt.time || "" });
@@ -231,28 +226,28 @@ function Appointments() {
   };
 
   const handleCompleteAppointment = async (id) => {
-    if (!window.confirm("Mark this appointment as completed?")) return;
-    try {
-      setProcessingId(id);
-      console.log("Attempting to complete appointment:", id);
-      const res = await fetchWithAuth(`/api/appointments/${id}/complete`, {
-        method: "POST",
-      });
-      console.log("Complete response:", res);
+  if (!window.confirm("Mark this appointment as completed?")) return;
+  try {
+    setProcessingId(id);
+    console.log("Attempting to complete appointment:", id);
+    const res = await fetchWithAuth(`/api/appointments/${id}/complete`, {
+      method: "POST",
+    });
+    console.log("Complete response:", res);
 
-      if (res && res.status === "success") {
-        alert("✅ Appointment marked as completed!");
-        await loadAppointments(); // Reload to see updated list
-      } else {
-        alert("⚠️ " + (res?.message || "Unknown error occurred"));
-      }
-    } catch (err) {
-      console.error("Complete appointment error:", err);
-      alert("❌ Failed to complete appointment: " + err.message);
-    } finally {
-      setProcessingId(null);
+    if (res && res.status === "success") {
+      alert("✅ Appointment marked as completed! Dashboard will update automatically.");
+      await loadAppointments(); // Reload appointments list
+    } else {
+      alert("⚠️ " + (res?.message || "Unknown error occurred"));
     }
-  };
+  } catch (err) {
+    console.error("Complete appointment error:", err);
+    alert("❌ Failed to complete appointment: " + err.message);
+  } finally {
+    setProcessingId(null);
+  }
+};
 
   const filteredAppointments = appointments.filter((a) => {
     const matchStatus = filterStatus === "All" || a.status === filterStatus;
@@ -600,70 +595,170 @@ function AppointmentsTable({
                       </span>
                     </td>
                     <td className="p-5">
-                      <div className="flex gap-2 justify-center flex-wrap">
-                        {isPending && (
-                          <button
-                            onClick={() =>
-                              handleApproveAppointment(a.appointmentId)
-                            }
-                            disabled={isProcessing}
-                            className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50"
-                            title="Approve"
-                          >
-                            Approve
-                          </button>
-                        )}
-                        {(isPending || isConfirmed || isRescheduling) && (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleNoDoctorAvailable(a.appointmentId)
-                              }
-                              disabled={isProcessing}
-                              className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50"
-                              title="No Doctor Available"
-                            >
-                              No Doctor
-                            </button>
-                            <button
-                              onClick={() => handleRescheduleClick(a)}
-                              disabled={isProcessing}
-                              className="px-3 py-2 bg-[#5996EC] hover:bg-[#4785DB] text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50"
-                              title="Reschedule"
-                            >
-                              Reschedule
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleCancelAppointment(a.appointmentId)
-                              }
-                              disabled={isProcessing}
-                              className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50"
-                              title="Cancel"
-                            >
-                              Cancel
-                            </button>
-                            {isConfirmed && (
-                              <button
-                                onClick={() =>
-                                  handleCompleteAppointment(a.appointmentId)
-                                }
-                                disabled={isProcessing}
-                                className="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50"
-                                title="Complete"
-                              >
-                                Complete
-                              </button>
-                            )}
-                          </>
-                        )}
+                      <div className="flex items-center gap-2 justify-center">
+                        {/* View Details */}
                         <button
                           onClick={() => setSelectedAppointment(a)}
-                          className="px-3 py-2 bg-[#5996EC] hover:bg-[#4785DB] text-white rounded-lg text-sm font-medium shadow-sm hover:shadow transition-all"
+                          className="p-2 text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200 relative group"
                           title="View Details"
                         >
-                          View
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            View Details
+                          </span>
                         </button>
+
+                        {/* Approve (Pending only) */}
+                        {isPending && (
+                          <button
+                            onClick={() => handleApproveAppointment(a.appointmentId)}
+                            disabled={isProcessing}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 disabled:opacity-50 relative group"
+                            title="Approve"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              Approve
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Reschedule */}
+                        {(isPending || isConfirmed || isRescheduling) && (
+                          <button
+                            onClick={() => handleRescheduleClick(a)}
+                            disabled={isProcessing}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 disabled:opacity-50 relative group"
+                            title="Reschedule"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              Reschedule
+                            </span>
+                          </button>
+                        )}
+
+                        {/* No Doctor Available */}
+                        {(isPending || isConfirmed || isRescheduling) && (
+                          <button
+                            onClick={() => handleNoDoctorAvailable(a.appointmentId)}
+                            disabled={isProcessing}
+                            className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 relative group"
+                            title="No Doctor Available"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                              />
+                            </svg>
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              No Doctor Available
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Complete (Confirmed only) */}
+                        {isConfirmed && (
+                          <button
+                            onClick={() => handleCompleteAppointment(a.appointmentId)}
+                            disabled={isProcessing}
+                            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-200 disabled:opacity-50 relative group"
+                            title="Complete"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                              />
+                            </svg>
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              Mark Complete
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Cancel */}
+                        {(isPending || isConfirmed || isRescheduling) && (
+                          <button
+                            onClick={() => handleCancelAppointment(a.appointmentId)}
+                            disabled={isProcessing}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 disabled:opacity-50 relative group"
+                            title="Cancel"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              Cancel Appointment
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

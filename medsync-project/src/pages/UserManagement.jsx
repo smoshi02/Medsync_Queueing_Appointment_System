@@ -86,13 +86,22 @@ function UserManagement() {
 
 
   const deleteUser = async (user) => {
-    try {
-      await fetchWithAuth(`/api/users/${user.role}/${user.id}`, { method: "DELETE" });
-      setUsers((prev) => prev.filter((u) => u.id !== user.id));
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+  const confirmDelete = window.confirm(
+    `Are you sure you want to delete this ${user.role}?\n\nName: ${user.name}`
+  );
+
+  if (!confirmDelete) return; // stop if user clicks Cancel
+
+  try {
+    await fetchWithAuth(`/api/users/${user.role}/${user.id}`, {
+      method: "DELETE",
+    });
+    setUsers((prev) => prev.filter((u) => u.id !== user.id));
+  } catch (err) {
+    setError(err.message);
+  }
+};
+
 
 
   const fetchFullUser = async (user, setFn) => {

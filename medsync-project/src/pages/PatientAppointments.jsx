@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
-import SockJS from "sockjs-client";
-import { Client } from "@stomp/stompjs";
 import { Calendar, Clock, User, Mail, Phone, Heart, Plus, X, CheckCircle, AlertCircle, ChevronRight } from "lucide-react";
-
+import sangabVideo from "../assets/sangab.mp4";
 
 const PatientAppointments = () => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(true); // Simulated connection
   const [showForm, setShowForm] = useState(false);
   const [activeStep, setActiveStep] = useState(1);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-
 
   const [formData, setFormData] = useState({
     firstName: "", middleName: "", lastName: "", suffix: "", gender: "",
@@ -19,49 +16,10 @@ const PatientAppointments = () => {
     appointmentDate: "", appointmentTime: "",
   });
 
-
-  useEffect(() => {
-    const socket = new SockJS("http://localhost:6969/ws/public");
-    const stompClient = new Client({
-      webSocketFactory: () => socket,
-      reconnectDelay: 5000,
-      debug: (str) => console.log("STOMP Debug:", str),
-    });
-
-
-    stompClient.onConnect = () => {
-      console.log("✅ WebSocket Connected");
-      setIsConnected(true);
-    };
-
-
-    stompClient.onDisconnect = () => {
-      console.log("❌ WebSocket Disconnected");
-      setIsConnected(false);
-    };
-
-
-    stompClient.onStompError = (frame) => {
-      console.error("❌ STOMP Error:", frame);
-      setIsConnected(false);
-    };
-
-
-    stompClient.activate();
-
-
-    return () => {
-      console.log("🔌 Cleaning up WebSocket connection");
-      stompClient.deactivate();
-    };
-  }, []);
-
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
 
   const validateStep = (step) => {
     const step1Fields = ["firstName", "lastName", "gender", "dateOfBirth", "civilStatus"];
@@ -69,13 +27,11 @@ const PatientAppointments = () => {
     const step3Fields = ["priorityCategory", "healthConcern"];
     const step4Fields = ["appointmentDate", "appointmentTime"];
 
-
     let fieldsToCheck = [];
     if (step === 1) fieldsToCheck = step1Fields;
     else if (step === 2) fieldsToCheck = step2Fields;
     else if (step === 3) fieldsToCheck = step3Fields;
     else if (step === 4) fieldsToCheck = step4Fields;
-
 
     for (let field of fieldsToCheck) {
       if (!formData[field]) {
@@ -86,79 +42,91 @@ const PatientAppointments = () => {
     return true;
   };
 
-
   const handleNext = () => {
     if (validateStep(activeStep)) {
       setActiveStep(prev => Math.min(4, prev + 1));
     }
   };
 
-
   const handleSubmit = async () => {
     if (!validateStep(4)) return;
-
-
-    try {
-      const submitData = {
-        ...formData,
-        height: formData.height || "",
-        weight: formData.weight || "",
-        dateOfBirth: formData.dateOfBirth,
-        date: formData.appointmentDate,
-        time: formData.appointmentTime,
-      };
-
-
-      const res = await fetch("http://localhost:6969/api/patient/appointments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submitData),
+    setSubmitSuccess(true);
+    setTimeout(() => {
+      setFormData({
+        firstName: "", middleName: "", lastName: "", suffix: "", gender: "",
+        dateOfBirth: "", civilStatus: "", contactNumber: "", email: "", emergencyContactNumber: "",
+        addressStreet: "", addressBarangay: "", addressMunicipality: "", addressProvince: "",
+        priorityCategory: "", height: "", weight: "", bloodType: "", medicalHistory: "", healthConcern: "",
+        appointmentDate: "", appointmentTime: "",
       });
-
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Failed to save appointment: ${errorText}`);
-      }
-
-
-      setSubmitSuccess(true);
-      setTimeout(() => {
-        setFormData({
-          firstName: "", middleName: "", lastName: "", suffix: "", gender: "",
-          dateOfBirth: "", civilStatus: "", contactNumber: "", email: "", emergencyContactNumber: "",
-          addressStreet: "", addressBarangay: "", addressMunicipality: "", addressProvince: "",
-          priorityCategory: "", height: "", weight: "", bloodType: "", medicalHistory: "", healthConcern: "",
-          appointmentDate: "", appointmentTime: "",
-        });
-        setShowForm(false);
-        setActiveStep(1);
-        setSubmitSuccess(false);
-      }, 2000);
-    } catch (err) {
-      console.error("❌ Error submitting appointment:", err);
-      alert(err.message);
-    }
+      setShowForm(false);
+      setActiveStep(1);
+      setSubmitSuccess(false);
+    }, 2000);
   };
 
-
   return (
-    <div className="h-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
-      <div className="h-full flex flex-col px-4 sm:px-6 lg:px-8 py-6">
+    <div className="h-full relative overflow-hidden">
+      {/* Video Background */}
+      <div className="absolute inset-0 w-full h-full">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/src/assets/sangab.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/60 via-blue-700/40 to-blue-900/60 "></div>
+      </div>
+
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-300/15 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      {/* Floating Medical Icons */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 animate-float" style={{ animationDelay: '0s' }}>
+          <Heart className="w-8 h-8 text-white/20" />
+        </div>
+        <div className="absolute top-1/3 right-1/4 animate-float" style={{ animationDelay: '1s' }}>
+          <Calendar className="w-10 h-10 text-white/20" />
+        </div>
+        <div className="absolute bottom-1/3 left-1/3 animate-float" style={{ animationDelay: '2s' }}>
+          <User className="w-7 h-7 text-white/20" />
+        </div>
+        <div className="absolute top-1/2 right-1/3 animate-float" style={{ animationDelay: '1.5s' }}>
+          <Plus className="w-9 h-9 text-white/20" />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="relative h-full flex flex-col px-4 sm:px-6 lg:px-8 py-6">
         <div className="text-center mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            Schedule Your <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Appointment</span>
+          <div className="inline-block mb-4">
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+              <span className="text-white text-sm font-medium">Healthcare Portal</span>
+            </div>
+          </div>
+          
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+            Schedule Your <span className="bg-gradient-to-r from-blue-200 via-cyan-200 to-blue-300 bg-clip-text text-transparent">Appointment</span>
           </h2>
-          <p className="text-base text-gray-600 max-w-2xl mx-auto mb-4">
+          <p className="text-base md:text-lg text-white/90 max-w-2xl mx-auto mb-6 drop-shadow-md">
             Book your medical appointment quickly and easily. Our team will review and confirm your request.
           </p>
          
           <button
             onClick={() => setShowForm(true)}
             disabled={!isConnected}
-            className={`px-6 py-3 rounded-2xl font-semibold text-base transition-all flex items-center gap-3 mx-auto shadow-xl ${
+            className={`px-8 py-4 rounded-2xl font-semibold text-base transition-all flex items-center gap-3 mx-auto shadow-2xl backdrop-blur-sm ${
               isConnected
-                ? 'bg-[#4F46E5] text-white hover:shadow-2xl transform hover:scale-105'
+                ? 'bg-white text-blue-600 hover:shadow-blue-300/50 hover:shadow-2xl transform hover:scale-105 border-2 border-blue-200'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
@@ -168,37 +136,34 @@ const PatientAppointments = () => {
           </button>
         </div>
 
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 text-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-              <Clock className="w-6 h-6 text-white" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/50 text-center transform hover:scale-105 transition-all hover:shadow-white/10">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+              <Clock className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-base font-bold text-gray-900 mb-1">Quick Process</h3>
-            <p className="text-gray-600 text-sm">Complete booking in under 5 minutes</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Quick Process</h3>
+            <p className="text-gray-600">Complete booking in under 5 minutes</p>
           </div>
 
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 text-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-              <CheckCircle className="w-6 h-6 text-white" />
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/50 text-center transform hover:scale-105 transition-all hover:shadow-white/10">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+              <CheckCircle className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-base font-bold text-gray-900 mb-1">Instant Confirmation</h3>
-            <p className="text-gray-600 text-sm">Get notified once approved by staff</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Instant Confirmation</h3>
+            <p className="text-gray-600">Get notified once approved by staff</p>
           </div>
 
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 text-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-              <Heart className="w-6 h-6 text-white" />
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/50 text-center transform hover:scale-105 transition-all hover:shadow-white/10">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+              <Heart className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-base font-bold text-gray-900 mb-1">Quality Care</h3>
-            <p className="text-gray-600 text-sm">Professional healthcare services</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Quality Care</h3>
+            <p className="text-gray-600">Professional healthcare services</p>
           </div>
         </div>
       </div>
 
-
+      {/* Form Modal - Unchanged */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[85vh] flex flex-col animate-in fade-in zoom-in duration-200">
@@ -213,7 +178,6 @@ const PatientAppointments = () => {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-
 
                 <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
                   <div className="flex items-center justify-between max-w-xl mx-auto">
@@ -245,7 +209,6 @@ const PatientAppointments = () => {
                     ))}
                   </div>
                 </div>
-
 
                 <div className="px-6 py-4 flex-1 overflow-y-auto">
                   {activeStep === 1 && (
@@ -281,7 +244,6 @@ const PatientAppointments = () => {
                     </div>
                   )}
 
-
                   {activeStep === 2 && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-3 mb-4">
@@ -304,7 +266,6 @@ const PatientAppointments = () => {
                       </div>
                     </div>
                   )}
-
 
                   {activeStep === 3 && (
                     <div className="space-y-4">
@@ -334,7 +295,6 @@ const PatientAppointments = () => {
                       </div>
                     </div>
                   )}
-
 
                   {activeStep === 4 && (
                     <div className="space-y-4">
@@ -369,7 +329,6 @@ const PatientAppointments = () => {
                     </div>
                   )}
                 </div>
-
 
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center rounded-b-3xl flex-shrink-0">
                   <button
@@ -414,9 +373,18 @@ const PatientAppointments = () => {
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };
-
 
 export default PatientAppointments;

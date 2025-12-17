@@ -12,7 +12,6 @@ import {
   Cell,
 } from "recharts";
 
-
 function Dashboard() {
   const [summary, setSummary] = useState({
     totalPatients: 0,
@@ -22,6 +21,11 @@ function Dashboard() {
     activityLogs: [],
   });
 
+  const [previousStats, setPreviousStats] = useState({
+    totalPatients: 0,
+    activeQueue: 0,
+    completedServices: 0,
+  });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,24 +36,20 @@ function Dashboard() {
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [dataSourceFilter, setDataSourceFilter] = useState("all"); // "all", "queue", "appointment"
-  const [activityFilter, setActivityFilter] = useState("all"); // "all", "queue", "appointment" for activity logs
-
+  const [dataSourceFilter, setDataSourceFilter] = useState("all");
+  const [activityFilter, setActivityFilter] = useState("all");
 
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
-
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
-
 
   const loadStats = async (filter = "weekly", month = null, year = null, source = "all") => {
     try {
       setLoading(true);
-
 
       let chartEndpoint = `/api/dashboard/served?filter=${filter}`;
       if (filter === "monthly" && month) {
@@ -58,11 +58,9 @@ function Dashboard() {
         chartEndpoint += `&year=${year}`;
       }
      
-      // Add source filter to the endpoint
       if (source !== "all") {
         chartEndpoint += `&source=${source}`;
       }
-
 
       const [stats, chartData, queueCards, appointments, medicalRecords] = await Promise.all([
         fetchWithAuth("/api/dashboard/stats"),
@@ -72,15 +70,12 @@ function Dashboard() {
         fetchWithAuth("/api/medical-records").catch(() => []),
       ]);
 
-
       const processedData = Array.isArray(chartData)
         ? chartData.map((w) => ({ label: w.weekLabel, count: w.totalServed ?? 0 }))
         : [];
 
-
       const activityLogs = [];
       let activeQueueCount = 0;
-
 
       // Calculate active queue from all services
       if (Array.isArray(queueCards)) {
@@ -92,7 +87,6 @@ function Dashboard() {
                 const patientName = queue.patientName ||
                   (queue.patient ? `${queue.patient.firstName || ''} ${queue.patient.lastName || ''}`.trim() : 'Unknown');
                
-                // Count as active if status is WAITING or IN_PROGRESS
                 const status = queue.status || 'Unknown';
                 if (status === 'WAITING' || status === 'IN_PROGRESS' || status === 'Waiting' || status === 'In Progress') {
                   activeQueueCount++;
@@ -114,7 +108,6 @@ function Dashboard() {
         }
       }
 
-
       if (Array.isArray(appointments)) {
         appointments.forEach(appt => {
           const patientName = appt.patientName ||
@@ -129,7 +122,6 @@ function Dashboard() {
           });
         });
       }
-
 
       if (Array.isArray(medicalRecords)) {
         medicalRecords.forEach(record => {
@@ -149,15 +141,18 @@ function Dashboard() {
         });
       }
 
-
       activityLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-
-      console.log("📊 Active Queue Count:", activeQueueCount);
+      // Store previous stats for comparison before updating
+      setPreviousStats({
+        totalPatients: summary.totalPatients || stats.totalPatients,
+        activeQueue: summary.activeQueue || activeQueueCount,
+        completedServices: summary.completedServices || stats.completedServices,
+      });
      
       setSummary({
         totalPatients: stats.totalPatients ?? 0,
-        activeQueue: activeQueueCount, // Use calculated active queue count
+        activeQueue: activeQueueCount,
         completedServices: stats.completedServices ?? 0,
         weeklyStats: processedData,
         activityLogs: activityLogs,
@@ -169,7 +164,7 @@ function Dashboard() {
     }
   };
 
-
+  // Initial load
   useEffect(() => {
     if (chartFilter === "monthly") {
       loadStats(chartFilter, selectedMonth, selectedYear, dataSourceFilter);
@@ -180,34 +175,31 @@ function Dashboard() {
     }
   }, [chartFilter, selectedMonth, selectedYear, dataSourceFilter]);
 
-
-  useStompWebSocket(["/topic/stats", "/topic/queue", "/topic/patient-queue", "/topic/private/appointments", "/topic/medical-records"], (msg) => {
+  // WebSocket real-time updates
+  useStompWebSocket([
+    "/topic/stats", 
+    "/topic/queue", 
+    "/topic/patient-queue", 
+    "/topic/private/appointments", 
+    "/topic/medical-records"
+  ], (msg) => {
     console.log("📡 Dashboard WebSocket message received:", msg);
    
-    // Handle queue updates - reload everything to recalculate active queue
-    if (msg.type === "queue-update" || msg.type === "queue-created" || msg.type === "queue-status-changed") {
-      console.log("🔄 Queue update detected, reloading stats and recalculating active queue...");
-      // Reload stats completely to recalculate active queue count
-      if (chartFilter === "monthly") {
-        loadStats(chartFilter, selectedMonth, selectedYear, dataSourceFilter);
-      } else if (chartFilter === "yearly") {
-        loadStats(chartFilter, null, selectedYear, dataSourceFilter);
-      } else {
-        loadStats(chartFilter, null, null, dataSourceFilter);
-      }
-    }
-   
-    // Handle stats updates
-    if (msg.type === "stats-update") {
-      setSummary((prev) => ({
-        ...prev,
-        totalPatients: msg.data?.totalPatients ?? prev.totalPatients,
-        completedServices: msg.data?.completedServices ?? prev.completedServices,
-      }));
-    }
-   
-    // Handle appointments or medical records updates
-    if (msg.type === "appointments-update" || msg.type === "medical-records-update") {
+    // Auto-reload on any update - NO MANUAL REFRESH NEEDED
+    if (
+      msg.type === "queue-update" || 
+      msg.type === "queue-created" || 
+      msg.type === "queue-status-changed" ||
+      msg.type === "appointments-update" || 
+      msg.type === "appointment-completed" ||
+      msg.type === "appointment-approved" ||
+      msg.type === "appointment-cancelled" ||
+      msg.type === "medical-records-update" ||
+      msg.type === "stats-update"
+    ) {
+      console.log("🔄 Real-time update detected, refreshing dashboard automatically...");
+      
+      // Reload stats based on current filters
       if (chartFilter === "monthly") {
         loadStats(chartFilter, selectedMonth, selectedYear, dataSourceFilter);
       } else if (chartFilter === "yearly") {
@@ -218,19 +210,16 @@ function Dashboard() {
     }
   });
 
-
   const getBarColor = (value, maxValue) => {
     const ratio = value / maxValue;
-    if (ratio > 0.7) return "#503878";
-    if (ratio > 0.4) return "#8B5DB8";
-    return "#D946EF";
+    if (ratio > 0.7) return "#4785DB";
+    if (ratio > 0.4) return "#5996EC";
+    return "#6BA5F0";
   };
-
 
   const maxCount = useMemo(() => {
     return Math.max(...summary.weeklyStats.map((d) => d.count), 1);
   }, [summary.weeklyStats]);
-
 
   const handleFilterChange = (filter) => {
     setChartFilter(filter);
@@ -238,20 +227,16 @@ function Dashboard() {
     setShowYearPicker(false);
   };
 
-
   const handleMonthSelect = (monthIndex) => {
     setSelectedMonth(monthIndex + 1);
     setShowMonthPicker(false);
   };
-
 
   const handleYearSelect = (year) => {
     setSelectedYear(year);
     setShowYearPicker(false);
   };
 
-
-  // Filter activity logs based on selected filter
   const filteredActivityLogs = summary.activityLogs.filter(log => {
     if (activityFilter === "all") return true;
     if (activityFilter === "queue") return log.source === "queue";
@@ -259,67 +244,113 @@ function Dashboard() {
     return true;
   });
 
-
   const totalPages = Math.ceil(filteredActivityLogs.length / itemsPerPage);
   const paginatedLogs = filteredActivityLogs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-
   const goToPage = (page) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
-
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filteredActivityLogs.length]);
 
+  // Calculate real-time percentages and trends from database
+  const totalServices = summary.completedServices + summary.activeQueue;
+  const queuePercentage = totalServices > 0 ? ((summary.activeQueue / totalServices) * 100).toFixed(1) : 0;
+  const completedPercentage = totalServices > 0 ? ((summary.completedServices / totalServices) * 100).toFixed(1) : 0;
 
-  if (loading)
+  // Calculate trends based on previous vs current stats
+  const patientTrend = previousStats.totalPatients > 0 
+    ? (((summary.totalPatients - previousStats.totalPatients) / previousStats.totalPatients) * 100).toFixed(1)
+    : 0;
+  const queueTrend = previousStats.activeQueue > 0
+    ? (((summary.activeQueue - previousStats.activeQueue) / previousStats.activeQueue) * 100).toFixed(1)
+    : 0;
+  const completedTrend = previousStats.completedServices > 0
+    ? (((summary.completedServices - previousStats.completedServices) / previousStats.completedServices) * 100).toFixed(1)
+    : 0;
+
+  if (loading && summary.totalPatients === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-[#503878] border-t-transparent mb-4"></div>
           <p className="text-[#503878] text-xl font-medium">Loading dashboard...</p>
         </div>
       </div>
     );
+  }
 
-
-  if (error)
+  if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="bg-red-50 p-8 rounded-xl border border-red-200">
           <p className="text-red-600">{error}</p>
         </div>
       </div>
     );
-
+  }
 
   return (
-    <div className="min-h-screen bg-white p-6 md:p-8 lg:p-10">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6 md:p-8 lg:p-10">
       <div className="w-full mx-auto space-y-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">
-            Dashboard
-          </h1>
-          <p className="text-gray-500 text-base">Real-time monitoring and analytics</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent mb-2">
+                Dashboard
+              </h1>
+              <p className="text-gray-600 text-base">Real-time monitoring and analytics • Auto-updates every change</p>
+            </div>
+            <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-200">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-green-700 text-sm font-medium">Live Updates Active</span>
+            </div>
+          </div>
         </div>
 
-
-        {/* Summary Cards */}
+        {/* Enhanced Summary Cards with Real-time Data */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatCard title="Total Patients" value={summary.totalPatients} />
-          <StatCard title="Active Queue" value={summary.activeQueue} />
-          <StatCard title="Completed Services" value={summary.completedServices} />
+          <EnhancedStatCard 
+            title="Total Patients" 
+            value={summary.totalPatients}
+            icon="👥"
+            color="from-blue-500 to-blue-600"
+            trend={Math.abs(patientTrend)}
+            trendUp={parseFloat(patientTrend) >= 0}
+            showTrend={previousStats.totalPatients > 0}
+          />
+          <EnhancedStatCard 
+            title="Active Queue" 
+            value={summary.activeQueue}
+            icon="⏳"
+            color="from-yellow-500 to-orange-500"
+            percentage={queuePercentage}
+            showProgress={true}
+            trend={Math.abs(queueTrend)}
+            trendUp={parseFloat(queueTrend) >= 0}
+            showTrend={previousStats.activeQueue > 0}
+          />
+          <EnhancedStatCard 
+            title="Completed Services" 
+            value={summary.completedServices}
+            icon="✅"
+            color="from-green-500 to-emerald-600"
+            percentage={completedPercentage}
+            showProgress={true}
+            trend={Math.abs(completedTrend)}
+            trendUp={parseFloat(completedTrend) >= 0}
+            showTrend={previousStats.completedServices > 0}
+          />
         </div>
-
 
         {/* Chart Section */}
-        <div className="bg-white border border-gray-200 p-8 rounded-xl shadow-sm">
+        <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-lg">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-4">
             <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#5996EC] to-[#4785DB] bg-clip-text text-transparent">
               Patients Served
@@ -331,7 +362,7 @@ function Dashboard() {
                 onClick={() => handleFilterChange("today")}
                 className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   chartFilter === "today"
-                    ? "bg-gradient-to-r from-[#503878] to-[#D946EF] text-white shadow-md"
+                    ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
                     : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
@@ -384,7 +415,6 @@ function Dashboard() {
                 )}
               </div>
 
-
               {/* Yearly Dropdown */}
               <div className="relative">
                 <button
@@ -394,7 +424,7 @@ function Dashboard() {
                   }}
                   className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                     chartFilter === "yearly"
-                      ? "bbg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
+                      ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white shadow-md"
                       : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
                   }`}
                 >
@@ -422,7 +452,6 @@ function Dashboard() {
               </div>
             </div>
           </div>
-
 
           {/* Data Source Filter */}
           <div className="flex flex-wrap gap-3 mb-8 pb-6 border-b border-gray-200">
@@ -458,7 +487,6 @@ function Dashboard() {
               Appointment Only
             </button>
           </div>
-
 
           {summary.weeklyStats.length === 0 ? (
             <div className="text-center py-16">
@@ -515,9 +543,8 @@ function Dashboard() {
           )}
         </div>
 
-
         {/* Recent Activity Logs */}
-        <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
           <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <h2 className="text-2xl font-semibold text-white">Recent Activity</h2>
@@ -602,7 +629,6 @@ function Dashboard() {
                         displayStatus = "Cancelled";
                       }
 
-
                       return (
                         <tr key={log.id || index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                           <td className="px-8 py-5">
@@ -651,7 +677,6 @@ function Dashboard() {
                 </table>
               </div>
 
-
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-5 bg-gray-50 border-t border-gray-200 gap-4">
@@ -689,7 +714,7 @@ function Dashboard() {
                             onClick={() => goToPage(pageNum)}
                             className={`w-11 h-11 rounded-lg text-sm font-medium transition-all ${
                               currentPage === pageNum
-                                ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] border border-gray-300 hover:bg-gray-50 text-white"
+                                ? "bg-gradient-to-r from-[#5996EC] to-[#4785DB] text-white"
                                 : "bg-white text-[#503878] border border-gray-300 hover:bg-gray-50"
                             }`}
                           >
@@ -698,7 +723,6 @@ function Dashboard() {
                         );
                       })}
                     </div>
-
 
                     <button
                       onClick={() => goToPage(currentPage + 1)}
@@ -722,16 +746,49 @@ function Dashboard() {
   );
 }
 
-
-function StatCard({ title, value }) {
+function EnhancedStatCard({ title, value, icon, color, trend, trendUp, percentage, showProgress, showTrend }) {
   return (
-    <div className="bg-gradient-to-r from-[#5996EC] to-[#4785DB] p-8 rounded-xl shadow-sm hover:shadow-md transition-all">
-      <h2 className="text-white text-sm font-semibold mb-4 opacity-90 uppercase tracking-wide">{title}</h2>
-      <p className="text-5xl font-semibold text-white">{value.toLocaleString()}</p>
+    <div className={`bg-gradient-to-r ${color} p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 relative overflow-hidden`}>
+      {/* Animated background effect */}
+      <div className="absolute inset-0 bg-white/5 backdrop-blur-sm"></div>
+      
+      <div className="relative z-10">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <p className="text-white/90 text-sm font-medium mb-2 uppercase tracking-wide">{title}</p>
+            <p className="text-5xl font-bold text-white animate-fade-in">{value.toLocaleString()}</p>
+          </div>
+          <div className="text-4xl opacity-30">{icon}</div>
+        </div>
+        
+        {showTrend && trend !== undefined && (
+          <div className="flex items-center gap-2 mt-4">
+            <span className={`text-sm font-semibold flex items-center gap-1 ${
+              trendUp ? 'text-white' : 'text-white/80'
+            }`}>
+              {trendUp ? '↑' : '↓'} {trend}%
+            </span>
+            <span className="text-white/70 text-xs">real-time</span>
+          </div>
+        )}
+        
+        {showProgress && percentage !== undefined && (
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-white/90 text-xs font-medium">Utilization</span>
+              <span className="text-white font-semibold text-sm">{percentage}%</span>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <div 
+                className="bg-white rounded-full h-2 transition-all duration-1000 ease-out"
+                style={{ width: `${Math.min(parseFloat(percentage), 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-
 export default Dashboard;
-
