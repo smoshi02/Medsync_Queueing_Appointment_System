@@ -3,6 +3,7 @@ package com.medsync.medsync.controller.AdminApi;
 import com.medsync.medsync.DTO.AppointmentsDTO.AppointmentsDTO;
 import com.medsync.medsync.Entities.Appointment;
 import com.medsync.medsync.Entities.Patient;
+
 import com.medsync.medsync.Repo.AppointmentRepository;
 import com.medsync.medsync.Services.EmailService;
 import org.springframework.http.ResponseEntity;
@@ -43,13 +44,20 @@ public class AppointmentApprovalController {
     @Transactional
     public ResponseEntity<Map<String, String>> approveAppointment(@PathVariable Long id) {
         try {
+            System.out.println("========================================");
+            System.out.println("🔍 APPROVING APPOINTMENT ID: " + id);
+
             Appointment appointment = appointmentRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Appointment not found"));
+                    .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + id));
+
+            System.out.println("✅ Found appointment - Current Status: " + appointment.getStatus());
 
             // Update status
             appointment.setStatus("Confirmed");
             appointment.setConfirmedDate(LocalDateTime.now());
-            appointmentRepository.save(appointment);
+            Appointment saved = appointmentRepository.save(appointment);
+
+            System.out.println("✅ Appointment updated to: " + saved.getStatus());
 
             // Get patient details
             Patient patient = appointment.getPatient();
@@ -76,11 +84,15 @@ public class AppointmentApprovalController {
                     appointment.getAppointmentId()
             );
 
+            System.out.println("✅ Email sent to: " + patient.getEmail());
+
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
-            // ADDED: Send specific notification for dashboard
+            // Send specific notification for dashboard
             broadcastDashboardUpdate("appointment-approved", id);
+
+            System.out.println("========================================");
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Appointment approved and email sent successfully");
@@ -89,7 +101,7 @@ public class AppointmentApprovalController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error approving appointment: " + e.getMessage());
+            System.err.println("❌ ERROR APPROVING APPOINTMENT: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, String> error = new HashMap<>();
@@ -136,6 +148,9 @@ public class AppointmentApprovalController {
     @Transactional
     public ResponseEntity<Map<String, String>> cancelAppointment(@PathVariable Long id) {
         try {
+            System.out.println("========================================");
+            System.out.println("🔍 CANCELLING APPOINTMENT ID: " + id);
+
             Appointment appointment = appointmentRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
@@ -150,6 +165,8 @@ public class AppointmentApprovalController {
             // Update status
             appointment.setStatus("Cancelled");
             appointmentRepository.save(appointment);
+
+            System.out.println("✅ Appointment cancelled");
 
             // Get patient details
             Patient patient = appointment.getPatient();
@@ -174,8 +191,10 @@ public class AppointmentApprovalController {
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
-            // ADDED: Send specific notification for dashboard
+            // Send specific notification for dashboard
             broadcastDashboardUpdate("appointment-cancelled", id);
+
+            System.out.println("========================================");
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Appointment cancelled successfully");
@@ -184,7 +203,7 @@ public class AppointmentApprovalController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error cancelling appointment: " + e.getMessage());
+            System.err.println("❌ Error cancelling appointment: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, String> error = new HashMap<>();
@@ -202,6 +221,9 @@ public class AppointmentApprovalController {
     @Transactional
     public ResponseEntity<Map<String, String>> completeAppointment(@PathVariable Long id) {
         try {
+            System.out.println("========================================");
+            System.out.println("🔍 COMPLETING APPOINTMENT ID: " + id);
+
             Appointment appointment = appointmentRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
@@ -219,7 +241,7 @@ public class AppointmentApprovalController {
 
             System.out.println("✅ Appointment " + id + " marked as COMPLETED");
 
-            // Optional: Send completion email
+            // Send completion email
             Patient patient = appointment.getPatient();
             String patientName = String.format("%s %s",
                     patient.getFirstName(),
@@ -236,8 +258,10 @@ public class AppointmentApprovalController {
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
-            // ADDED: Send specific notification for dashboard with completed status
+            // Send specific notification for dashboard
             broadcastDashboardUpdate("appointment-completed", id);
+
+            System.out.println("========================================");
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Appointment marked as completed successfully");
@@ -246,7 +270,7 @@ public class AppointmentApprovalController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error completing appointment: " + e.getMessage());
+            System.err.println("❌ Error completing appointment: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, String> error = new HashMap<>();
@@ -256,7 +280,6 @@ public class AppointmentApprovalController {
             return ResponseEntity.status(500).body(error);
         }
     }
-
 
     // ============================================
     // RESCHEDULE APPOINTMENT (Patient Action via UI)
@@ -268,6 +291,9 @@ public class AppointmentApprovalController {
             @RequestBody Map<String, String> rescheduleData
     ) {
         try {
+            System.out.println("========================================");
+            System.out.println("🔍 RESCHEDULING APPOINTMENT ID: " + id);
+
             Appointment appointment = appointmentRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
@@ -297,6 +323,8 @@ public class AppointmentApprovalController {
             appointment.setStatus("Rescheduling");
             appointmentRepository.save(appointment);
 
+            System.out.println("✅ Appointment rescheduled to: " + newDate);
+
             // Get patient details
             Patient patient = appointment.getPatient();
             String patientName = String.format("%s %s",
@@ -319,8 +347,10 @@ public class AppointmentApprovalController {
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
-            // ADDED: Send specific notification for dashboard
+            // Send specific notification for dashboard
             broadcastDashboardUpdate("appointments-update", id);
+
+            System.out.println("========================================");
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Appointment rescheduled successfully. Waiting for approval.");
@@ -329,7 +359,7 @@ public class AppointmentApprovalController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error rescheduling appointment: " + e.getMessage());
+            System.err.println("❌ Error rescheduling appointment: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, String> error = new HashMap<>();
@@ -382,7 +412,7 @@ public class AppointmentApprovalController {
             // Broadcast update via WebSocket
             broadcastAppointmentUpdate();
 
-            // ADDED: Send specific notification for dashboard
+            // Send specific notification for dashboard
             broadcastDashboardUpdate("appointments-update", id);
 
             Map<String, String> response = new HashMap<>();
@@ -392,7 +422,7 @@ public class AppointmentApprovalController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error marking no doctor available: " + e.getMessage());
+            System.err.println("❌ Error marking no doctor available: " + e.getMessage());
             e.printStackTrace();
 
             Map<String, String> error = new HashMap<>();
@@ -408,7 +438,11 @@ public class AppointmentApprovalController {
     // ============================================
     private void broadcastAppointmentUpdate() {
         try {
+            System.out.println("🔄 Broadcasting appointment update...");
+
             List<AppointmentsDTO> updatedList = appointmentRepository.loadAppointments();
+
+            System.out.println("📊 Broadcasting " + updatedList.size() + " appointments");
 
             // Create payload map
             Map<String, Object> payload = new HashMap<>();
@@ -428,7 +462,7 @@ public class AppointmentApprovalController {
     }
 
     // ============================================
-    // NEW: Helper to Broadcast Dashboard Updates
+    // Helper to Broadcast Dashboard Updates
     // ============================================
     private void broadcastDashboardUpdate(String eventType, Long appointmentId) {
         try {
