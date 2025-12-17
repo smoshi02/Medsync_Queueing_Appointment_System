@@ -190,6 +190,64 @@ public class AppointmentApprovalController {
     }
 
     // ============================================
+    // COMPLETE APPOINTMENT (Staff Action)
+    // ============================================
+    @PostMapping("/{id}/complete")
+    @Transactional
+    public ResponseEntity<Map<String, String>> completeAppointment(@PathVariable Long id) {
+        try {
+            Appointment appointment = appointmentRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+            // Only allow completion if status is Confirmed
+            if (!"Confirmed".equals(appointment.getStatus())) {
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Only confirmed appointments can be completed");
+                response.put("status", "error");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Update status to Completed
+            appointment.setStatus("Completed");
+            appointmentRepository.save(appointment);
+
+            // Optional: Send completion email
+            Patient patient = appointment.getPatient();
+            String patientName = String.format("%s %s",
+                    patient.getFirstName(),
+                    patient.getLastName()
+            );
+
+            emailService.sendAppointmentCompletedEmail(
+                    patient.getEmail(),
+                    patientName,
+                    appointment.getDate() != null ? appointment.getDate().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")) : "Not specified",
+                    appointment.getTime() != null ? appointment.getTime().toString() : "Not specified"
+            );
+
+            // Broadcast update via WebSocket
+            broadcastAppointmentUpdate();
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Appointment marked as completed successfully");
+            response.put("status", "success");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("Error completing appointment: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Failed to complete appointment: " + e.getMessage());
+            error.put("status", "error");
+
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+
+    // ============================================
     // RESCHEDULE APPOINTMENT (Patient Action via UI)
     // ============================================
     @PutMapping("/{id}/reschedule")
