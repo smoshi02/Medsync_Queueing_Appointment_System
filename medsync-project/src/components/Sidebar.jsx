@@ -1,7 +1,7 @@
+// Sidebar.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/medsync-logo.png";
-
 
 /* =======================
    SVG Icon Components
@@ -13,14 +13,12 @@ const HomeIcon = () => (
   </svg>
 );
 
-
 const QueueIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
-
 
 const MedicalRecordsIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,14 +27,12 @@ const MedicalRecordsIcon = () => (
   </svg>
 );
 
-
 const UsersIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
       d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
   </svg>
 );
-
 
 const CalendarIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +41,6 @@ const CalendarIcon = () => (
   </svg>
 );
 
-
 /* =======================
         Sidebar
 ======================= */
@@ -53,15 +48,12 @@ function Sidebar({ isOpen, customItems }) {
   const location = useLocation();
   const [activeItem, setActiveItem] = useState(location.pathname);
 
-
   useEffect(() => {
     setActiveItem(location.pathname);
   }, [location.pathname]);
 
-
   const roleRaw = localStorage.getItem("role") || "ROLE_PATIENT";
   const role = roleRaw.replace(/^ROLE_+/, "").toUpperCase();
-
 
   const menuConfig = {
     SUPER_ADMIN: [
@@ -87,18 +79,16 @@ function Sidebar({ isOpen, customItems }) {
     ],
   };
 
-
   const menuItems =
     (customItems && Array.isArray(customItems) ? customItems : menuConfig[role]) || [];
 
-
   return (
     <div
-      className={`h-screen bg-white border-r border-gray-200 transition-all duration-300
+      className={`h-screen bg-white border-r border-gray-200 transition-all duration-300 ease-in-out
       ${isOpen ? "w-64" : "w-20"} flex flex-col`}
     >
-      {/* Logo */}
-      <div className={`p-6 border-b border-gray-200 ${isOpen ? "" : "flex justify-center"}`}>
+      {/* Logo - Same height as header */}
+      <div className={`h-[61px] px-6 border-b border-gray-200 flex items-center ${isOpen ? "" : "justify-center"}`}>
         {isOpen ? (
           <div className="flex items-center gap-3">
             <img
@@ -119,7 +109,6 @@ function Sidebar({ isOpen, customItems }) {
           />
         )}
       </div>
-
 
       {/* Menu */}
       <nav className={`flex-1 px-3 py-6 space-y-2 ${isOpen ? "overflow-y-auto" : "overflow-hidden"}`}>
@@ -160,6 +149,4 @@ function Sidebar({ isOpen, customItems }) {
   );
 }
 
-
 export default Sidebar;
-

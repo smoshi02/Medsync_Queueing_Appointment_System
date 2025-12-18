@@ -626,7 +626,7 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
 
           {/* Personal Info */}
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-[#503878] mb-3">Personal Information</h3>
+            <h3 className="text-lg font-bold text-[#5996EC] mb-3">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name *"
@@ -679,7 +679,7 @@ function PatientRegistrationForm({ onClose, onSuccess, fetchPublic }) {
 
           {/* Contact */}
           <div className="mb-6">
-            <h3 className="text-lg font-bold text-[#5996EC8] mb-3">Contact</h3>
+            <h3 className="text-lg font-bold text-[#5996EC] mb-3">Contact</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address *"

@@ -9,6 +9,8 @@ function MedicalRecords() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [userRole, setUserRole] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 10;
 
   const loadRecords = async () => {
     try {
@@ -46,6 +48,22 @@ function MedicalRecords() {
     r.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.recordId?.toString().includes(searchTerm)
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = filteredRecords.slice(indexOfFirstRecord, indexOfLastRecord);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (loading) {
     return (
@@ -137,72 +155,141 @@ function MedicalRecords() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="p-5 text-left text-gray-700 font-semibold text-sm">Patient</th>
-                    <th className="p-5 text-left text-gray-700 font-semibold text-sm">Contact</th>
-                    <th className="p-5 text-left text-gray-700 font-semibold text-sm">Chief Complaint</th>
-                    <th className="p-5 text-left text-gray-700 font-semibold text-sm">Diagnosis</th>
-                    <th className="p-5 text-left text-gray-700 font-semibold text-sm">Status</th>
-                    <th className="p-5 text-left text-gray-700 font-semibold text-sm">Date</th>
-                    <th className="p-5 text-left text-gray-700 font-semibold text-sm">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRecords.map((record) => (
-                    <tr key={record.recordId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="p-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-[#5996EC] flex items-center justify-center text-white font-semibold shadow-sm">
-                            {record.patientName?.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="font-medium text-gray-900">{record.patientName}</span>
-                        </div>
-                      </td>
-                      <td className="p-5">
-                        <span className="text-gray-700">{record.contactNumber || "—"}</span>
-                      </td>
-                      <td className="p-5 max-w-xs">
-                        <span className="text-gray-700">{record.chiefComplaint || "—"}</span>
-                      </td>
-                      <td className="p-5">
-                        <span className="text-gray-700">
-                          {record.diagnosis || "Pending"}
-                        </span>
-                      </td>
-                      <td className="p-5">
-                        <span className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${
-                          record.status === "Completed" 
-                            ? "bg-green-50 text-green-700 border border-green-200" 
-                            : "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                        }`}>
-                          {record.status}
-                        </span>
-                      </td>
-                      <td className="p-5">
-                        <div className="text-sm text-gray-800 font-medium">
-                          {new Date(record.recordCreatedDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </div>
-                      </td>
-                      <td className="p-5">
-                        <button
-                          onClick={() => setSelectedRecord(record)}
-                          className="px-5 py-2.5 bg-[#5996EC] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium shadow-sm"
-                        >
-                          View/Edit
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="p-5 text-left text-gray-700 font-semibold text-sm">Patient</th>
+                      <th className="p-5 text-left text-gray-700 font-semibold text-sm">Contact</th>
+                      <th className="p-5 text-left text-gray-700 font-semibold text-sm">Chief Complaint</th>
+                      <th className="p-5 text-left text-gray-700 font-semibold text-sm">Diagnosis</th>
+                      <th className="p-5 text-left text-gray-700 font-semibold text-sm">Status</th>
+                      <th className="p-5 text-left text-gray-700 font-semibold text-sm">Date</th>
+                      <th className="p-5 text-left text-gray-700 font-semibold text-sm">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {currentRecords.map((record) => (
+                      <tr key={record.recordId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="p-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-full bg-[#5996EC] flex items-center justify-center text-white font-semibold shadow-sm">
+                              {record.patientName?.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="font-medium text-gray-900">{record.patientName}</span>
+                          </div>
+                        </td>
+                        <td className="p-5">
+                          <span className="text-gray-700">{record.contactNumber || "—"}</span>
+                        </td>
+                        <td className="p-5 max-w-xs">
+                          <span className="text-gray-700">{record.chiefComplaint || "—"}</span>
+                        </td>
+                        <td className="p-5">
+                          <span className="text-gray-700">
+                            {record.diagnosis || "Pending"}
+                          </span>
+                        </td>
+                        <td className="p-5">
+                          <span className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${
+                            record.status === "Completed" 
+                              ? "bg-green-50 text-green-700 border border-green-200" 
+                              : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                          }`}>
+                            {record.status}
+                          </span>
+                        </td>
+                        <td className="p-5">
+                          <div className="text-sm text-gray-800 font-medium">
+                            {new Date(record.recordCreatedDate).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        </td>
+                        <td className="p-5">
+                          <button
+                            onClick={() => setSelectedRecord(record)}
+                            className="px-5 py-2.5 bg-[#5996EC] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium shadow-sm"
+                          >
+                            View/Edit
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-sm text-gray-600 font-medium">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="flex gap-1">
+                      {[...Array(totalPages)].map((_, index) => {
+                        const pageNumber = index + 1;
+                        // Show first page, last page, current page, and pages around current
+                        if (
+                          pageNumber === 1 ||
+                          pageNumber === totalPages ||
+                          (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={pageNumber}
+                              onClick={() => handlePageChange(pageNumber)}
+                              className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                                currentPage === pageNumber
+                                  ? 'bg-[#5996EC] text-white shadow-sm'
+                                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNumber}
+                            </button>
+                          );
+                        } else if (
+                          pageNumber === currentPage - 2 ||
+                          pageNumber === currentPage + 2
+                        ) {
+                          return (
+                            <span key={pageNumber} className="w-10 h-10 flex items-center justify-center text-gray-400">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      Next
+                    </button>
+                  </div>
+
+                  <div className="text-sm text-gray-600">
+                    Showing {indexOfFirstRecord + 1}-{Math.min(indexOfLastRecord, filteredRecords.length)} of {filteredRecords.length}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
