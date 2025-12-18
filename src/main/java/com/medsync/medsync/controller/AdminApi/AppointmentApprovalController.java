@@ -405,8 +405,7 @@ public class AppointmentApprovalController {
                     patient.getEmail(),
                     patientName,
                     formattedDate,
-                    formattedTime,
-                    appointment.getAppointmentId()
+                    formattedTime
             );
 
             // Broadcast update via WebSocket

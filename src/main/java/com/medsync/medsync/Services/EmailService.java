@@ -312,8 +312,7 @@ public class EmailService {
             String toEmail,
             String patientName,
             String appointmentDate,
-            String appointmentTime,
-            Long appointmentId
+            String appointmentTime
     ) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -327,7 +326,6 @@ public class EmailService {
                             "circumstances, no physician is available on your requested appointment date.\n\n" +
                             "ORIGINAL APPOINTMENT REQUEST\n" +
                             "─────────────────────────────────────\n" +
-                            "Appointment ID: #%s\n" +
                             "Requested Date: %s\n" +
                             "Requested Time: %s\n" +
                             "Status: Requires Rescheduling\n" +
@@ -346,7 +344,7 @@ public class EmailService {
                             "The MedSync Healthcare Team\n\n" +
                             "─────────────────────────────────────\n" +
                             "This is an automated notification. Please do not reply to this email.",
-                    patientName, appointmentId, appointmentDate, appointmentTime, SUPPORT_PHONE, SUPPORT_EMAIL
+                    patientName, appointmentDate, appointmentTime, SUPPORT_PHONE, SUPPORT_EMAIL
             );
 
             message.setText(emailBody);
